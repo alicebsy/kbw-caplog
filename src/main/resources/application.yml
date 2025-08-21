@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: caplog
+server:
+  port: 8080
