@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CEAB618C2E8DB5E400B2CB49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEAB617B2E8DB5E400B2CB49 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		CEAB617B2E8DB5E400B2CB49 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CEFCA11C2E8D8F5D0014AA05 /* caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +37,7 @@
 		CEFCA1132E8D8F5C0014AA05 = {
 			isa = PBXGroup;
 			children = (
+				CEAB617B2E8DB5E400B2CB49 /* Assets.xcassets */,
 				CEFCA11E2E8D8F5D0014AA05 /* caplog */,
 				CEFCA11D2E8D8F5D0014AA05 /* Products */,
 			);
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CEAB618C2E8DB5E400B2CB49 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
