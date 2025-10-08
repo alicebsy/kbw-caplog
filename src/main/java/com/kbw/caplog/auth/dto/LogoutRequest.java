@@ -1,4 +1,3 @@
-// src/main/java/com/kbw/caplog/auth/dto/LogoutRequest.java
 package com.kbw.caplog.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
@@ -16,5 +15,5 @@ import lombok.NoArgsConstructor;
 public class LogoutRequest {
     @NotBlank
     private String refreshToken;  // 현재 기기에서 발급받은 리프레시 토큰
-    private boolean allDevices;   // true면 모든 기기 로그아웃
+    private boolean allDevices;   // true 면 모든 기기 로그아웃
 }
