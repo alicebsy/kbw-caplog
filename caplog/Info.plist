@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>kakaokompassauth</string>
+        <string>kakaolink</string>
+        <string>kakaotalk</string>
+    </array>
+
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>Google</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.223205367262-0tm94rfedheu0b0ngsk09nif2d0d2qlq</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>Kakao</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>kakao81b506b612e5cc41201bc15a145764cb</string>
+            </array>
+        </dict>
+    </array>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>위치 기반 리마인드를 제공하기 위해 위치 접근 권한이 필요합니다.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>스크린샷을 저장하기 위해 사진 접근 권한이 필요합니다.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>스크린샷을 자동 분류하기 위해 사진 접근 권한이 필요합니다.</string>
+
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+
+    <key>UILaunchScreen</key>
+    <dict/>
+
+    <key>KAKAO_APP_KEY</key>
+    <string>81b506b612e5cc41201bc15a145764cb</string>
+
+    <key>GIDClientID</key>
+    <string>223205367262-0tm94rfedheu0b0ngsk09nif2d0d2qlq.apps.googleusercontent.com</string>
+</dict>
+</plist>
