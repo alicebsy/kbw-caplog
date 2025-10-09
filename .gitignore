@@ -42,3 +42,7 @@ logs/
 Thumbs.db**/*.xcuserstate
 **/xcuserdata/
 **/*.xcuserstate
+.DS_Store
+**/*.xcuserstate
+**/xcuserdata/
+DerivedData/
