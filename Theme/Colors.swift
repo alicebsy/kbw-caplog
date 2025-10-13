@@ -5,6 +5,10 @@ extension Color {
     static let brandGradientTop    = Color(hex: "#87ABA4")
     static let brandGradientBottom = Color(hex: "#FFFCF1")
     
+    static let joinButton  = Color(hex: "#AABBBE")
+    static let loginButton = Color(hex: "#5E5858")
+
+    
     static let brandBgTop    = Color(hex: "#FFFCC1")
     static let brandBgBottom = Color(hex: "#87ABA4")
     static let brandHeader   = Color(hex: "#CFE8E0")

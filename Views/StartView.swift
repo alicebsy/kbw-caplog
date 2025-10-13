@@ -7,7 +7,7 @@ struct StartView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(gradient: Gradient(colors: [Color.brandBgTop, Color.brandBgBottom]),
+                LinearGradient(gradient: Gradient(colors: [Color.brandGradientTop, Color.brandGradientBottom]),
                                startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 

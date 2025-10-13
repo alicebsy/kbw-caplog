@@ -23,7 +23,7 @@ struct Register1View: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 343, height: 49)
-                        .background(Color.registerGreen)   // Primary
+                        .background(Color.joinButton)
                         .cornerRadius(16)
                 }
                 NavigationLink(destination: Register3View()) {
@@ -31,7 +31,7 @@ struct Register1View: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 343, height: 49)
-                        .background(Color.homeGreenDark)   // Secondary(대조)
+                        .background(Color.loginButton)
                         .cornerRadius(16)
                 }
             }
@@ -48,7 +48,7 @@ struct Register1View: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [.brandBgTop, .brandBgBottom]),
+                gradient: Gradient(colors: [.brandGradientTop, .brandGradientBottom]),
                 startPoint: .top,
                 endPoint: .bottom
             )
