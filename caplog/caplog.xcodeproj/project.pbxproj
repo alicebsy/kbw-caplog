@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */;
+			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -309,7 +309,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */ = {
+		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEFCA1252E8D8F620014AA05 /* Debug */,
