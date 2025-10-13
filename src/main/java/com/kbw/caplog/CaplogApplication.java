@@ -19,16 +19,17 @@ public class CaplogApplication {
         // Spring Boot 애플리케이션 실행 (내장 Tomcat 서버 시작)
         SpringApplication.run(CaplogApplication.class, args);
     }
-    // ✅ 서버 기동 직후 1회 실행되는 테스트 훅
+    // ★ 테스트 끝났으면 이 Bean은 지워도 됩니다.
     @Bean
-    CommandLineRunner testKakao(KakaoGeocodingClient kakao) {
+    CommandLineRunner testKakao(com.kbw.caplog.recommendation.service.KakaoGeocodingClient kakao) {
         return args -> {
-            var point = kakao.geocode("경기도 고양시 일산동구 하늘마을로 76");
-            if (point.isPresent()) {
-                System.out.println("✅ lat=" + point.get().lat() + ", lng=" + point.get().lng());
-            } else {
-                System.out.println("⚠️ no_result");
-            }
+            // 1) 주소로 테스트
+            String r1 = kakao.geocodeByAddress("경기도 고양시 일산동구 하늘마을로 76");
+            System.out.println("addr result = " + r1);
+
+            // 2) 키워드로 테스트
+            String r2 = kakao.geocodeByKeyword("센트럴 더 포레");
+            System.out.println("keyword result = " + r2);
         };
     }
 }
