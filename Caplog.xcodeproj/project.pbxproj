@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		CE81079C2E9CF74300181F2D /* Caplog.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Caplog.xcodeproj; sourceTree = "<group>"; };
 		CEFCA11C2E8D8F5D0014AA05 /* caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -29,6 +30,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CE81079F2E9CF74300181F2D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		CEFCA1132E8D8F5C0014AA05 = {
 			isa = PBXGroup;
 			children = (
@@ -85,7 +93,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */;
+			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -97,6 +105,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CEFCA11D2E8D8F5D0014AA05 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = CE81079F2E9CF74300181F2D /* Products */;
+					ProjectRef = CE81079C2E9CF74300181F2D /* Caplog.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				CEFCA11B2E8D8F5C0014AA05 /* caplog */,
@@ -309,7 +323,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */ = {
+		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEFCA1252E8D8F620014AA05 /* Debug */,

@@ -7,7 +7,7 @@ struct HomeView: View {
     @State private var shareTarget: Content? = nil
     @State private var fullscreenImage: String? = nil
     @State private var editingContent: Content? = nil
-    @State private var selectedTab: OTKTab = .home
+    @State private var selectedTab: CaplogTab = .home
 
     var body: some View {
         NavigationStack {
@@ -89,7 +89,7 @@ struct HomeView: View {
 
                 // TabBar
                 // 변경
-                OTKTabBar(selected: selectedTab) { tab in
+                CaplogTabBar(selected: selectedTab) { tab in
                     selectedTab = tab
                     switch tab {
                     case .search:

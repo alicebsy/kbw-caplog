@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - 5탭 정의 (search, folder, home, share, mypage)
-enum OTKTab: String, CaseIterable, Identifiable {
+enum CaplogTab: String, CaseIterable, Identifiable {
     case search, folder, home, share, mypage
     var id: String { rawValue }
 
@@ -25,9 +25,9 @@ enum OTKTab: String, CaseIterable, Identifiable {
     }
 }
 
-struct OTKTabBar: View {
-    var selected: OTKTab
-    var onSelect: (OTKTab) -> Void
+struct CaplogTabBar: View {
+    var selected: CaplogTab
+    var onSelect: (CaplogTab) -> Void
 
     var body: some View {
         ZStack {
@@ -36,7 +36,7 @@ struct OTKTabBar: View {
                 .shadow(color: .black.opacity(0.05), radius: 8, y: -1)
 
             HStack {
-                ForEach(OTKTab.allCases) { tab in
+                ForEach(CaplogTab.allCases) { tab in
                     Button { onSelect(tab) } label: {
                         VStack(spacing: 4) {
                             Image(systemName: tab.icon)
