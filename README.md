@@ -1,4 +1,4 @@
-# kbw-caplog develop 브랜치 구분용
+# kbw-caplog backend 브랜치 구분용
 쿠폰/장소 스크린샷을 업로드하고 정리/공유할 수 있는 서비스
 Spring Boot + Gradle 기반
 

@@ -1,6 +1,6 @@
 import SwiftUI
 import Combine
-internal import CoreLocation
+import CoreLocation
 
 final class LocationPermission: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var status: CLAuthorizationStatus = .notDetermined
