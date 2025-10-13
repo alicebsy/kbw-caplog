@@ -6,15 +6,39 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CE8107A12E9CF74300181F2D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE81079A2E9CF74300181F2D /* Assets.xcassets */; };
+		CE8107A22E9CF74300181F2D /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CE81079E2E9CF74300181F2D /* Info.plist */; };
+		CE8107D62E9CF74300181F2D /* caplogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE81079D2E9CF74300181F2D /* caplogApp.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		CE81079C2E9CF74300181F2D /* Caplog.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Caplog.xcodeproj; sourceTree = "<group>"; };
-		CEFCA11C2E8D8F5D0014AA05 /* caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE81079A2E9CF74300181F2D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
+		CE81079D2E9CF74300181F2D /* caplogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = caplogApp.swift; sourceTree = "<group>"; };
+		CE81079E2E9CF74300181F2D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CEFCA11C2E8D8F5D0014AA05 /* caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = caplog.app; path = "/Users/user/Desktop/kbw-caplog/build/Debug-iphoneos/caplog.app"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CEFCA11E2E8D8F5D0014AA05 /* caplog */ = {
+		CE8107E52E9CF93300181F2D /* Components */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = caplog;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		CE8107FF2E9CF94600181F2D /* Managers */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		CE81080E2E9CF94A00181F2D /* Theme */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		CE81082A2E9CF94B00181F2D /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -30,27 +54,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		CE81079F2E9CF74300181F2D /* Products */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		CEFCA1132E8D8F5C0014AA05 = {
 			isa = PBXGroup;
 			children = (
-				CEFCA11E2E8D8F5D0014AA05 /* caplog */,
-				CEFCA11D2E8D8F5D0014AA05 /* Products */,
+				CE81079E2E9CF74300181F2D /* Info.plist */,
+				CE8107E52E9CF93300181F2D /* Components */,
+				CE8107FF2E9CF94600181F2D /* Managers */,
+				CE81080E2E9CF94A00181F2D /* Theme */,
+				CE81082A2E9CF94B00181F2D /* Views */,
+				CE81079A2E9CF74300181F2D /* Assets.xcassets */,
+				CE81079B2E9CF74300181F2D /* caplog.entitlements */,
+				CE81079D2E9CF74300181F2D /* caplogApp.swift */,
 			);
-			sourceTree = "<group>";
-		};
-		CEFCA11D2E8D8F5D0014AA05 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				CEFCA11C2E8D8F5D0014AA05 /* caplog.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -69,7 +84,10 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CEFCA11E2E8D8F5D0014AA05 /* caplog */,
+				CE8107E52E9CF93300181F2D /* Components */,
+				CE8107FF2E9CF94600181F2D /* Managers */,
+				CE81080E2E9CF94A00181F2D /* Theme */,
+				CE81082A2E9CF94B00181F2D /* Views */,
 			);
 			name = caplog;
 			packageProductDependencies = (
@@ -103,14 +121,8 @@
 			mainGroup = CEFCA1132E8D8F5C0014AA05;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = CEFCA11D2E8D8F5D0014AA05 /* Products */;
+			productRefGroup = CEFCA1132E8D8F5C0014AA05;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = CE81079F2E9CF74300181F2D /* Products */;
-					ProjectRef = CE81079C2E9CF74300181F2D /* Caplog.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				CEFCA11B2E8D8F5C0014AA05 /* caplog */,
@@ -123,6 +135,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE8107A12E9CF74300181F2D /* Assets.xcassets in Resources */,
+				CE8107A22E9CF74300181F2D /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +147,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE8107D62E9CF74300181F2D /* caplogApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
