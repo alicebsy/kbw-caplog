@@ -35,7 +35,7 @@ struct HomeView: View {
                         .padding(.horizontal, 20)
 
                         // Recommended
-                        SectionHeader(title: "Recommended Contents")
+                        HomeSectionHeader(title: "Recommended Contents")
                             .padding(.horizontal, 20)
 
                         TabView {
@@ -60,7 +60,7 @@ struct HomeView: View {
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
 
                         // Recently Viewed
-                        SectionHeader(title: "Recently Viewed")
+                        HomeSectionHeader(title: "Recently Viewed")
                             .padding(.horizontal, 20)
 
                         VStack(spacing: 12) {

@@ -21,6 +21,7 @@ struct Register3View: View {
                 Text("로그인")
                     .font(.system(size: 22, weight: .bold))
 
+                // 입력 필드
                 VStack(spacing: 20) {
                     UnderlineTextField(placeholder: "Email Address", text: $email)
                         .textInputAutocapitalization(.never)
@@ -34,6 +35,7 @@ struct Register3View: View {
                 }
                 .padding(.horizontal, 40)
 
+                // 로그인 버튼
                 Button {
                     guard !email.isEmpty && !password.isEmpty else {
                         return show("이메일과 비밀번호를 입력해주세요.")
@@ -54,7 +56,7 @@ struct Register3View: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 311, height: 45)
-                        .background(Color.loginButton)
+                        .background(Color.homeGreenDark) // 통일
                         .cornerRadius(32)
                         .opacity(canLogin ? 1.0 : 0.6)
                 }
@@ -68,6 +70,7 @@ struct Register3View: View {
                     .font(.system(size: 12))
                     .foregroundColor(.black)
 
+                // Apple
                 SocialLoginButton(provider: "Apple", logo: Image(systemName: "applelogo")) {
                     Task {
                         AuthService.shared.signInWithApple { result in
@@ -80,12 +83,14 @@ struct Register3View: View {
                                     }
                                     await exchangeAndProceed { try await AuthAPI.exchangeApple(idToken: idToken) }
                                 }
-                            case .failure(let e): show("Apple 로그인 실패: \(e.localizedDescription)")
+                            case .failure(let e):
+                                show("Apple 로그인 실패: \(e.localizedDescription)")
                             }
                         }
                     }
                 }
 
+                // Google
                 SocialLoginButton(provider: "Google", logo: Image("google_logo").resizable()) {
                     if let vc = UIApplication.shared.connectedScenes
                         .compactMap({ ($0 as? UIWindowScene)?.keyWindow?.rootViewController }).first {
@@ -99,13 +104,15 @@ struct Register3View: View {
                                         }
                                         await exchangeAndProceed { try await AuthAPI.exchangeGoogle(idToken: idToken) }
                                     }
-                                case .failure(let e): show("Google 로그인 실패: \(e.localizedDescription)")
+                                case .failure(let e):
+                                    show("Google 로그인 실패: \(e.localizedDescription)")
                                 }
                             }
                         }
                     }
                 }
 
+                // Kakao
                 SocialLoginButton(provider: "KakaoTalk", logo: Image("kakao_logo").resizable()) {
                     Task {
                         AuthService.shared.signInWithKakao { result in
@@ -114,7 +121,8 @@ struct Register3View: View {
                                 Task {
                                     await exchangeAndProceed { try await AuthAPI.exchangeKakao(accessToken: token.accessToken) }
                                 }
-                            case .failure(let e): show("Kakao 로그인 실패: \(e.localizedDescription)")
+                            case .failure(let e):
+                                show("Kakao 로그인 실패: \(e.localizedDescription)")
                             }
                         }
                     }
@@ -132,6 +140,7 @@ struct Register3View: View {
         .background(Color.white.ignoresSafeArea())
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .scrollDismissesKeyboard(.interactively)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func show(_ msg: String) {

@@ -2,7 +2,7 @@ import SwiftUI
 
 private let accentGreen = Color(red: 0.06, green: 0.36, blue: 0)
 
-struct SectionHeader: View {
+struct MyPageSectionHeader: View {
     var title: String
     var body: some View {
         Text(title)

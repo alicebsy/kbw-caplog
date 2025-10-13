@@ -1,13 +1,13 @@
 import SwiftUI
 
 // MARK: - Section Header
-struct SectionHeader: View {
+struct HomeSectionHeader: View {
     let title: String
     var body: some View {
         HStack {
             Text(title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Brand.textMain)
+                .foregroundStyle(Color.brandTextMain)
                 .lineLimit(1)
             Spacer()
         }
@@ -31,7 +31,7 @@ struct HomeCardRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(content.category)
                         .font(.system(size: 13))
-                        .foregroundStyle(Brand.textSub)
+                        .foregroundStyle(Color.brandTextSub)
                         .lineLimit(1)
                     Text(content.name)
                         .font(.system(size: 18, weight: .semibold))
@@ -50,7 +50,7 @@ struct HomeCardRow: View {
                             .lineLimit(1)
                         Text(content.address)
                             .font(.system(size: 14))
-                            .foregroundStyle(Brand.textSub)
+                            .foregroundStyle(Color.brandTextSub)
                             .lineLimit(1)
                     }
                 }
@@ -58,7 +58,7 @@ struct HomeCardRow: View {
                 if !content.tags.isEmpty {
                     Text(content.tags)
                         .font(.system(size: 14))
-                        .foregroundStyle(Brand.textSub)
+                        .foregroundStyle(Color.brandTextSub)
                         .lineLimit(1)
                 }
 
@@ -68,7 +68,7 @@ struct HomeCardRow: View {
                     Button(action: onTapMore) { Image(systemName: "ellipsis") }
                 }
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Brand.textSub)
+                .foregroundStyle(Color.brandTextSub)
             }
             .contentShape(Rectangle())
             .onTapGesture { onTap() }
@@ -84,7 +84,7 @@ struct HomeCardRow: View {
                 .onTapGesture { onTapThumb() }
         }
         .padding(18)
-        .background(Brand.cardBG)
+        .background(Color.brandCardBG)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -115,7 +115,7 @@ struct RecentlyRow: View {
                     .lineLimit(1)
                 Text(meta)
                     .font(.system(size: 14))
-                    .foregroundStyle(Brand.textSub)
+                    .foregroundStyle(Color.brandTextSub)
                     .lineLimit(1)
             }
             .contentShape(Rectangle())
@@ -127,10 +127,10 @@ struct RecentlyRow: View {
                 Button(action: onTapMore)  { Image(systemName: "ellipsis") }
             }
             .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(Brand.textSub)
+            .foregroundStyle(Color.brandTextSub)
         }
         .padding(12)
-        .background(Brand.cardBG)
+        .background(Color.brandCardBG)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
@@ -148,7 +148,7 @@ struct HomeHeader: View {
                     .font(.system(size: 22, weight: .bold))
                 Text("Today’s Summary")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Brand.textSub)
+                    .foregroundStyle(Color.brandTextSub)
             }
             Spacer()
             HStack(spacing: 12) {
@@ -183,7 +183,7 @@ struct ExpiringCouponCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, minHeight: 110)
-        .background(Brand.greenCard)
+        .background(Color.brandGreenCard)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }

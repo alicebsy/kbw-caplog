@@ -28,13 +28,13 @@ struct HomeCardPopupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(content.category)
                         .font(.system(size: 13))
-                        .foregroundStyle(Brand.textSub)
+                        .foregroundStyle(Color.brandTextSub)
                     Text(content.address)
                         .font(.system(size: 14))
                         .lineLimit(2)
                     Text(content.tags)
                         .font(.system(size: 14))
-                        .foregroundStyle(Brand.textSub)
+                        .foregroundStyle(Color.brandTextSub)
                 }
                 Spacer()
             }
@@ -58,7 +58,7 @@ struct HomeCardPopupView: View {
             }
         }
         .padding(20)
-        .background(Brand.cardBG)
+        .background(Color.brandCardBG)
         .presentationDragIndicator(.visible)
     }
 }

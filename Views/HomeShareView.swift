@@ -40,7 +40,7 @@ struct HomeShareView: View {
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(selectedIDs.contains(f.id) ? Brand.accent : .clear, lineWidth: 3)
+                                        .stroke(selectedIDs.contains(f.id) ? Color.brandAccent : .clear, lineWidth: 3)
                                 )
                                 .onTapGesture {
                                     if selectedIDs.contains(f.id) { selectedIDs.remove(f.id) }
@@ -62,7 +62,7 @@ struct HomeShareView: View {
                     .frame(height: 48)
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.brandLine))
                 Button {
                     onSend(Array(selectedIDs), message)
                     dismiss()
@@ -70,7 +70,7 @@ struct HomeShareView: View {
                     Image(systemName: "paperplane.fill")
                         .foregroundStyle(.white)
                         .frame(width: 56, height: 48)
-                        .background(Brand.accent)
+                        .background(Color.brandAccent)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .disabled(selectedIDs.isEmpty && message.isEmpty)
@@ -78,6 +78,6 @@ struct HomeShareView: View {
             }
         }
         .padding(16)
-        .background(Brand.cardBG)
+        .background(Color.brandCardBG)
     }
 }

@@ -6,7 +6,7 @@ struct MyPageSettingsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "설정")
+            MyPageSectionHeader(title: "설정")
             ToggleRow(title: "위치 기반 추천", isOn: $allowLocationRecommend)
             ToggleRow(title: "알림 수신", isOn: $allowNotification)
         }

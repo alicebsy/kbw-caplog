@@ -41,12 +41,12 @@ struct CaplogTabBar: View {
                         VStack(spacing: 4) {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(selected == tab ? Brand.accent : Brand.textSub)
+                                .foregroundColor(selected == tab ? Color.brandAccent : Color.brandTextSub)
                                 .scaleEffect(selected == tab ? 1.1 : 1.0)
                                 .animation(.spring(duration: 0.25), value: selected)
                             Text(tab.label)
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(selected == tab ? Brand.accent : Brand.textSub)
+                                .foregroundColor(selected == tab ? Color.brandAccent : Color.brandTextSub)
                         }
                         .frame(maxWidth: .infinity)
                     }

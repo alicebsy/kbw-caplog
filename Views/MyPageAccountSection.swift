@@ -8,7 +8,7 @@ struct MyPageAccountSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "가입정보")
+            MyPageSectionHeader(title: "가입정보")
 
             LabeledRow(label: "이름") { TextField("닉네임", text: $name).textFieldStyle(.roundedBorder) }
             LabeledRow(label: "이메일") { Text(email).foregroundStyle(.secondary) }

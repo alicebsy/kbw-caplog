@@ -6,7 +6,7 @@ struct MyPageUsageCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "사용정보")
+            MyPageSectionHeader(title: "사용정보")
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(uiColor: .systemGray6))
                 .overlay(

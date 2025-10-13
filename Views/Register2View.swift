@@ -34,6 +34,7 @@ struct Register2View: View {
                 Text("회원가입")
                     .font(.system(size: 22, weight: .bold))
 
+                // 입력 필드
                 VStack(spacing: 20) {
                     UnderlineTextField(placeholder: "Name", text: $name)
                         .autocorrectionDisabled(true)
@@ -50,7 +51,7 @@ struct Register2View: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .keyboardType(.asciiCapable)
-                        .textContentType(.none)
+                        .textContentType(.username)
 
                     UnderlineTextField(placeholder: "Password", text: $password, isSecure: true)
                         .textContentType(.newPassword)
@@ -62,9 +63,11 @@ struct Register2View: View {
                 }
                 .padding(.horizontal, 40)
 
+                // 약관 체크
                 CheckBoxView(isChecked: $agreeToTerms)
                     .padding(.horizontal, 40)
 
+                // 가입 버튼
                 Button {
                     guard agreeToTerms else { return show("약관에 동의해야 회원가입이 가능합니다.") }
                     guard password == confirmPassword else { return show("비밀번호가 일치하지 않습니다.") }
@@ -87,7 +90,7 @@ struct Register2View: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 311, height: 45)
-                        .background(Color.register2Join)
+                        .background(Color.registerGreen) // 통일
                         .cornerRadius(32)
                         .opacity(canSubmit ? 1.0 : 0.6)
                 }
@@ -101,6 +104,7 @@ struct Register2View: View {
                     .font(.system(size: 12))
                     .foregroundColor(.black)
 
+                // Apple
                 SocialLoginButton(provider: "Apple", logo: Image(systemName: "applelogo")) {
                     Task {
                         AuthService.shared.signInWithApple { result in
@@ -113,12 +117,14 @@ struct Register2View: View {
                                     }
                                     await exchangeAndProceed { try await AuthAPI.exchangeApple(idToken: idToken) }
                                 }
-                            case .failure(let e): show("Apple 로그인 실패: \(e.localizedDescription)")
+                            case .failure(let e):
+                                show("Apple 로그인 실패: \(e.localizedDescription)")
                             }
                         }
                     }
                 }
 
+                // Google
                 SocialLoginButton(provider: "Google", logo: Image("google_logo").resizable()) {
                     if let vc = UIApplication.shared.connectedScenes
                         .compactMap({ ($0 as? UIWindowScene)?.keyWindow?.rootViewController }).first {
@@ -132,13 +138,15 @@ struct Register2View: View {
                                         }
                                         await exchangeAndProceed { try await AuthAPI.exchangeGoogle(idToken: idToken) }
                                     }
-                                case .failure(let e): show("Google 로그인 실패: \(e.localizedDescription)")
+                                case .failure(let e):
+                                    show("Google 로그인 실패: \(e.localizedDescription)")
                                 }
                             }
                         }
                     }
                 }
 
+                // Kakao
                 SocialLoginButton(provider: "KakaoTalk", logo: Image("kakao_logo").resizable()) {
                     Task {
                         AuthService.shared.signInWithKakao { result in
@@ -147,7 +155,8 @@ struct Register2View: View {
                                 Task {
                                     await exchangeAndProceed { try await AuthAPI.exchangeKakao(accessToken: token.accessToken) }
                                 }
-                            case .failure(let e): show("Kakao 로그인 실패: \(e.localizedDescription)")
+                            case .failure(let e):
+                                show("Kakao 로그인 실패: \(e.localizedDescription)")
                             }
                         }
                     }
@@ -160,6 +169,7 @@ struct Register2View: View {
         .background(Color.white.ignoresSafeArea())
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .scrollDismissesKeyboard(.interactively)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func show(_ msg: String) {

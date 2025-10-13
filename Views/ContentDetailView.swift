@@ -34,7 +34,7 @@ struct ContentDetailView: View {
         }
         .navigationTitle("상세 정보")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Brand.cardBG)
+        .background(Color.brandCardBG)
     }
 }
 

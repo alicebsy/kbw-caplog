@@ -8,7 +8,7 @@ struct MyPageProfileSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "프로필")
+            MyPageSectionHeader(title: "프로필")
 
             LabeledRow(label: "성별") {
                 HStack(spacing: 24) {
