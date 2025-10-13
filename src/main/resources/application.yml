@@ -1,5 +1,31 @@
 spring:
   application:
     name: caplog
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/caplog?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
 server:
   port: 8080
+
+caplog:
+  geocode:
+    provider: kakao
+    throttleMillis: 250      # 호출 간 최소 간격(밀리초)
+    maxAttempts: 3           # 재시도 상한
+
+kakao:
+  restApiKey: ${KAKAO_REST_API_KEY:}   # 환경변수로 주입
+  geocode-url: https://dapi.kakao.com/v2/local/search/address.json
