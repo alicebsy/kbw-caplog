@@ -24,7 +24,7 @@ public class CaplogApplication {
     CommandLineRunner testKakao(com.kbw.caplog.recommendation.service.KakaoGeocodingClient kakao) {
         return args -> {
             // 1) 주소로 테스트
-            String r1 = kakao.geocodeByAddress("경기도 고양시 일산동구 하늘마을로 76");
+            String r1 = kakao.geocodeByAddress("경기 고양시 일산동구 고양대로 1124 1층");
             System.out.println("addr result = " + r1);
 
             // 2) 키워드로 테스트

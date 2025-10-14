@@ -40,3 +40,6 @@ logs/
 ### OS 별 불필요 파일 ###
 .DS_Store
 Thumbs.dbsrc/main/resources/application.yml
+
+# local env files
+.env.db
