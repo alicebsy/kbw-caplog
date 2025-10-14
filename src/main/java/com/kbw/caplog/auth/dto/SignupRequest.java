@@ -2,6 +2,7 @@ package com.kbw.caplog.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,12 @@ public class SignupRequest {
     @NotBlank
     @Size(min = 6, max = 20)
     private String password;
+
+    @NotBlank
+    @Size(min = 3, max = 20)
+    @Pattern(regexp = "^[a-zA-Z0-9_\\.]+$", message = "userId는 영문/숫자/._ 만 허용합니다.")
+    private String userId;
+
 
     @NotBlank
     private String name;

@@ -29,12 +29,21 @@ public class AuthService {
     // 회원가입
     @Transactional
     public void signup(SignupRequest request) {
+        // 중복 검사
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("이미 사용 중인 이메일입니다.");
+        }
+        if (userRepository.existsByUserId(request.getUserId())) {
+            throw new RuntimeException("이미 사용 중인 아이디입니다.");
+        }
+
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .userId(request.getEmail().split("@")[0])
+                .userId(request.getUserId())  // ✅ 수정됨: 요청에서 직접 받기
                 .build();
+
         userRepository.save(user);
     }
 
