@@ -1,9 +1,10 @@
 import Foundation
 
 /// 기본 로그인/회원가입/소셜 교환 응답
-/// 서버가 {"jwt":"..."} 형태로 내려준다고 가정
+// 백엔에 맞게 수정함
 struct AuthResponse: Decodable {
-    let jwt: String
+    let accessToken: String
+    let refreshToken: String
 }
 
 //

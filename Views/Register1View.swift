@@ -10,10 +10,7 @@ struct Register1View: View {
                 Image("caplog_logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
-                Text("Caplog")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.black)
+                    .frame(width: 150, height: 150)
             }
             
             // Join / Log in
@@ -42,6 +39,27 @@ struct Register1View: View {
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+            
+            // ✅ 임시 버튼 추가 (기존 코드 영향 X)
+            VStack(spacing: 12) {
+                NavigationLink(destination: HomeView()) {
+                    Text("임시 홈")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                NavigationLink(destination: MyPageView()) {
+                    Text("임시 마이페이지")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.purple)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.top, 10)
             
             Spacer()
         }

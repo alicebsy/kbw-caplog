@@ -5,21 +5,20 @@ struct MyPageProfileHeader: View {
     let email: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.05))
-                .frame(width: 56, height: 56)
-                .overlay(Text("👤").font(.system(size: 24)))
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(displayName) 님").font(.system(size: 22, weight: .bold))
-                Text(email).font(.system(size: 13)).foregroundStyle(.secondary)
-            }
-            Spacer()
-            // 로그아웃 버튼
-            CapsuleButton(title: "로그아웃") { NotificationCenter.default.post(name: .logoutTapped, object: nil) }
+        VStack(alignment: .leading, spacing: 10) {   // spacing 살짝 늘림
+            // ✅ 사용자 이름 + "님" 으로 표시
+            Text("\(displayName)님")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.black)
+                .padding(.top, 8)
+
+            // 이메일 표시
+            Text(email)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
         }
-        .padding(.horizontal, 20).padding(.top, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
 }
-
-extension Notification.Name { static let logoutTapped = Notification.Name("logoutTapped") }

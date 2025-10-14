@@ -24,7 +24,7 @@ struct HomeCardRow: View {
     var onTapThumb: () -> Void       // 우측 썸네일 탭 → 이미지 전체보기
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top) {
 
             // LEFT: 텍스트 블록
             VStack(alignment: .leading, spacing: 10) {

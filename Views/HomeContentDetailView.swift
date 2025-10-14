@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentDetailView: View {
+struct HomeContentDetailView: View {
     let content: Content
 
     var body: some View {

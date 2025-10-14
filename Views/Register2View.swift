@@ -76,15 +76,26 @@ struct Register2View: View {
                     }
                     isLoading = true
                     Task {
-                        do {
-                            let jwt = try await AuthAPI.register(name: name, email: email, userId: userId, password: password)
-                            SessionStore.saveJWT(jwt)
-                            goPerm = true
-                        } catch {
-                            show("회원가입 실패: \(error.localizedDescription)")
+                            do {
+                                // 1) 회원가입: 성공만 확인(토큰 X)
+                                try await AuthAPI.register(
+                                    name: name,
+                                    email: email,
+                                    userId: userId,
+                                    password: password
+                                )
+
+                                // 2) 바로 로그인해서 accessToken 받기
+                                let jwt = try await AuthAPI.login(email: email, password: password)
+
+                                // 3) 토큰 저장 후 다음 화면 이동
+                                SessionStore.saveJWT(jwt)
+                                goPerm = true
+                            } catch {
+                                show("회원가입 실패: \(error.localizedDescription)")
+                            }
+                            isLoading = false
                         }
-                        isLoading = false
-                    }
                 } label: {
                     Text(isLoading ? "Joining..." : "Join")
                         .font(.system(size: 16, weight: .bold))

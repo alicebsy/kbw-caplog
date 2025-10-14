@@ -34,30 +34,33 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 20)
 
-                        // Recommended
-                        HomeSectionHeader(title: "Recommended Contents")
-                            .padding(.horizontal, 20)
-
-                        TabView {
-                            ForEach(vm.recommended.prefix(3)) { content in
-                                HomeCardRow(
-                                    content: content,
-                                    onTap: { selectedContent = content },     // 가운데 탭 → 상세
-                                    onShare: { shareTarget = content },       // 공유
-                                    onTapMore: { editingContent = content },  // … → 상세정보 수정
-                                    onTapThumb: {                              // 우측 이미지 → 전체보기
-                                        if let first = content.screenshots.first {
-                                            fullscreenImage = first
-                                        } else {
-                                            fullscreenImage = content.thumbnail
-                                        }
-                                    }
-                                )
+                        // Recommended (헤더-카드 간격 강제 축소)
+                        VStack(alignment: .leading, spacing: 0) {
+                            HomeSectionHeader(title: "Recommended Contents")
                                 .padding(.horizontal, 20)
+                                .padding(.bottom, -8) // 헤더 내부 기본 하단 여백 상쇄
+
+                            TabView {
+                                ForEach(vm.recommended.prefix(3)) { content in
+                                    HomeCardRow(
+                                        content: content,
+                                        onTap: { selectedContent = content },     // 가운데 탭 → 상세
+                                        onShare: { shareTarget = content },       // 공유
+                                        onTapMore: { editingContent = content },  // … → 상세정보 수정
+                                        onTapThumb: {                              // 우측 이미지 → 전체보기
+                                            if let first = content.screenshots.first {
+                                                fullscreenImage = first
+                                            } else {
+                                                fullscreenImage = content.thumbnail
+                                            }
+                                        }
+                                    )
+                                    .padding(.horizontal, 20)
+                                }
                             }
+                            .frame(height: 250)
+                            .tabViewStyle(.page(indexDisplayMode: .automatic))
                         }
-                        .frame(height: 250)
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
 
                         // Recently Viewed
                         HomeSectionHeader(title: "Recently Viewed")
@@ -88,12 +91,11 @@ struct HomeView: View {
                 }
 
                 // TabBar
-                // 변경
                 CaplogTabBar(selected: selectedTab) { tab in
                     selectedTab = tab
                     switch tab {
                     case .search:
-                        // TODO: 검색 화면 열기 (원하면 NavigationDestination로 연결)
+                        // TODO: 검색 화면 열기
                         break
                     case .folder:
                         // TODO: 보관함 화면 열기
@@ -145,7 +147,7 @@ struct HomeView: View {
 
             // 네비게이션
             .navigationDestination(item: $selectedContent) { ct in
-                ContentDetailView(content: ct)
+                HomeContentDetailView(content: ct)
             }
             .navigationDestination(isPresented: $vm.showNotificationView) {
                 NotificationView()

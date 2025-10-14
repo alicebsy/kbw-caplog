@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CE8107A12E9CF74300181F2D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE81079A2E9CF74300181F2D /* Assets.xcassets */; };
 		CE8107D62E9CF74300181F2D /* caplogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE81079D2E9CF74300181F2D /* caplogApp.swift */; };
 		CE8108562E9CFE3700181F2D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108552E9CFE3700181F2D /* GoogleSignIn */; };
 		CE8108582E9CFE3700181F2D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108572E9CFE3700181F2D /* GoogleSignInSwift */; };
 		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
 		CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108622E9CFECD00181F2D /* KakaoSDKCommon */; };
 		CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108652E9D009E00181F2D /* KakaoSDKUser */; };
+		CE81086F2E9D2ADE00181F2D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE81079A2E9CF74300181F2D /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,7 +21,7 @@
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
 		CE81079D2E9CF74300181F2D /* caplogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = caplogApp.swift; sourceTree = "<group>"; };
 		CE81079E2E9CF74300181F2D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CE8108532E9CFC1B00181F2D /* caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = caplog.app; path = "/Users/user/Desktop/kbw-caplog/build/Debug-iphoneos/caplog.app"; sourceTree = "<absolute>"; };
+		CE8108752E9DF21800181F2D /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,15 +82,16 @@
 				CE81079B2E9CF74300181F2D /* caplog.entitlements */,
 				CE81079D2E9CF74300181F2D /* caplogApp.swift */,
 				CE8108642E9D009E00181F2D /* Frameworks */,
+				CE8108752E9DF21800181F2D /* Caplog.app */,
 			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CEFCA11B2E8D8F5C0014AA05 /* caplog */ = {
+		CEFCA11B2E8D8F5C0014AA05 /* Caplog */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CEFCA1272E8D8F620014AA05 /* Build configuration list for PBXNativeTarget "caplog" */;
+			buildConfigurationList = CEFCA1272E8D8F620014AA05 /* Build configuration list for PBXNativeTarget "Caplog" */;
 			buildPhases = (
 				CEFCA1182E8D8F5C0014AA05 /* Sources */,
 				CEFCA1192E8D8F5C0014AA05 /* Frameworks */,
@@ -106,7 +107,7 @@
 				CE81080E2E9CF94A00181F2D /* Theme */,
 				CE81082A2E9CF94B00181F2D /* Views */,
 			);
-			name = caplog;
+			name = Caplog;
 			packageProductDependencies = (
 				CE8108552E9CFE3700181F2D /* GoogleSignIn */,
 				CE8108572E9CFE3700181F2D /* GoogleSignInSwift */,
@@ -115,7 +116,7 @@
 				CE8108652E9D009E00181F2D /* KakaoSDKUser */,
 			);
 			productName = caplog;
-			productReference = CE8108532E9CFC1B00181F2D /* caplog.app */;
+			productReference = CE8108752E9DF21800181F2D /* Caplog.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -133,7 +134,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */;
+			buildConfigurationList = CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -151,7 +152,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CEFCA11B2E8D8F5C0014AA05 /* caplog */,
+				CEFCA11B2E8D8F5C0014AA05 /* Caplog */,
 			);
 		};
 /* End PBXProject section */
@@ -161,7 +162,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE8107A12E9CF74300181F2D /* Assets.xcassets in Resources */,
+				CE81086F2E9D2ADE00181F2D /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,7 +364,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "caplog" */ = {
+		CEFCA1172E8D8F5C0014AA05 /* Build configuration list for PBXProject "Caplog" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEFCA1252E8D8F620014AA05 /* Debug */,
@@ -372,7 +373,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CEFCA1272E8D8F620014AA05 /* Build configuration list for PBXNativeTarget "caplog" */ = {
+		CEFCA1272E8D8F620014AA05 /* Build configuration list for PBXNativeTarget "Caplog" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CEFCA1282E8D8F620014AA05 /* Debug */,

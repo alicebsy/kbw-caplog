@@ -9,29 +9,37 @@ struct StartView: View {
             ZStack {
                 LinearGradient(gradient: Gradient(colors: [Color.brandGradientTop, Color.brandGradientBottom]),
                                startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+                    .ignoresSafeArea()
 
                 VStack {
                     Spacer()
-                    Image("caplog_logo").resizable().scaledToFit().frame(width: 120, height: 120)
-                    Text("Caplog").font(.system(size: 28, weight: .bold)).foregroundColor(.black)
+                    Image("caplog_logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 200, height: 200)
                     Spacer()
                 }
             }
             .onAppear {
                 if let token = SessionStore.readJWT(), !token.isEmpty {
                     hasToken = true
-                    go = true                         // 즉시 메인으로
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        go = true
+                    }
                 } else {
                     hasToken = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { go = true } // 스플래시 후 진입
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        go = true
+                    }
                 }
             }
             .navigationDestination(isPresented: $go) {
                 if hasToken {
-                    RegisterMainView()               // 이미 로그인된 상태
+                    // ✅ 로그인된 상태에서는 AppRootView (탭 구조)로 진입
+                    AppRootView()
                 } else {
-                    Register1View()                  // 로그인/회원가입 진입
+                    // ✅ 로그인 안 되어 있으면 Register1View로 이동
+                    Register1View()
                 }
             }
         }
