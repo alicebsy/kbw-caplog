@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "caplog_logo.png",
+      "filename" : "caplog_logo_notext.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
