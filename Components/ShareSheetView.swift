@@ -1,3 +1,12 @@
+
+//
+//  ShareFriend.swift
+//  Caplog
+//
+//  Created by user on 10/14/25.
+//
+
+
 import SwiftUI
 
 struct ShareFriend: Identifiable, Hashable {
@@ -6,8 +15,9 @@ struct ShareFriend: Identifiable, Hashable {
     var avatar: String
 }
 
-struct HomeShareView: View {
-    let target: Content
+/// 🔗 홈/폴더 어디서든 재사용 가능한 공유 시트
+struct ShareSheetView<T: Identifiable>: View {
+    let target: T
     let friends: [ShareFriend]
     var onSend: (_ selectedFriendIDs: [UUID], _ message: String) -> Void
 
@@ -17,6 +27,7 @@ struct HomeShareView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            // 상단바
             HStack {
                 Text("공유")
                     .font(.system(size: 16, weight: .semibold))
@@ -28,7 +39,7 @@ struct HomeShareView: View {
                 }
             }
 
-            // 친구 목록 (수평 캐러셀)
+            // 친구 목록
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(friends) { f in
@@ -43,8 +54,11 @@ struct HomeShareView: View {
                                         .stroke(selectedIDs.contains(f.id) ? Color.brandAccent : .clear, lineWidth: 3)
                                 )
                                 .onTapGesture {
-                                    if selectedIDs.contains(f.id) { selectedIDs.remove(f.id) }
-                                    else { selectedIDs.insert(f.id) }
+                                    if selectedIDs.contains(f.id) {
+                                        selectedIDs.remove(f.id)
+                                    } else {
+                                        selectedIDs.insert(f.id)
+                                    }
                                 }
                             Text(f.name)
                                 .font(.system(size: 12))
@@ -55,7 +69,7 @@ struct HomeShareView: View {
                 .padding(.horizontal, 6)
             }
 
-            // 메시지 입력 + 전송 버튼
+            // 메시지 입력
             HStack(spacing: 10) {
                 TextField("메시지를 입력하세요", text: $message)
                     .padding(.horizontal, 14)

@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct Register1View: View {
     var body: some View {

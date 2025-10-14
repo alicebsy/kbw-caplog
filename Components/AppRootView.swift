@@ -6,54 +6,58 @@ enum Route: Hashable {
     case detail(id: String)
 }
 
-// MARK: - AppRootView
 struct AppRootView: View {
     @State private var path = NavigationPath()
-    @State private var selectedTab: CaplogTab = .home   // 실제 enum 이름에 맞게 수정
+    @State private var selectedTab: CaplogTab = .home
 
     var body: some View {
         NavigationStack(path: $path) {
             TabView(selection: $selectedTab) {
 
-                // 홈 탭
+                // 홈
                 HomeView()
                     .tag(CaplogTab.home)
-                    .tabItem { Label("Home", systemImage: "house") }
+                    .tabItem { Label("Home", systemImage: "house.fill") }
 
-                // 마이페이지 탭
+                // 폴더(보관함)
+                FolderView()
+                    .tag(CaplogTab.folder)
+                    .tabItem { Label("Folder", systemImage: "folder.fill") }
+
+                // 검색
+                SearchView { tab in selectedTab = tab }
+                    .tag(CaplogTab.search)
+                    .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+                // 공유
+                ShareView { tab in selectedTab = tab }
+                    .tag(CaplogTab.share)
+                    .tabItem { Label("Share", systemImage: "square.and.arrow.up") }
+
+                // 마이페이지
                 MyPageView()
                     .tag(CaplogTab.mypage)
-                    .tabItem { Label("My", systemImage: "person") }
+                    .tabItem { Label("My", systemImage: "person.fill") }
             }
-
-            // MARK: - 공용 네비게이션 목적지 (push 시 화면)
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .myPage:
-                    MyPageView()
-                        .customBackButton()   // ✅ 이름 변경 → 충돌 방지
-
+                    MyPageView().customBackButton()
                 case .detail(let id):
-                    Text("Detail View for \(id)") // 임시 DetailView
-                        .customBackButton()
+                    Text("Detail View for \(id)").customBackButton()
                 }
             }
         }
     }
 }
 
-#Preview {
-    AppRootView()
-}
+#Preview { AppRootView() }
 
-// MARK: - 백버튼 구조체 & 뷰 확장 (이 파일 안에서만 유효하게)
+// MARK: - 공용 백버튼
 private struct CustomBackButton: View {
     @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        Button {
-            dismiss()   // 항상 바로 전 화면으로 pop
-        } label: {
+        Button { dismiss() } label: {
             Image(systemName: "chevron.left")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.black)
@@ -61,16 +65,10 @@ private struct CustomBackButton: View {
         .buttonStyle(.plain)
     }
 }
-
 extension View {
-    /// 어떤 화면에도 적용 가능한 공용 백버튼
     func customBackButton() -> some View {
         self
             .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    CustomBackButton()
-                }
-            }
+            .toolbar { ToolbarItem(placement: .topBarLeading) { CustomBackButton() } }
     }
 }

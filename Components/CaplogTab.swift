@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - 5탭 정의 (search, folder, home, share, mypage)
+// MARK: - 탭 정의
 enum CaplogTab: String, CaseIterable, Identifiable {
     case search, folder, home, share, mypage
     var id: String { rawValue }
@@ -17,7 +17,7 @@ enum CaplogTab: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .search: return "검색"
-        case .folder: return "보관함"
+        case .folder: return "폴더"
         case .home:   return "홈"
         case .share:  return "공유"
         case .mypage: return "마이"
@@ -25,15 +25,16 @@ enum CaplogTab: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - 탭 바
 struct CaplogTabBar: View {
-    var selected: CaplogTab
-    var onSelect: (CaplogTab) -> Void
+    let selected: CaplogTab
+    let onSelect: (CaplogTab) -> Void
 
     var body: some View {
         ZStack {
-            BlurView(style: .systemUltraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 26))
-                .shadow(color: .black.opacity(0.05), radius: 8, y: -1)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.06), radius: 10, y: -1)
 
             HStack {
                 ForEach(CaplogTab.allCases) { tab in
@@ -41,31 +42,23 @@ struct CaplogTabBar: View {
                         VStack(spacing: 4) {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(selected == tab ? Color.brandAccent : Color.brandTextSub)
+                                .foregroundStyle(selected == tab ? .primary : .secondary)
                                 .scaleEffect(selected == tab ? 1.1 : 1.0)
-                                .animation(.spring(duration: 0.25), value: selected)
+                                .animation(.spring(duration: 0.24), value: selected)
                             Text(tab.label)
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(selected == tab ? Color.brandAccent : Color.brandTextSub)
+                                .foregroundStyle(selected == tab ? .primary : .secondary)
                         }
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                     }
                 }
             }
             .padding(.vertical, 10)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 6)
         }
-        .frame(height: 60)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 8)
+        .frame(height: 64)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 2)   // 바닥에 더 붙게
     }
-}
-
-// UIKit blur 래퍼
-struct BlurView: UIViewRepresentable {
-    var style: UIBlurEffect.Style = .systemMaterial
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        UIVisualEffectView(effect: UIBlurEffect(style: style))
-    }
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }

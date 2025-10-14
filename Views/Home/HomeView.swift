@@ -9,6 +9,12 @@ struct HomeView: View {
     @State private var editingContent: Content? = nil
     @State private var selectedTab: CaplogTab = .home
 
+    // ✅ 탭 이동용 상태
+    @State private var showFolder = false
+    @State private var showSearch = false
+    @State private var showShare  = false
+    @State private var showMyPage = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -19,7 +25,7 @@ struct HomeView: View {
                         HomeHeader(
                             userName: vm.userName,
                             onTapNotification: { vm.showNotificationView = true },
-                            onTapProfile: { vm.showMyPageView = true }
+                            onTapProfile: { showMyPage = true }
                         )
 
                         // Coupon (green)
@@ -34,20 +40,20 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 20)
 
-                        // Recommended (헤더-카드 간격 강제 축소)
+                        // Recommended
                         VStack(alignment: .leading, spacing: 0) {
                             HomeSectionHeader(title: "Recommended Contents")
                                 .padding(.horizontal, 20)
-                                .padding(.bottom, -8) // 헤더 내부 기본 하단 여백 상쇄
+                                .padding(.bottom, -8)
 
                             TabView {
                                 ForEach(vm.recommended.prefix(3)) { content in
                                     HomeCardRow(
                                         content: content,
-                                        onTap: { selectedContent = content },     // 가운데 탭 → 상세
-                                        onShare: { shareTarget = content },       // 공유
-                                        onTapMore: { editingContent = content },  // … → 상세정보 수정
-                                        onTapThumb: {                              // 우측 이미지 → 전체보기
+                                        onTap: { selectedContent = content },
+                                        onShare: { shareTarget = content },
+                                        onTapMore: { editingContent = content },
+                                        onTapThumb: {
                                             if let first = content.screenshots.first {
                                                 fullscreenImage = first
                                             } else {
@@ -74,7 +80,7 @@ struct HomeView: View {
                                     thumb: content.thumbnail,
                                     onTapCenter: { selectedContent = content },
                                     onTapShare: { shareTarget = content },
-                                    onTapMore:  { editingContent = content }, // … → 상세정보 수정
+                                    onTapMore:  { editingContent = content },
                                     onTapThumb: {
                                         if let first = content.screenshots.first {
                                             fullscreenImage = first
@@ -86,76 +92,73 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 80) // 탭바 공간
+                        .padding(.bottom, 80)
                     }
                 }
 
-                // TabBar
+                // ✅ TabBar
                 CaplogTabBar(selected: selectedTab) { tab in
                     selectedTab = tab
-                    switch tab {
-                    case .search:
-                        // TODO: 검색 화면 열기
-                        break
-                    case .folder:
-                        // TODO: 보관함 화면 열기
-                        break
-                    case .home:
-                        break
-                    case .share:
-                        // TODO: 공유 허브 열기
-                        break
-                    case .mypage:
-                        vm.showMyPageView = true
-                    }
+                    route(from: .home, to: tab)
                 }
-                .frame(maxWidth: CGFloat.infinity)
-
+                .frame(maxWidth: .infinity)
             }
 
-            // 공유 시트
-            .sheet(item: $shareTarget) { ct in
-                HomeShareView(
-                    target: ct,
+            // ShareSheet
+            .sheet(item: $shareTarget) { target in
+                ShareSheetView(
+                    target: target,
                     friends: vm.friends
                 ) { ids, msg in
-                    print("공유 대상: \(ids), 메시지: \(msg)")
+                    print("Home 공유 → 대상: \(ids), 메시지: \(msg)")
                 }
                 .presentationDetents([.height(350)])
             }
 
-            // 편집 시트(상세정보 수정)
+            // 편집 시트
             .sheet(item: $editingContent) { ct in
                 ContentEditSheet(content: ct) { updated in
-                    // TODO: Spring API 호출
                     print("업데이트: \(updated)")
                 }
                 .presentationDetents([.medium, .large])
             }
 
             // 전체 이미지
-            .fullScreenCover(
-                isPresented: Binding(
-                    get: { fullscreenImage != nil },
-                    set: { if !$0 { fullscreenImage = nil } }
-                )
-            ) {
+            .fullScreenCover(isPresented: Binding(
+                get: { fullscreenImage != nil },
+                set: { if !$0 { fullscreenImage = nil } }
+            )) {
                 if let name = fullscreenImage {
                     HomeImagePopupView(imageName: name)
                 }
             }
 
-            // 네비게이션
+            // 네비게이션 목적지
             .navigationDestination(item: $selectedContent) { ct in
                 HomeContentDetailView(content: ct)
             }
-            .navigationDestination(isPresented: $vm.showNotificationView) {
-                NotificationView()
+            .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }
+            .navigationDestination(isPresented: $showMyPage) { MyPageView() }
+            .navigationDestination(isPresented: $showFolder) { FolderView() }
+            .navigationDestination(isPresented: $showSearch) {
+                SearchView { tab in route(from: .search, to: tab) }
             }
-            .navigationDestination(isPresented: $vm.showMyPageView) {
-                MyPageView()
+            .navigationDestination(isPresented: $showShare)  {
+                ShareView { tab in route(from: .share, to: tab) }
             }
         }
         .task { await vm.load() }
+    }
+
+    // MARK: - 라우팅
+    private func route(from current: CaplogTab, to tab: CaplogTab) {
+        guard current != tab else { return }
+        switch tab {
+        case .home:   break // 이미 Home
+        case .folder: showFolder = true
+        case .search: showSearch = true
+        case .share:  showShare  = true
+        case .mypage: showMyPage = true
+        }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 struct UserProfile: Codable {
     var nickname: String
