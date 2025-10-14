@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct MyPageView: View {
+    var onSelectTab: ((CaplogTab) -> Void)? = nil
+
     @StateObject private var vm = MyPageViewModel()
     @State private var showingError = false
 
@@ -17,15 +19,16 @@ struct MyPageView: View {
             }
             .modifier(MyPageModifier(vm: vm, showingError: $showingError))
 
-            // ✅ 하단 탭
+            // 하단 탭
             .safeAreaInset(edge: .bottom) {
-                CaplogTabBar(selected: .mypage) { tab in
+                CaplogTabBar(selected: .myPage) { tab in
+                    onSelectTab?(tab)
                     switch tab {
-                    case .home:   goHome = true
+                    case .home:   goHome   = true
                     case .folder: goFolder = true
                     case .search: goSearch = true
                     case .share:  goShare  = true
-                    case .mypage: break
+                    case .myPage: break
                     }
                 }
             }
@@ -33,8 +36,8 @@ struct MyPageView: View {
             // 라우팅 목적지
             .navigationDestination(isPresented: $goHome)   { HomeView() }
             .navigationDestination(isPresented: $goFolder) { FolderView() }
-            .navigationDestination(isPresented: $goSearch) { SearchView { _ in } }
-            .navigationDestination(isPresented: $goShare)  { ShareView  { _ in } }
+            .navigationDestination(isPresented: $goSearch) { SearchView() }
+            .navigationDestination(isPresented: $goShare)  { ShareView() }
         }
     }
 

@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - 탭 정의
 enum CaplogTab: String, CaseIterable, Identifiable {
-    case search, folder, home, share, mypage
+    case search, folder, home, share, myPage
     var id: String { rawValue }
 
     var icon: String {
@@ -11,7 +11,7 @@ enum CaplogTab: String, CaseIterable, Identifiable {
         case .folder: return "folder.fill"
         case .home:   return "house.fill"
         case .share:  return "square.and.arrow.up"
-        case .mypage: return "person.fill"
+        case .myPage: return "person.fill"
         }
     }
     var label: String {
@@ -20,7 +20,7 @@ enum CaplogTab: String, CaseIterable, Identifiable {
         case .folder: return "폴더"
         case .home:   return "홈"
         case .share:  return "공유"
-        case .mypage: return "마이"
+        case .myPage: return "마이"
         }
     }
 }

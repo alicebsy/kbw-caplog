@@ -36,7 +36,7 @@ struct AppRootView: View {
 
                 // 마이페이지
                 MyPageView()
-                    .tag(CaplogTab.mypage)
+                    .tag(CaplogTab.myPage)
                     .tabItem { Label("My", systemImage: "person.fill") }
             }
             .navigationDestination(for: Route.self) { route in

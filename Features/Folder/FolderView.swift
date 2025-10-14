@@ -2,6 +2,8 @@ import SwiftUI
 import Combine
 
 struct FolderView: View {
+    var onSelectTab: ((CaplogTab) -> Void)? = nil
+
     @StateObject private var manager = FolderManager()
     @State private var selectedCategory: FolderCategory = .info
     @State private var selectedSub: String? = nil
@@ -18,7 +20,7 @@ struct FolderView: View {
     @State private var goShare  = false
     @State private var goMyPage = false
 
-    var filteredItems: [FolderItem] {
+    private var filteredItems: [FolderItem] {
         manager.items.filter {
             $0.category == selectedCategory && (selectedSub == nil || $0.subcategory == selectedSub)
         }
@@ -81,23 +83,24 @@ struct FolderView: View {
             .navigationTitle("Folder")
             .navigationBarTitleDisplayMode(.inline)
 
-            // ✅ 하단 탭
+            // 하단 탭
             .safeAreaInset(edge: .bottom) {
                 CaplogTabBar(selected: .folder) { tab in
+                    onSelectTab?(tab) // 외부 콜백 알림
                     switch tab {
-                    case .home:   goHome = true
-                    case .search: goSearch = true
-                    case .share:  goShare = true
-                    case .mypage: goMyPage = true
-                    case .folder: break
+                    case .home:    goHome   = true
+                    case .search:  goSearch = true
+                    case .share:   goShare  = true
+                    case .myPage:  goMyPage = true
+                    case .folder:  break
                     }
                 }
             }
 
             // 라우팅 목적지
             .navigationDestination(isPresented: $goHome)   { HomeView() }
-            .navigationDestination(isPresented: $goSearch) { SearchView { _ in } }
-            .navigationDestination(isPresented: $goShare)  { ShareView  { _ in } }
+            .navigationDestination(isPresented: $goSearch) { SearchView() }
+            .navigationDestination(isPresented: $goShare)  { ShareView() }
             .navigationDestination(isPresented: $goMyPage) { MyPageView() }
         }
     }

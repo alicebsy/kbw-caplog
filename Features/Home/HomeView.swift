@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    var onSelectTab: ((CaplogTab) -> Void)? = nil
+
     @StateObject private var vm = HomeViewModel()
 
     @State private var selectedContent: Content? = nil
@@ -9,7 +11,7 @@ struct HomeView: View {
     @State private var editingContent: Content? = nil
     @State private var selectedTab: CaplogTab = .home
 
-    // ✅ 탭 이동용 상태
+    // 탭 이동용 상태
     @State private var showFolder = false
     @State private var showSearch = false
     @State private var showShare  = false
@@ -96,9 +98,10 @@ struct HomeView: View {
                     }
                 }
 
-                // ✅ TabBar
+                // 하단 탭
                 CaplogTabBar(selected: selectedTab) { tab in
                     selectedTab = tab
+                    onSelectTab?(tab)
                     route(from: .home, to: tab)
                 }
                 .frame(maxWidth: .infinity)
@@ -133,19 +136,16 @@ struct HomeView: View {
                 }
             }
 
-            // 네비게이션 목적지
+            // 상세 이동 — id를 String으로 맞춰 전달
             .navigationDestination(item: $selectedContent) { ct in
-                HomeContentDetailView(content: ct)
+                HomeContentDetailView(id: ct.id.uuidString)
             }
+
             .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }
             .navigationDestination(isPresented: $showMyPage) { MyPageView() }
             .navigationDestination(isPresented: $showFolder) { FolderView() }
-            .navigationDestination(isPresented: $showSearch) {
-                SearchView { tab in route(from: .search, to: tab) }
-            }
-            .navigationDestination(isPresented: $showShare)  {
-                ShareView { tab in route(from: .share, to: tab) }
-            }
+            .navigationDestination(isPresented: $showSearch) { SearchView() }
+            .navigationDestination(isPresented: $showShare)  { ShareView() }
         }
         .task { await vm.load() }
     }
@@ -154,11 +154,11 @@ struct HomeView: View {
     private func route(from current: CaplogTab, to tab: CaplogTab) {
         guard current != tab else { return }
         switch tab {
-        case .home:   break // 이미 Home
+        case .home:   break
         case .folder: showFolder = true
         case .search: showSearch = true
         case .share:  showShare  = true
-        case .mypage: showMyPage = true
+        case .myPage: showMyPage = true
         }
     }
 }
