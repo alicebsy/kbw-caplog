@@ -3,9 +3,9 @@ spring:
     name: caplog
 
   datasource:
-    url: jdbc:mysql://localhost:3307/caplog?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: jdbc:mysql://localhost:3306/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
+    username: caplog
+    password: caplogpw
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -27,5 +27,5 @@ caplog:
     maxAttempts: 3           # 재시도 상한
 
 kakao:
-  restApiKey: ${KAKAO_REST_API_KEY:}   # 환경변수로 주입
+  restApiKey: ${KAKAO_REST_API_KEY:}  # 환경변수로 주입
   geocode-url: https://dapi.kakao.com/v2/local/search/address.json

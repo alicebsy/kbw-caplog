@@ -1,5 +1,6 @@
 package com.kbw.caplog.recommendation.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -11,13 +12,26 @@ public class KakaoGeocodingClient {
 
     private final WebClient client;
 
-    public KakaoGeocodingClient() {
-        String apiKey = System.getenv("KAKAO_REST_API_KEY"); // 환경변수
+    public KakaoGeocodingClient(
+            @Value("${kakao.restApiKey:}") String keyFromProp   // ← 스프링 프로퍼티 주입
+    ) {
+        String apiKey = keyFromProp;
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = System.getenv("KAKAO_REST_API_KEY");       // ← 환경변수 폴백
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = System.getProperty("kakao.restApiKey");    // ← -Dkakao.restApiKey 폴백
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("KAKAO_REST_API_KEY(또는 kakao.restApiKey)가 설정되지 않았습니다.");
+        }
+
         this.client = WebClient.builder()
                 .baseUrl("https://dapi.kakao.com")
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey.trim())
                 .build();
     }
+
 
     /** 주소 문자열로 좌표 조회 -> JSON(String) 반환 */
     public String geocodeByAddress(String address) {
