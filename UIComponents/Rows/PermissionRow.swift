@@ -8,12 +8,22 @@ struct PermissionRow: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text(title).font(.headline)
-            Text(desc).font(.subheadline).foregroundColor(.gray).multilineTextAlignment(.center)
+            Text(title)
+                .font(.headline)
+            Text(desc)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
             Button(actionTitle, action: action)
                 .font(.body.bold())
-                .frame(maxWidth: .infinity).padding(.vertical, 12)
-                .background(Color.blue.opacity(0.1)).cornerRadius(12)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    (actionTitle == "설정에서 허용")
+                    ? Color.orange.opacity(0.15) // 설정 유도 시 색상 살짝 구분
+                    : Color.blue.opacity(0.1)
+                )
+                .cornerRadius(12)
         }
         .padding()
         .background(Color(.systemBackground))
