@@ -11,7 +11,7 @@ struct FolderCardView: View {
             Text(item.title)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.brandTextMain)
-            Text(item.description)
+            Text(item.desc)
                 .font(.system(size: 14))
                 .foregroundColor(.brandTextSub)
 

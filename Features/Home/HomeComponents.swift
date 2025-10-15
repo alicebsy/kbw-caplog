@@ -139,7 +139,6 @@ struct RecentlyRow: View {
 struct HomeHeader: View {
     let userName: String
     var onTapNotification: () -> Void
-    var onTapProfile: () -> Void
 
     var body: some View {
         HStack {
@@ -152,10 +151,12 @@ struct HomeHeader: View {
             }
             Spacer()
             HStack(spacing: 12) {
-                Button(action: onTapNotification) { Image(systemName: "bell") }
-                Button(action: onTapProfile)     { Image(systemName: "person.circle") }
+                Button(action: onTapNotification) {
+                    Image(systemName: "bell")
+                }
             }
             .font(.system(size: 20, weight: .semibold))
+            .padding(.trailing, 12) // ← 기존보다 왼쪽으로 이동
         }
         .padding(.horizontal, 20)
     }

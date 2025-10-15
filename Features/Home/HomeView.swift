@@ -21,13 +21,12 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 10) { // 간격 줄임
 
-                        // Header
+                        // Header (알림만 남기고 프로필 제거)
                         HomeHeader(
                             userName: vm.userName,
-                            onTapNotification: { vm.showNotificationView = true },
-                            onTapProfile: { showMyPage = true }
+                            onTapNotification: { vm.showNotificationView = true }
                         )
 
                         // Coupon (green)
@@ -150,7 +149,7 @@ struct HomeView: View {
         .task { await vm.load() }
     }
 
-    // MARK: - 라우팅
+    // MARK: - 라우팅 함수 (body 밖으로 이동!)
     private func route(from current: CaplogTab, to tab: CaplogTab) {
         guard current != tab else { return }
         switch tab {

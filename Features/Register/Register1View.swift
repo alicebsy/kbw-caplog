@@ -34,8 +34,8 @@ struct Register1View: View {
                 }
             }
             
-            // 약관 안내
-            Text("By joining Caplog, you agreed to our Terms of service and Privacy policy")
+            // 약관 안내 (줄바꿈 위치 조정)
+            Text("By joining Caplog, you agreed to\nour Terms of service and Privacy policy.")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
@@ -43,6 +43,14 @@ struct Register1View: View {
             
             // ✅ 임시 버튼 추가 (기존 코드 영향 X)
             VStack(spacing: 12) {
+                NavigationLink(destination: Register4_1View()) {
+                    Text("임시 레지스터4-1")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.yellow)
+                        .cornerRadius(10)
+                }
                 NavigationLink(destination: HomeView()) {
                     Text("임시 홈")
                         .font(.system(size: 14, weight: .medium))

@@ -6,7 +6,7 @@ final class MyPageViewModel: ObservableObject {
     enum Gender: String, CaseIterable, Identifiable {
         case male = "남성", female = "여성"
         var id: String { rawValue }
-        var apiCode: String { self == .male ? "M" : "F" } // ✅ 백엔드 코드 매핑
+        var apiCode: String { self == .male ? "M" : "F" }
     }
 
     // UI 바인딩 상태
@@ -30,32 +30,28 @@ final class MyPageViewModel: ObservableObject {
     private let userService = UserService()
     private let screenshotService = ScreenshotService()
 
-    // Header 호환용
-    var displayName: String { name }
+    var displayName: String {
+        name
+    }
 
-    // ✅ 유효성 검사
     var isNameValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var isEmailValid: Bool {
-        // RFC 완벽 검증은 과하지만, 일반적인 패턴 검증
         let pattern = #"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"#
         return email.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
     var isBirthdayValid: Bool {
-        // 생일이 미래이면 안 됨
         guard let b = birthday else { return true }
         return b <= Date()
     }
 
-    // ✅ 저장 버튼 활성 조건
     var canSaveProfile: Bool {
         isNameValid && isEmailValid && isBirthdayValid && !isLoading
     }
 
-    // ✅ 백엔드 전송용 날짜 포맷 (yyyy-MM-dd)
     var birthdayYMDString: String? {
         guard let b = birthday else { return nil }
         let f = DateFormatter()
@@ -83,7 +79,7 @@ final class MyPageViewModel: ObservableObject {
             name = me.nickname
             email = me.email
             if let g = me.gender { gender = (g == "M") ? .male : .female }
-            birthday = me.birthday    // 서버가 Date로 내려주면 그대로, 문자열이면 디코더에서 처리
+            birthday = me.birthday
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -95,12 +91,10 @@ final class MyPageViewModel: ObservableObject {
             return
         }
         do {
-            // 백엔드 규격에 따라 Date? 또는 String?로 전송
-            // 예: 서버가 yyyy-MM-dd 문자열을 받는다면 birthdayYMDString 사용
             let updated = try await userService.updateMe(
                 nickname: name,
                 gender: gender,
-                birthday: birthday // 필요 시 birthdayYMDString로 바꿔주세요.
+                birthday: birthday
             )
             name = updated.nickname
             email = updated.email
@@ -113,7 +107,6 @@ final class MyPageViewModel: ObservableObject {
         do {
             try await userService.logout()
             AuthStorage.shared.clear()
-            // TODO: 루트 전환이 필요하면 AppState와 연동
         } catch {
             errorMessage = error.localizedDescription
         }

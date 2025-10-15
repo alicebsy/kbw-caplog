@@ -14,18 +14,18 @@ struct MyPageUsageCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(uiColor: .systemGray6))
                 .frame(height: 60)
+                .padding(.horizontal, 2)
                 .overlay(
-                    VStack(spacing: 6) {
-                        Text("📸 \(savedCount)건의 정보 저장  |  💡 \(recommendedCount)건 추천 받음")
-                            .font(.system(size: 15))
-                            .foregroundColor(.black)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                    }
+                    HStack(spacing: 4) {
+                            Text("📸 ")
+                            Text("\(savedCount)").bold()
+                            Text("건의 정보 저장  |  💡 ")
+                            Text("\(recommendedCount)").bold()
+                            Text("건 추천 받음")
+                        }
                     .padding(.horizontal, 10)
                     .frame(maxWidth: .infinity, alignment: .center)
                 )
-                .padding(.horizontal, 4)
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .sectionContainer()

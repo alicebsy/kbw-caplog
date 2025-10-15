@@ -13,7 +13,6 @@ struct MyPageModifier: ViewModifier {
             )
             .navigationTitle("My Page")
             .navigationBarTitleDisplayMode(.inline)
-            .standardBackButton()
             .onAppear { vm.onAppear() }
             .onReceive(NotificationCenter.default.publisher(for: .logoutTapped)) { _ in
                 Task { await vm.logout() }
