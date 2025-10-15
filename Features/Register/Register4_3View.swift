@@ -41,7 +41,7 @@ struct Register4_3View: View {
         .onAppear { noti.refresh() }
         // ✅ iOS 17+ 신 API: isPresented로 목적지 푸시
         .navigationDestination(isPresented: $goMain) {
-            RegisterMainView()
+            HomeView()
         }
     }
 }

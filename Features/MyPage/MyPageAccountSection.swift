@@ -15,7 +15,7 @@ struct MyPageAccountSection: View {
             LabeledRow(label: "이름") {
                 TextField(
                     "", text: $name,
-                    prompt: Text("민하").foregroundColor(.gray)
+                    prompt: Text("강배우").foregroundColor(.gray)
                 )
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.never)

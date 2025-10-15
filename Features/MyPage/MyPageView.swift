@@ -17,6 +17,11 @@ struct MyPageView: View {
             ScrollView(showsIndicators: false) {
                 content
             }
+            // ✨ 이 부분이 추가된 핵심 코드입니다.
+            // 화면이 나타날 때 ViewModel의 onAppear 함수를 호출하여 데이터를 불러옵니다.
+            .onAppear {
+                vm.onAppear()
+            }
             .modifier(MyPageModifier(vm: vm, showingError: $showingError))
 
             // 하단 탭

@@ -44,8 +44,9 @@ struct HomeView: View {
                         // Recommended
                         VStack(alignment: .leading, spacing: 0) {
                             HomeSectionHeader(title: "Recommended Contents")
+                                .padding(.top, 20)
                                 .padding(.horizontal, 20)
-                                .padding(.bottom, -8)
+                                .padding(.bottom, -20)
 
                             TabView {
                                 ForEach(vm.recommended.prefix(3)) { content in

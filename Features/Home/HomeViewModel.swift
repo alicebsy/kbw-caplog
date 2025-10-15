@@ -38,9 +38,9 @@ final class HomeViewModel: ObservableObject {
         // self.recommended = decoded.recommended
 
         // 데모 데이터
-        self.userName = "민하"
+        self.userName = "강배우"
         self.coupon = .init(title: "무료 음료 쿠폰",
-                            expireDate: "2025-09-30",
+                            expireDate: "2025-10-20",
                             brand: "Starbucks",
                             screenshotName: "shot_coupon")
         self.recommended = sampleContents

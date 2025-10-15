@@ -141,8 +141,8 @@ struct HomeHeader: View {
     var onTapNotification: () -> Void
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Hello, \(userName)")
                     .font(.system(size: 22, weight: .bold))
                 Text("Today’s Summary")
