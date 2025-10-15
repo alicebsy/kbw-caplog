@@ -32,3 +32,13 @@ jwt:
   secret: "change-this-to-a-long-random-secret-please-please"
   access-hours: 1        # Access 토큰 1시간
   refresh-days: 14       # Refresh 토큰 14일
+
+caplog:
+  geocode:
+    provider: kakao
+    throttleMillis: 250      # 호출 간 최소 간격(밀리초)
+    maxAttempts: 3           # 재시도 상한
+
+kakao:
+  restApiKey: ${KAKAO_REST_API_KEY:}  # 환경변수로 주입
+  geocode-url: https://dapi.kakao.com/v2/local/search/address.json
