@@ -25,6 +25,7 @@ extension Color {
     static let caplogGrayLight   = Color(hex: "#EEEEEE")
     static let caplogGrayMedium  = Color(hex: "#C4C4C4")
     static let caplogGrayDark    = Color(hex: "#5D5858")
+    static let accentGreen = Color(red: 0.06, green: 0.36, blue: 0)
 
     static let registerGreen         = Color(hex: "#34A853")
     static let registerGoogleBlue    = Color(hex: "#4285F4")

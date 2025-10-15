@@ -8,4 +8,6 @@ enum Endpoints {
 
     // 스크린샷
     static let screenshots = "/screenshots"       // GET ?cursor=&size=
+    
+    static let changePassword = "/api/v1/auth/password"
 }

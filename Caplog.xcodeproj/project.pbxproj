@@ -16,7 +16,7 @@
 
 /* Begin PBXFileReference section */
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
-		CE8108752E9DF21800181F2D /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Caplog.app; path = "/Users/user/Desktop/kbw-caplog/build/Debug-iphoneos/Caplog.app"; sourceTree = "<absolute>"; };
+		CEB027E72E9FE78B007EE2D8 /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,6 +99,7 @@
 				CEEFC38E2E9E51B80002AAAF /* App */,
 				CE8108642E9D009E00181F2D /* Frameworks */,
 				CE81079B2E9CF74300181F2D /* caplog.entitlements */,
+				CEB027E72E9FE78B007EE2D8 /* Caplog.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -134,7 +135,7 @@
 				CE8108652E9D009E00181F2D /* KakaoSDKUser */,
 			);
 			productName = caplog;
-			productReference = CE8108752E9DF21800181F2D /* Caplog.app */;
+			productReference = CEB027E72E9FE78B007EE2D8 /* Caplog.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -254,6 +255,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -310,6 +312,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};

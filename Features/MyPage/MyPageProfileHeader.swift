@@ -7,7 +7,7 @@ struct MyPageProfileHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {   // spacing 살짝 늘림
             // ✅ 사용자 이름 + "님" 으로 표시
-            Text("\(displayName)님")
+            Text("\(displayName) 님")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.black)
                 .padding(.top, 8)
