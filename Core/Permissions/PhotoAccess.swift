@@ -8,8 +8,16 @@ final class PhotoAccess: ObservableObject {
     @Published var screenshotCount: Int = 0
 
     init() {
-        status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        if isAuthorized { loadScreenshotsCount() }
+        // 권한 상태를 안전하게 읽기 (권한 없어도 크래시 X)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let authStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            DispatchQueue.main.async {
+                self.status = authStatus
+                if self.isAuthorized {
+                    self.loadScreenshotsCount()
+                }
+            }
+        }
     }
 
     var isAuthorized: Bool {
@@ -20,7 +28,9 @@ final class PhotoAccess: ObservableObject {
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { st in
             DispatchQueue.main.async {
                 self.status = st
-                if self.isAuthorized { self.loadScreenshotsCount() }
+                if self.isAuthorized {
+                    self.loadScreenshotsCount()
+                }
             }
         }
     }
@@ -32,13 +42,22 @@ final class PhotoAccess: ObservableObject {
     }
 
     private func loadScreenshotsCount() {
-        let col = PHAssetCollection.fetchAssetCollections(
-            with: .smartAlbum,
-            subtype: .smartAlbumScreenshots,
-            options: nil
-        ).firstObject
-        guard let col else { self.screenshotCount = 0; return }
-        let assets = PHAsset.fetchAssets(in: col, options: nil)
-        self.screenshotCount = assets.count
+        DispatchQueue.global(qos: .userInitiated).async {
+            let allPhotosOptions = PHFetchOptions()
+            allPhotosOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+            
+            let allPhotos = PHAsset.fetchAssets(with: allPhotosOptions)
+            
+            var count = 0
+            allPhotos.enumerateObjects { asset, _, _ in
+                if asset.mediaType == .image {
+                    count += 1
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.screenshotCount = count
+            }
+        }
     }
 }

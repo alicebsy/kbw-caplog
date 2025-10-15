@@ -2,6 +2,8 @@ import SwiftUI
 import Combine
 
 struct Register1View: View {
+    // 👇 부모 뷰(StartView)와 상태를 공유하기 위한 바인딩 변수
+    @Binding var isLoggedIn: Bool
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
@@ -81,6 +83,6 @@ struct Register1View: View {
             )
             .ignoresSafeArea()
         )
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

@@ -20,7 +20,7 @@ struct PermissionRow: View {
                 .padding(.vertical, 12)
                 .background(
                     (actionTitle == "설정에서 허용")
-                    ? Color.orange.opacity(0.15) // 설정 유도 시 색상 살짝 구분
+                    ? Color.orange.opacity(0.2) // 설정 유도 시 색상 살짝 구분
                     : Color.blue.opacity(0.1)
                 )
                 .cornerRadius(12)

@@ -12,26 +12,36 @@ struct Register4_3View: View {
                     .font(.system(size: 22, weight: .bold))
                 Text("유효기간 전 리마인드를 전송합니다.")
                     .foregroundStyle(.secondary)
+
                 PermissionRow(
                     title: "알림 권한",
                     desc: "만료 전, 위치·시간에 맞춰 알림을 전송합니다.",
-                    actionTitle: noti.granted ? "허용됨" : "허용"
+                    actionTitle: noti.actionTitle
                 ) {
-                    noti.request()
+                    switch noti.status {
+                    case .notDetermined: noti.request()
+                    case .denied:        noti.openSettings()
+                    case .authorized:    break
+                    }
                 }
+
+                // ✅ 숨김 NavigationLink 제거
+
                 Button("모두 완료") { goMain = true }
-                    .padding()
-                    .background(Color.blue.opacity(0.8))
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(noti.isAuthorized ? Color.blue.opacity(0.8) : Color.gray.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(12)
-                    .disabled(!noti.granted)
-                    .navigationDestination(isPresented: $goMain) {
-                        RegisterMainView()
-                    }
+                    .disabled(!noti.isAuthorized)
+                    .padding(.bottom, 40)
             }
             .padding()
-            .padding(.bottom, 40)
             Spacer()
+        }
+        .onAppear { noti.refresh() }
+        // ✅ iOS 17+ 신 API: isPresented로 목적지 푸시
+        .navigationDestination(isPresented: $goMain) {
+            RegisterMainView()
         }
     }
 }
