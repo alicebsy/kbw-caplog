@@ -21,6 +21,13 @@ enum AuthAPI {
 
     /// 회원가입 (성공만 확인)
     static func register(name: String, email: String, userId: String, password: String) async throws {
+        // ✨ isMock이 true일 때 실제 네트워크 통신을 건너뛰는 코드를 추가합니다.
+        if BackendEnv.isMock {
+            print("--- Mock: Register Succeeded ---")
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기 (로딩 인디케이터 확인용)
+            return
+        }
+        
         let body: [String: String] = [
             "name": name, "email": email, "userId": userId, "password": password
         ]
@@ -45,6 +52,13 @@ enum AuthAPI {
 
     /// 로그인: 액세스 토큰 문자열 반환 (서버가 accessToken 또는 jwt 중 하나로 줄 수 있음)
     static func login(email: String, password: String) async throws -> String {
+        // ✨ isMock이 true일 때 가짜 토큰을 즉시 반환하는 코드를 추가합니다.
+        if BackendEnv.isMock {
+            print("--- Mock: Login Succeeded ---")
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기
+            return "mock_jwt_token_for_test" // 가짜 토큰 반환
+        }
+
         let body = ["email": email, "password": password]
 
         var url = baseURL

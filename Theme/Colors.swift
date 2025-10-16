@@ -44,7 +44,7 @@ extension Color {
 
     static let homeGreenDark       = Color(hex: "#144749")
     static let homeGreen           = Color(hex: "#A4CFCA")
-    static let homeGreenLight      = Color(hex: "#C1E3E0")
+    static let homeGreenLight      = Color(hex: "#C1E4E0")
     static let homeGrayDeep        = Color(hex: "#2B2B2B")
     static let homeGrayText        = Color(hex: "#444444")
     static let homeGraySub         = Color(hex: "#666666")

@@ -3,201 +3,164 @@ import SwiftUI
 // MARK: - Entry (탭에서 이걸 불러오면 됨)
 struct FolderView: View {
     @StateObject private var manager = FolderManager()
+    
+    // 탭 선택 및 화면 전환을 위한 상태 변수
+    @State private var selectedTab: CaplogTab = .folder
+    @State private var goHome = false
+    @State private var goSearch = false
+    @State private var goShare  = false
+    @State private var goMyPage = false
+
     var body: some View {
         NavigationStack {
             FolderCategoryListView()
                 .environmentObject(manager)
                 .navigationTitle("Folder")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+                .toolbarBackground(Color.white, for: .navigationBar)
+
+                .safeAreaInset(edge: .bottom) {
+                    CaplogTabBar(selected: selectedTab) { tab in
+                        selectedTab = tab
+                        switch tab {
+                        case .home:   goHome = true
+                        case .search: goSearch = true
+                        case .share:  goShare = true
+                        case .myPage: goMyPage = true
+                        case .folder: break
+                        }
+                    }
+                }
+
+                .navigationDestination(isPresented: $goHome)   { HomeView() }
+                .navigationDestination(isPresented: $goSearch) { SearchView() }
+                .navigationDestination(isPresented: $goShare)  { ShareView() }
+                .navigationDestination(isPresented: $goMyPage) { MyPageView() }
         }
     }
 }
 
-// MARK: - 1) 대분류 리스트 (첫 화면)
+// MARK: - 1) 대분류 + 소분류 리스트 (피그마 디자인 최종본)
 struct FolderCategoryListView: View {
     @EnvironmentObject private var manager: FolderManager
+    @State private var selectedCategory: FolderCategory = .info
+
+    private var groupedSubcategories: [String: [FolderSubcategory]] {
+        Dictionary(grouping: selectedCategory.subcategories, by: { $0.displayGroup })
+    }
+    
+    private var orderedGroupKeys: [String] {
+        var keys: [String] = []
+        for subcategory in selectedCategory.subcategories {
+            if !keys.contains(subcategory.displayGroup) {
+                keys.append(subcategory.displayGroup)
+            }
+        }
+        return keys
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Category")
-                    .font(.system(size: 22, weight: .bold))
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-
-                VStack(spacing: 12) {
+        HStack(spacing: 0) {
+            
+            // --- 왼쪽: 대분류 리스트 ---
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 22) {
                     ForEach(FolderCategory.allCases) { category in
-                        NavigationLink {
-                            FolderSubcategoryListView(category: category)
-                                .environmentObject(manager)
-                        } label: {
-                            HStack(spacing: 14) {
-                                // 이모지/색 포인트
-                                Text(category.emoji)
-                                    .font(.system(size: 18))
+                        Button(action: {
+                            selectedCategory = category
+                        }) {
+                            HStack(spacing: 8) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(selectedCategory == category ? category.color : Color.clear)
+                                    .frame(width: 4, height: 24)
 
-                                Text(category.rawValue)
-                                    .font(.system(size: 18, weight: .semibold))
+                                Text("\(category.emoji) \(category.rawValue)")
+                                    .font(.system(size: 17, weight: .bold)) // Bold 제거
+                                    .foregroundColor(
+                                        selectedCategory == category
+                                        ? .homeGreenDark   // 선택 시 지정 색상
+                                        : .black           // 기본은 검정
+                                    )
+                                    .lineLimit(1)
+
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.plain) // 파란 틴트 방지
+                        .padding(.leading, 20)
+                    }
+                }
+                .padding(.top, 16)
+            }
+            .frame(width: UIScreen.main.bounds.width / 2)
+            .background(Color.white)
+
+            // --- 오른쪽: 소분류 리스트 ---
+            List {
+                ForEach(orderedGroupKeys, id: \.self) { key in
+                    Section {
+                        ForEach(groupedSubcategories[key] ?? []) { sub in
+                            NavigationLink {
+                                FolderItemListView(category: selectedCategory, subcategory: sub.name)
+                                    .environmentObject(manager)
+                            } label: {
+                                Text(sub.name)
+                                    .font(.system(size: 17, weight: .regular))
                                     .foregroundStyle(Color.primary)
-
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(.secondary)
                             }
-                            .padding(.horizontal, 16)
-                            .frame(height: 56)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
+                            .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
                         }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20)
+                    } header: {
+                        if !key.isEmpty {
+                            Text(key)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.gray)
+                                .padding(.leading, 20)
+                                .padding(.bottom, 4)
+                        }
                     }
+                    .listRowSeparator(.hidden)
                 }
-                .padding(.bottom, 24)
+                .listRowBackground(Color.clear)
             }
+            .listStyle(.plain)
+            .background(Color(red: 246/255, green: 248/255, blue: 246/255))
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
-// MARK: - 2) 소분류 리스트
-struct FolderSubcategoryListView: View {
-    @EnvironmentObject private var manager: FolderManager
-    let category: FolderCategory
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header
-
-                VStack(spacing: 12) {
-                    ForEach(category.subcategories) { sub in
-                        NavigationLink {
-                            FolderItemListView(category: category, subcategory: sub.name)
-                                .environmentObject(manager)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    if let group = sub.group, !group.isEmpty {
-                                        Text(group)
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Text(sub.name)
-                                        .font(.system(size: 17, weight: .regular))
-                                        .foregroundStyle(Color.primary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 16)
-                            .frame(height: 52)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20)
-                    }
-                }
-                .padding(.bottom, 24)
-            }
-        }
-        .navigationTitle(category.rawValue)
-        .navigationBarTitleDisplayMode(.inline)
-        // ✅ ToolbarItem을 개별로 사용 + Button(action:) 구문으로 변경
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 정렬/필터 액션 자리 */ }) {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 공유 시트 자리 */ }) {
-                    Image(systemName: "square.and.arrow.up")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 소분류 추가 액션 자리 */ }) {
-                    Image(systemName: "plus.circle")
-                }
-            }
-        }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Category")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
-            Text(category.rawValue)
-                .font(.system(size: 26, weight: .bold))
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-    }
-}
-
-// MARK: - 3) 아이템 리스트 (선택된 카테고리/소분류)
+// MARK: - FolderItemListView 및 FolderItemRow (수정 없음)
 struct FolderItemListView: View {
     @EnvironmentObject private var manager: FolderManager
     let category: FolderCategory
     let subcategory: String
-
     private var filtered: [FolderItem] {
         manager.items.filter { $0.category == category && $0.subcategory == subcategory }
     }
-
     var body: some View {
         List {
-            Section {
-                if filtered.isEmpty {
-                    emptyState
-                } else {
-                    ForEach(filtered) { item in
-                        FolderItemRow(item: item)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .background(Color.clear)
-                    }
+            if filtered.isEmpty { emptyState }
+            else {
+                ForEach(filtered) { item in
+                    FolderItemRow(item: item)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .background(Color.clear)
                 }
-            } header: {
-                Text("\(category.rawValue) - \(subcategory)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
             }
         }
         .listStyle(.plain)
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
-        // ✅ 여기서도 같은 방식으로 고정
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 정렬/필터 자리 */ }) {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 공유 시트 */ }) {
-                    Image(systemName: "square.and.arrow.up")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { /* 아이템 추가 */ }) {
-                    Image(systemName: "plus.circle")
-                }
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: { /* 정렬/필터 자리 */ }) { Image(systemName: "line.3.horizontal.decrease.circle") }
+                Button(action: { /* 공유 시트 */ }) { Image(systemName: "square.and.arrow.up") }
+                Button(action: { /* 아이템 추가 */ }) { Image(systemName: "plus.circle") }
             }
         }
     }
-
     private var emptyState: some View {
         VStack(alignment: .center, spacing: 8) {
             Image(systemName: "tray")
@@ -212,29 +175,23 @@ struct FolderItemListView: View {
     }
 }
 
-// MARK: - 아이템 카드 (필요 시 카테고리별로 fields 표시 커스터마이즈 가능)
 private struct FolderItemRow: View {
     let item: FolderItem
-
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("\(item.category.rawValue) - \(item.subcategory)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
-
                 Text(item.title)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.primary)
-
                 if !item.summary.isEmpty {
                     Text(item.summary)
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-
-                // fields 요약 (상위 2~3개만)
                 if !item.fields.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(Array(item.fields.keys.prefix(3)), id: \.self) { key in
@@ -247,7 +204,6 @@ private struct FolderItemRow: View {
                         }
                     }
                 }
-
                 if !item.date.isEmpty {
                     Text(item.date)
                         .font(.system(size: 13))
@@ -255,7 +211,6 @@ private struct FolderItemRow: View {
                 }
             }
             Spacer(minLength: 10)
-
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(.tertiarySystemFill))
                 .frame(width: 64, height: 64)
@@ -263,9 +218,7 @@ private struct FolderItemRow: View {
                     Group {
                         if let name = item.imageName, !name.isEmpty {
                             Image(name)
-                                .resizable()
-                                .scaledToFill()
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .resizable().scaledToFill().clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                     }
                 )

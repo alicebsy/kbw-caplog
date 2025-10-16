@@ -5,21 +5,34 @@ struct MyPageProfileHeader: View {
     let email: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) { // ← 간격 줄이기 (기존: 10)
-            // ✅ displayName이 비어있지 않으면 'OO 님'으로 출력
-            if !displayName.isEmpty {
-                Text("\(displayName) 님")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.top, 8)
-            }
+        HStack(alignment: .center, spacing: 16) {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .foregroundStyle(Color.caplogGrayMedium, Color.caplogGrayLight)
 
-            Text(email)
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
+            VStack(alignment: .leading, spacing: 6) {
+                if !displayName.isEmpty {
+                    Text("\(displayName) 님")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.black)
+                } else {
+                    Text("강배우 님")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.black)
+                }
+                
+                Text(email)
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+            }
+            // --- ⬇️ 추가된 수정사항 ⬇️ ---
+            // 텍스트 그룹 전체를 y축으로 2만큼 살짝 내려서 시각적 중심을 맞춥니다.
+            .offset(y: 5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
-        .padding(.bottom, 6) // ← 하단 패딩도 약간 줄여줌
+        .padding(.vertical, 10)
     }
 }

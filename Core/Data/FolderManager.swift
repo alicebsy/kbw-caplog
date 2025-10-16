@@ -15,7 +15,7 @@ final class FolderManager: ObservableObject {
                 "유효기간": "-"
             ],
             date: "2025.09.28",
-            imageName: nil
+            imageName: "이목리막국수"
         ),
         FolderItem(
             category: .info,
@@ -29,7 +29,7 @@ final class FolderManager: ObservableObject {
                 "유효기간": "-"
             ],
             date: "2025.10.10",
-            imageName: nil
+            imageName: "낭만식탁"
         ),
         FolderItem(
             category: .contents,
@@ -38,7 +38,7 @@ final class FolderManager: ObservableObject {
             summary: "‘너무 늦은 시도란 없다.’",
             fields: ["topic": "동기부여", "tone": "긍정적"],
             date: "2025.09.05",
-            imageName: nil
+            imageName: "글귀"
         )
     ]
 }

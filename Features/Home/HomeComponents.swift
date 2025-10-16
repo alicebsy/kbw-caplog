@@ -146,7 +146,7 @@ struct HomeHeader: View {
                 Text("Hello, \(userName)")
                     .font(.system(size: 22, weight: .bold))
                 Text("Today’s Summary")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Color.brandTextSub)
             }
             Spacer()
