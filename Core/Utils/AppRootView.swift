@@ -24,12 +24,12 @@ struct AppRootView: View {
                     .tag(CaplogTab.folder)
                     .tabItem { Label("Folder", systemImage: "folder.fill") }
 
-                // 검색
-                SearchView { tab in selectedTab = tab }
+                // 검색  ✅ 트레일링 클로저 제거
+                SearchView()
                     .tag(CaplogTab.search)
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
 
-                // 공유
+                // 공유 (ShareView는 onSelectTab을 받도록 설계된 상태라 유지 가능)
                 ShareView { tab in selectedTab = tab }
                     .tag(CaplogTab.share)
                     .tabItem { Label("Share", systemImage: "square.and.arrow.up") }
@@ -65,6 +65,7 @@ private struct CustomBackButton: View {
         .buttonStyle(.plain)
     }
 }
+
 extension View {
     func customBackButton() -> some View {
         self

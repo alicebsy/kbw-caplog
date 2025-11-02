@@ -1,66 +1,79 @@
 import SwiftUI
+import Combine
 
-final class ShareChatRoomVM: ObservableObject {
-    @Published var messages: [Message] = []
-    @Published var text: String = ""
-    private let api = ShareAPI()
-    let chat: ChatSummary
+struct ChatRoomView: View {
+    @ObservedObject var vm: ShareViewModel
+    let thread: ChatThread
+    @State private var inputText = ""
+    private let meId = "me"
 
-    init(chat: ChatSummary) { self.chat = chat }
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        ForEach(vm.messagesByThread[thread.id] ?? []) { msg in
+                            MessageRow(
+                                meId: meId,
+                                message: msg,
+                                timeText: vm.timeString(for: msg.createdAt)
+                            )
+                            .id(msg.id)
+                        }
+                    }
+                    .padding(.top, 12)
+                }
+                .onChange(of: vm.messagesByThread[thread.id]?.last?.id) { _, lastId in
+                    if let lastId { withAnimation { proxy.scrollTo(lastId, anchor: .bottom) } }
+                }
+            }
 
-    @MainActor func load() async {
-        do { messages = try await api.fetchMessages(chatId: chat.id) }
-        catch {
-            messages = [
-                Message(id: "1", chatId: chat.id, senderId: "1", senderName: "엄마", text: "송금했어", createdAt: .now),
-                Message(id: "2", chatId: chat.id, senderId: "me", senderName: "나", text: "고마워요 💛", createdAt: .now)
-            ]
+            // 입력 바
+            HStack(spacing: 8) {
+                TextField("메시지 입력", text: $inputText)
+                    .textFieldStyle(.roundedBorder)
+                    .submitLabel(.send)
+                    .onSubmit { send() }
+
+                Button("보내기") { send() }
+                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
         }
+        .navigationTitle(thread.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await vm.openThread(thread.id) } // 🔹 읽음 처리 + 메시지 로드
     }
 
-    @MainActor func send() async {
+    private func send() {
+        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        messages.append(Message(id: UUID().uuidString, chatId: chat.id, senderId: "me", senderName: "나", text: text, createdAt: .now))
-        text = ""
+        Task {
+            await vm.send(to: thread.id, text: text)
+            inputText = ""
+        }
     }
 }
 
-struct ShareChatRoomView: View {
-    @StateObject private var vm: ShareChatRoomVM
-    init(chat: ChatSummary) {
-        _vm = StateObject(wrappedValue: ShareChatRoomVM(chat: chat))
-    }
+// 🔹 말풍선 + 시간 컴포넌트
+struct MessageRow: View {
+    let meId: String
+    let message: ChatMessage
+    let timeText: String
+    var isMine: Bool { message.senderId == meId }
 
     var body: some View {
-        VStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    ForEach(vm.messages) { msg in
-                        HStack {
-                            if msg.senderId == "me" { Spacer() }
-                            Text(msg.text)
-                                .padding()
-                                .background(msg.senderId == "me" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                                .cornerRadius(10)
-                            if msg.senderId != "me" { Spacer() }
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 2)
-                    }
-                }
-            }
-
-            HStack {
-                TextField("메시지 입력", text: $vm.text)
-                    .textFieldStyle(.roundedBorder)
-                Button("보내기") {
-                    Task { await vm.send() }
-                }
-            }
-            .padding()
+        HStack(alignment: .bottom, spacing: 8) {
+            if isMine { Spacer(minLength: 32) }
+            Text(message.text)
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(isMine ? Color.blue.opacity(0.2) : Color.gray.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            Text(timeText).font(.caption2).foregroundStyle(.secondary).padding(.bottom, 2).fixedSize()
+            if !isMine { Spacer(minLength: 32) }
         }
-        .navigationTitle(vm.chat.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await vm.load() }
+        .frame(maxWidth: .infinity, alignment: isMine ? .trailing : .leading)
+        .padding(.horizontal, 16).padding(.vertical, 2)
     }
 }

@@ -44,32 +44,33 @@ struct Register1View: View {
                 .padding(.horizontal, 40)
             
             // ✅ 임시 버튼 추가 (기존 코드 영향 X)
-//            VStack(spacing: 12) {
-//                NavigationLink(destination: Register4_1View()) {
-//                    Text("임시 레지스터4-1")
-//                        .font(.system(size: 14, weight: .medium))
-//                        .foregroundColor(.white)
-//                        .frame(width: 200, height: 40)
-//                        .background(Color.yellow)
-//                        .cornerRadius(10)
-//                }
-//                NavigationLink(destination: HomeView()) {
-//                    Text("임시 홈")
-//                        .font(.system(size: 14, weight: .medium))
-//                        .foregroundColor(.white)
-//                        .frame(width: 200, height: 40)
-//                        .background(Color.blue)
-//                        .cornerRadius(10)
-//                }
-//                NavigationLink(destination: MyPageView()) {
-//                    Text("임시 마이페이지")
-//                        .font(.system(size: 14, weight: .medium))
-//                        .foregroundColor(.white)
-//                        .frame(width: 200, height: 40)
-//                        .background(Color.purple)
-//                        .cornerRadius(10)
-//                }
-//            }
+            VStack(spacing: 12) {
+                NavigationLink(destination: Register4_1View()) {
+                    Text("임시 레지스터4-1")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.yellow)
+                        .cornerRadius(10)
+                }
+                NavigationLink(destination: HomeView()) {
+                    Text("임시 홈")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                NavigationLink(destination: MyPageView()) {
+                    Text("임시 마이페이지")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 40)
+                        .background(Color.purple)
+                        .cornerRadius(10)
+                }
+            }
+
             .padding(.top, 10)
             
             Spacer()

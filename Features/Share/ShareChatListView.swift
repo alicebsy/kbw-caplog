@@ -1,41 +1,42 @@
 import SwiftUI
+import Combine
 
-final class ShareChatListVM: ObservableObject {
-    @Published var chats: [ChatSummary] = []
-    private let api = ShareAPI()
-
-    @MainActor func load() async {
-        do { chats = try await api.fetchChats() }
-        catch {
-            chats = [
-                ChatSummary(id: "c1", title: "엄마", lastMessage: "송금 완료", updatedAt: .now, unreadCount: 2, avatarURL: nil),
-                ChatSummary(id: "c2", title: "캡스톤 팀", lastMessage: "발표 준비 중", updatedAt: .now, unreadCount: 0, avatarURL: nil)
-            ]
-        }
-    }
-}
-
+/// 채팅 목록 화면 (상단의 “채팅” 탭 컨텐츠)
+@MainActor
 struct ShareChatListView: View {
-    @StateObject private var vm = ShareChatListVM()
+    @ObservedObject var vm: ShareViewModel   // 🔹 주입받기
 
     var body: some View {
-        List(vm.chats) { chat in
-            NavigationLink {
-                ShareChatRoomView(chat: chat)
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(chat.title).font(.headline)
-                        Spacer()
-                        Text(chat.updatedAt, style: .time).font(.caption).foregroundStyle(.secondary)
+        List {
+            ForEach(vm.threads) { t in
+                NavigationLink {
+                    // 🔹 같은 vm 전달 → openThread에서 읽음 0 반영됨
+                    ChatRoomView(vm: vm, thread: t)
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle().frame(width: 40, height: 40)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(t.title).font(.system(size: 16, weight: .semibold))
+                                Spacer()
+                                Text(vm.timeString(for: t.lastMessageAt))     // 우측 작은 시간
+                                    .font(.footnote).foregroundStyle(.secondary)
+                            }
+                            Text(t.lastMessageText ?? "메시지가 없습니다")
+                                .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        if t.unreadCount > 0 {
+                            Text("\(t.unreadCount)")
+                                .font(.footnote)
+                                .padding(6)
+                                .background(Capsule().fill(Color.blue.opacity(0.15)))
+                        }
                     }
-                    Text(chat.lastMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    .padding(.vertical, 6)
                 }
-                .padding(.vertical, 4)
             }
         }
-        .task { await vm.load() }
+        .listStyle(.plain)
+        .refreshable { await vm.loadAll() }
     }
 }

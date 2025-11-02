@@ -11,6 +11,7 @@ struct SearchItem: Identifiable, Decodable, Hashable {
     let id: String
     let title: String
     let snippet: String
+    let description: String?
     let thumbnailURL: URL?
     let createdAt: Date
     let category: MajorCategory?

@@ -20,7 +20,7 @@ enum CaplogTab: String, CaseIterable, Identifiable {
         case .folder: return "폴더"
         case .home:   return "홈"
         case .share:  return "공유"
-        case .myPage: return "마이"
+        case .myPage: return "마이페이지"
         }
     }
 }
@@ -59,6 +59,6 @@ struct CaplogTabBar: View {
         }
         .frame(height: 64)
         .padding(.horizontal, 22)
-        .padding(.bottom, 2)   // 바닥에 더 붙게
+        .padding(.bottom, 2)
     }
 }

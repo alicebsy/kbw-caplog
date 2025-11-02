@@ -21,10 +21,9 @@ enum AuthAPI {
 
     /// 회원가입 (성공만 확인)
     static func register(name: String, email: String, userId: String, password: String) async throws {
-        // ✨ isMock이 true일 때 실제 네트워크 통신을 건너뛰는 코드를 추가합니다.
         if BackendEnv.isMock {
             print("--- Mock: Register Succeeded ---")
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기 (로딩 인디케이터 확인용)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
             return
         }
         
@@ -33,8 +32,8 @@ enum AuthAPI {
         ]
 
         var url = baseURL
-        url.append(path: APIConfig.apiPrefix)      // "/api"
-        url.append(path: "auth/signup")            // "/api/auth/signup"
+        url.append(path: APIConfig.apiPrefix)
+        url.append(path: "auth/signup")
 
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -50,20 +49,19 @@ enum AuthAPI {
         }
     }
 
-    /// 로그인: 액세스 토큰 문자열 반환 (서버가 accessToken 또는 jwt 중 하나로 줄 수 있음)
+    /// 로그인: 액세스 토큰 문자열 반환
     static func login(email: String, password: String) async throws -> String {
-        // ✨ isMock이 true일 때 가짜 토큰을 즉시 반환하는 코드를 추가합니다.
         if BackendEnv.isMock {
             print("--- Mock: Login Succeeded ---")
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기
-            return "mock_jwt_token_for_test" // 가짜 토큰 반환
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            return "mock_jwt_token_for_test"
         }
 
         let body = ["email": email, "password": password]
 
         var url = baseURL
-        url.append(path: APIConfig.apiPrefix)      // "/api"
-        url.append(path: "auth/login")             // "/api/auth/login"
+        url.append(path: APIConfig.apiPrefix)
+        url.append(path: "auth/login")
 
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
@@ -78,7 +76,6 @@ enum AuthAPI {
                           userInfo: [NSLocalizedDescriptionKey: "Login failed (\(code))"])
         }
 
-        // {"accessToken":"..." , "refreshToken":"..."} or {"jwt":"..."}
         if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             if let token = obj["accessToken"] as? String { return token }
             if let token = obj["jwt"] as? String { return token }
@@ -87,24 +84,26 @@ enum AuthAPI {
                       userInfo: [NSLocalizedDescriptionKey: "Token not found in response"])
     }
 
-    // (선택) 소셜 교환 엔드포인트 — 동일하게 /api 프리픽스 포함
+    // 소셜 로그인
     static func exchangeApple(idToken: String) async throws -> String {
         struct Req: Encodable { let idToken: String }
         let res: LoginResponse = try await postJSON(path: "auth/apple", body: Req(idToken: idToken))
         return res.accessToken
     }
+    
     static func exchangeGoogle(idToken: String) async throws -> String {
         struct Req: Encodable { let idToken: String }
         let res: LoginResponse = try await postJSON(path: "auth/google", body: Req(idToken: idToken))
         return res.accessToken
     }
+    
     static func exchangeKakao(accessToken: String) async throws -> String {
         struct Req: Encodable { let accessToken: String }
         let res: LoginResponse = try await postJSON(path: "auth/kakao", body: Req(accessToken: accessToken))
         return res.accessToken
     }
 
-    // MARK: - Low-level helpers (항상 /api 프리픽스를 붙여서 호출)
+    // MARK: - Helpers
 
     private static func postString(path: String, body: some Encodable) async throws -> String {
         var url = baseURL

@@ -17,7 +17,11 @@ struct FolderView: View {
                 .environmentObject(manager)
                 .navigationTitle("Folder")
                 .navigationBarTitleDisplayMode(.inline)
+
+                // ✅ 네비게이션 바를 '불투명한 흰색'으로 고정
+                .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarBackground(Color.white, for: .navigationBar)
+                .toolbarColorScheme(.light, for: .navigationBar)
 
                 .safeAreaInset(edge: .bottom) {
                     CaplogTabBar(selected: selectedTab) { tab in
@@ -61,7 +65,6 @@ struct FolderCategoryListView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            
             // --- 왼쪽: 대분류 리스트 ---
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 22) {
@@ -75,11 +78,11 @@ struct FolderCategoryListView: View {
                                     .frame(width: 4, height: 24)
 
                                 Text("\(category.emoji) \(category.rawValue)")
-                                    .font(.system(size: 17, weight: .bold)) // Bold 제거
+                                    .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(
                                         selectedCategory == category
-                                        ? .homeGreenDark   // 선택 시 지정 색상
-                                        : .black           // 기본은 검정
+                                        ? .homeGreenDark
+                                        : .black
                                     )
                                     .lineLimit(1)
 
@@ -93,7 +96,7 @@ struct FolderCategoryListView: View {
                 .padding(.top, 16)
             }
             .frame(width: UIScreen.main.bounds.width / 2)
-            .background(Color.white)
+            .background(Color.white) // 왼쪽은 항상 흰색
 
             // --- 오른쪽: 소분류 리스트 ---
             List {
@@ -124,6 +127,7 @@ struct FolderCategoryListView: View {
                 .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
+            // ✅ 오른쪽 회색은 타이틀 아래부터 보이도록 (상단 바가 불투명 흰색이므로 자연스레 밑에서 시작됨)
             .background(Color(red: 246/255, green: 248/255, blue: 246/255))
         }
         .ignoresSafeArea(edges: .bottom)
