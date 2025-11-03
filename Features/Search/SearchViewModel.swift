@@ -5,7 +5,7 @@ import Combine
 final class SearchViewModel: ObservableObject {
     // Input / Output
     @Published var query: String = ""
-    @Published var results: [SearchResultItem] = []
+    @Published var results: [FolderItem] = []  // ✅ SearchResultItem → FolderItem
     @Published var isLoading: Bool = false
     @Published var hasSearched: Bool = false
     @Published var recentQueries: [String] = []
@@ -69,25 +69,50 @@ final class SearchViewModel: ObservableObject {
     }
 }
 
-// MARK: - Model
-struct SearchResultItem: Identifiable, Equatable {
-    let id = UUID()
-    let title: String
-    let snippet: String
-    let createdAt: Date
-}
-
 // MARK: - Service Protocol
 protocol SearchServiceType {
-    func search(query: String) -> AnyPublisher<[SearchResultItem], Error>
+    func search(query: String) -> AnyPublisher<[FolderItem], Error>  // ✅ FolderItem 반환
 }
 
 // 🔧 백엔드 붙기 전까지는 더미 서비스 사용
 struct SearchServiceMock: SearchServiceType {
-    func search(query: String) -> AnyPublisher<[SearchResultItem], Error> {
-        // 지금은 빈 결과만 반환 (네트워크 연동 전)
-        return Just<[SearchResultItem]>([])
+    func search(query: String) -> AnyPublisher<[FolderItem], Error> {
+        // 테스트용 더미 데이터 (실제로는 백엔드에서 받아옴)
+        let dummyResults: [FolderItem] = [
+            FolderItem(
+                category: .info,
+                subcategory: "맛집",
+                title: "이목리 막국수",
+                summary: "동치미막국수, 명태회막국수",
+                fields: [
+                    "장소명": "이목리 막국수",
+                    "주소": "강원 속초시 이목로 104-43",
+                    "대표메뉴": "동치미막국수"
+                ],
+                date: "2025.09.28",
+                imageName: "이목리막국수"
+            ),
+            FolderItem(
+                category: .contents,
+                subcategory: "글",
+                title: "마음에 남는 문장",
+                summary: "'너무 늦은 시도란 없다.'",
+                fields: ["topic": "동기부여"],
+                date: "2025.09.05",
+                imageName: "글귀"
+            )
+        ]
+        
+        // 검색어에 따라 필터링 (더미)
+        let filtered = dummyResults.filter { item in
+            item.title.localizedCaseInsensitiveContains(query) ||
+            item.summary.localizedCaseInsensitiveContains(query) ||
+            item.subcategory.localizedCaseInsensitiveContains(query)
+        }
+        
+        return Just(filtered)
             .setFailureType(to: Error.self)
+            .delay(for: .milliseconds(500), scheduler: DispatchQueue.main)  // 네트워크 지연 시뮬레이션
             .eraseToAnyPublisher()
     }
 }

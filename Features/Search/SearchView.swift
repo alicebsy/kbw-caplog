@@ -12,19 +12,18 @@ struct SearchView: View {
         VStack(spacing: 0) {
 
             // ===== 상단 행: 로고 + 검색창 + 돋보기(같은 높이) =====
-            HStack(spacing: 10) {
+            HStack(spacing: 2) {
 
                 // Ⓛ Caplog 로고: 포커스 시 숨기고, 해제 시 다시 표시
-                Image("caplog_logo")
+                Image("caplog_letter")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: showLogo ? 76 : 0, height: 22)   // 숨김 시 폭 0으로 접기
+                    .frame(width: showLogo ? 76 : 0, height: 22)
                     .opacity(showLogo ? 1 : 0)
                     .animation(.easeInOut(duration: 0.18), value: showLogo)
 
                 // ⓒ 검색창
-                HStack(spacing: 8) {
-                    // 왼쪽 아이콘(필요 없다고 했으므로 없음)
+                HStack(spacing: 5) {
                     TextField("검색어를 입력해주세요.", text: $vm.query)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
@@ -56,7 +55,7 @@ struct SearchView: View {
                         )
                 )
 
-                // Ⓡ 돋보기 버튼: 반드시 이 버튼(또는 키보드 Search)으로만 검색 실행
+                // Ⓡ 돋보기 버튼
                 Button {
                     isFocused = false
                     vm.resetAndSearch()
@@ -69,14 +68,14 @@ struct SearchView: View {
                 }
                 .accessibilityLabel("검색")
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 8)
             .padding(.top, 10)
             .animation(.easeInOut(duration: 0.18), value: isFocused)
 
             // ===== 콘텐츠 =====
             Group {
                 if !vm.hasSearched {
-                    // 1) 검색 전: 최근 검색만 표시 (로고는 위 행에 있으므로 여기선 없음)
+                    // 1) 검색 전: 최근 검색만 표시
                     RecentSearchList(
                         items: vm.recentQueries,
                         tap: { term in
@@ -100,28 +99,19 @@ struct SearchView: View {
                     } else {
                         List {
                             ForEach(vm.results) { item in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(item.title)
-                                        .font(.system(size: 17, weight: .semibold))
-                                    if !item.snippet.isEmpty {
-                                        Text(item.snippet)
-                                            .font(.system(size: 14))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(2)
+                                SearchResultItemRow(item: item)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                                    .onAppear {
+                                        if item.id == vm.results.last?.id {
+                                            vm.loadMoreIfPossible()
+                                        }
                                     }
-                                    Text(item.createdAt, style: .date)
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .padding(.vertical, 6)
-                                .onAppear {
-                                    if item.id == vm.results.last?.id {
-                                        vm.loadMoreIfPossible()
-                                    }
-                                }
                             }
                             if vm.isLoading {
                                 HStack { Spacer(); ProgressView(); Spacer() }
+                                    .listRowBackground(Color.clear)
                             }
                         }
                         .listStyle(.plain)
@@ -132,15 +122,14 @@ struct SearchView: View {
         }
         .background(Color.white)
         .navigationBarTitleDisplayMode(.inline)
-        // 네비게이션 바에는 아무 아이콘도 추가하지 않음(중복/위치 어긋남 방지)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.white, for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
-        .navigationBarBackButtonHidden(false)   // 시스템 < 한 개만
+        .navigationBarBackButtonHidden(false)
     }
 }
 
-// MARK: - Recent Search List (기존 그대로)
+// MARK: - Recent Search List
 private struct RecentSearchList: View {
     let items: [String]
     let tap: (String) -> Void
@@ -162,15 +151,18 @@ private struct RecentSearchList: View {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 14))
                                 .foregroundStyle(.secondary)
-                            Text(term).foregroundStyle(.primary)
+                            Text(term)
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .buttonStyle(.plain)
                     Spacer()
                     Button(action: { remove(term) }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
@@ -181,5 +173,59 @@ private struct RecentSearchList: View {
                 )
             }
         }
+    }
+}
+
+// MARK: - Search Result Item Row (Folder 스타일과 동일)
+private struct SearchResultItemRow: View {
+    let item: FolderItem
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("\(item.category.rawValue) - \(item.subcategory)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Text(item.title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.primary)
+                if !item.summary.isEmpty {
+                    Text(item.summary)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                if !item.locationText.isEmpty {
+                    Text(item.locationText)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                if !item.date.isEmpty {
+                    Text(item.date)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 10)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(.tertiarySystemFill))
+                .frame(width: 80, height: 80)
+                .overlay(
+                    Group {
+                        if let name = item.imageName, !name.isEmpty {
+                            Image(name)
+                                .resizable()
+                                .scaledToFill()
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                )
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
     }
 }

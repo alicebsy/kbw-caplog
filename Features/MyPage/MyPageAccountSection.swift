@@ -11,8 +11,12 @@ struct MyPageAccountSection: View {
         VStack(alignment: .leading, spacing: 12) {
             MyPageSectionHeader(title: "가입정보")
 
-            // ✅ 닉네임 입력란에 placeholder 추가
-            LabeledRow(label: "이름") {
+            // ✅ 이름 + 저장 버튼
+            HStack(spacing: 12) {
+                Text("이름")
+                    .font(.system(size: 15, weight: .semibold))
+                    .frame(width: 90, alignment: .leading)
+                
                 TextField(
                     "", text: $name,
                     prompt: Text("강배우").foregroundColor(.gray)
@@ -20,6 +24,8 @@ struct MyPageAccountSection: View {
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                
+                CapsuleButton(title: "저장", action: onSave)
             }
 
             LabeledRow(label: "이메일") {

@@ -22,10 +22,6 @@ struct MyPageProfileHeader: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.black)
                 }
-                
-                Text(email)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
             }
             // --- ⬇️ 추가된 수정사항 ⬇️ ---
             // 텍스트 그룹 전체를 y축으로 2만큼 살짝 내려서 시각적 중심을 맞춥니다.

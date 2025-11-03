@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import CoreLocation
 
 @MainActor
 final class MyPageViewModel: ObservableObject {
@@ -29,6 +30,22 @@ final class MyPageViewModel: ObservableObject {
 
     private let userService = UserService()
     private let screenshotService = ScreenshotService()
+    
+    // 권한 매니저
+    private let locationPermission = LocationPermission()
+    private let notificationPermission = NotificationPermission()
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        // 권한 상태 모니터링
+        locationPermission.$status
+            .map { $0 == .authorizedWhenInUse || $0 == .authorizedAlways }
+            .assign(to: &$allowLocationRecommend)
+        
+        notificationPermission.$status
+            .map { $0 == .authorized }
+            .assign(to: &$allowNotification)
+    }
 
     var displayName: String {
         name
@@ -81,7 +98,11 @@ final class MyPageViewModel: ObservableObject {
             if let g = me.gender { gender = (g == "M") ? .male : .female }
             birthday = me.birthday
         } catch {
-            errorMessage = error.localizedDescription
+            // Mock 데이터 사용 (API 연동 전)
+            name = "강배우"
+            email = "ewhakbw@gmail.com"
+            gender = .male
+            birthday = nil
         }
     }
 
@@ -109,6 +130,30 @@ final class MyPageViewModel: ObservableObject {
             AuthStorage.shared.clear()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+    
+    // MARK: - 권한 관리
+    
+    /// 위치 권한 토글 처리
+    func toggleLocationPermission(_ newValue: Bool) {
+        if newValue {
+            // 켜기: 권한 요청
+            locationPermission.request()
+        } else {
+            // 끄기: 설정 앱으로 이동
+            locationPermission.openSettings()
+        }
+    }
+    
+    /// 알림 권한 토글 처리
+    func toggleNotificationPermission(_ newValue: Bool) {
+        if newValue {
+            // 켜기: 권한 요청
+            notificationPermission.request()
+        } else {
+            // 끄기: 설정 앱으로 이동
+            notificationPermission.openSettings()
         }
     }
 

@@ -17,14 +17,13 @@ struct MyPageView: View {
             ScrollView(showsIndicators: false) {
                 content
             }
-            // ✨ 이 부분이 추가된 핵심 코드입니다.
-            // 화면이 나타날 때 ViewModel의 onAppear 함수를 호출하여 데이터를 불러옵니다.
+            // ✨ ViewModel의 onAppear로 데이터 초기 로드
             .onAppear {
                 vm.onAppear()
             }
             .modifier(MyPageModifier(vm: vm, showingError: $showingError))
 
-            // 하단 탭
+            // 하단 탭바
             .safeAreaInset(edge: .bottom) {
                 CaplogTabBar(selected: .myPage) { tab in
                     onSelectTab?(tab)
@@ -49,28 +48,39 @@ struct MyPageView: View {
     // MARK: - Content
     private var content: some View {
         VStack(spacing: 16) {
+            // 프로필 헤더
             MyPageProfileHeader(
                 displayName: vm.displayName,
                 email: vm.email
             )
+
+            // 가입정보 섹션
             MyPageAccountSection(
                 name: $vm.name,
                 email: vm.email,
-                onChangePassword: { /* TODO */ },
+                onChangePassword: { /* TODO: 비밀번호 변경 화면 연결 예정 */ },
                 onSave: { Task { await vm.saveProfile() } },
                 isSaveEnabled: vm.canSaveProfile
             )
+
+            // 사용정보 카드
             MyPageUsageCard(
                 savedCount: vm.savedCount,
                 recommendedCount: vm.recommendedCount
             )
+
+            // 프로필 섹션
             MyPageProfileSection(
                 gender: $vm.gender,
                 birthday: $vm.birthday
             )
+
+            // 설정 섹션 ✅ (에러 수정됨)
             MyPageSettingsSection(
                 allowLocationRecommend: $vm.allowLocationRecommend,
-                allowNotification: $vm.allowNotification
+                allowNotification: $vm.allowNotification,
+                onLocationToggle: vm.toggleLocationPermission,
+                onNotificationToggle: vm.toggleNotificationPermission
             )
         }
         .padding(.vertical, 8)

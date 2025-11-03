@@ -22,13 +22,17 @@ struct MyPageProfileSection: View {
             }
 
             // 생년월일 선택
-            LabeledRow(label: "생년월일") {
-                HStack(spacing: 10) {
-                    Text(birthday.map { DateFormatter.display.string(from: $0) } ?? "미설정")
-                        .font(profileFieldFont) // ✅ 글씨 크기 통일
-                    Spacer()
-                    CapsuleButton(title: "날짜 선택하기") { showPicker = true }
-                }
+            HStack(spacing: 12) {
+                Text("생년월일")
+                    .font(.system(size: 15, weight: .semibold))
+                    .frame(width: 90, alignment: .leading)
+                
+                Text(birthday.map { DateFormatter.display.string(from: $0) } ?? "미설정")
+                    .font(profileFieldFont)
+                
+                Spacer()
+                
+                CapsuleButton(title: "날짜 선택하기") { showPicker = true }
             }
         }
         .sectionContainer()
