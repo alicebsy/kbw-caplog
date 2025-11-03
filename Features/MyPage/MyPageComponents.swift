@@ -33,12 +33,16 @@ struct CapsuleButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14))
-                .padding(.horizontal, 14)
+                .lineLimit(1)                 // ✅ 줄바꿈 금지
+                .minimumScaleFactor(0.85)     // ✅ 공간 부족 시 살짝 축소
+                .fixedSize(horizontal: true, vertical: false) // ✅ 버튼 폭을 고정형으로
+                .padding(.horizontal, 12)     // (기존 14 → 12로 조금 더 컴팩트)
                 .padding(.vertical, 6)
                 .background(.white)
                 .overlay(Capsule().stroke(Color(uiColor: .systemGray4), lineWidth: 0.5))
                 .clipShape(Capsule())
-        }.buttonStyle(.plain)
+        }
+        .buttonStyle(.plain)
     }
 }
 
