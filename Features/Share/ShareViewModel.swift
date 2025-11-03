@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-// MARK: - Model
+// MARK: - Local UI Models
 struct ChatMessage: Identifiable, Codable, Equatable {
     let id: String
     let senderId: String
@@ -27,25 +27,20 @@ protocol ShareRepository {
     func sendMessage(threadId: String, text: String) async throws -> ChatMessage
     func markRead(threadId: String) async throws
 }
-
-extension ShareRepository {
-    // 라이브 연동 전엔 no-op
-    func markRead(threadId: String) async throws {}
-}
+extension ShareRepository { func markRead(threadId: String) async throws {} }
 
 // MARK: - Mock Repository
 struct MockShareRepository: ShareRepository {
 
     private var _friends: [Friend] {
         [
-            .init(id: "u1", name: "민하", status: "online",  avatarURL: nil),
-            .init(id: "u2", name: "다혜", status: "offline", avatarURL: nil),
-            .init(id: "u3", name: "서연", status: "online",  avatarURL: nil),
-            .init(id: "u4", name: "배우", status: "offline", avatarURL: nil)
+            .init(id: "u1", name: "민하", avatarURL: nil),
+            .init(id: "u2", name: "다혜", avatarURL: nil),
+            .init(id: "u3", name: "서연", avatarURL: nil),
+            .init(id: "u4", name: "배우", avatarURL: nil)
         ]
     }
 
-    // 샘플 스레드
     private var _threads: [ChatThread] {
         [
             .init(
@@ -53,7 +48,7 @@ struct MockShareRepository: ShareRepository {
                 title: "민하",
                 participantIds: ["u1"],
                 lastMessageText: "이번 주말 일정 공유했어!",
-                lastMessageAt: Date().addingTimeInterval(-60 * 12), // 12분 전
+                lastMessageAt: Date().addingTimeInterval(-60 * 12),
                 unreadCount: 1
             ),
             .init(
@@ -61,28 +56,21 @@ struct MockShareRepository: ShareRepository {
                 title: "강배우 팀",
                 participantIds: ["u1", "u2", "u3"],
                 lastMessageText: "폴더 구조 정리 완료",
-                lastMessageAt: Date().addingTimeInterval(-60 * 60 * 5), // 5시간 전
+                lastMessageAt: Date().addingTimeInterval(-60 * 60 * 5),
                 unreadCount: 0
             )
         ]
     }
 
-    // 스레드별 메시지 모킹
     private static var messageStore: [String: [ChatMessage]] = [
-        "t1": [
-            .init(id: UUID().uuidString, senderId: "u1", text: "주말 일정 공유했어!", createdAt: Date().addingTimeInterval(-60*12))
-        ],
-        "t2": [
-            .init(id: UUID().uuidString, senderId: "u2", text: "폴더 구조 정리 완료", createdAt: Date().addingTimeInterval(-60*60*5))
-        ]
+        "t1": [.init(id: UUID().uuidString, senderId: "u1", text: "주말 일정 공유했어!", createdAt: Date().addingTimeInterval(-60*12))],
+        "t2": [.init(id: UUID().uuidString, senderId: "u2", text: "폴더 구조 정리 완료", createdAt: Date().addingTimeInterval(-60*60*5))]
     ]
 
     func fetchFriends() async throws -> [Friend] { _friends }
-
     func fetchChatThreads() async throws -> [ChatThread] { _threads }
 
     func fetchMessages(threadId: String) async throws -> [ChatMessage] {
-        // 네트워크 지연 흉내
         try? await Task.sleep(nanoseconds: 200_000_000)
         return Self.messageStore[threadId] ?? []
     }
@@ -95,9 +83,7 @@ struct MockShareRepository: ShareRepository {
         return msg
     }
 
-    func markRead(threadId: String) async throws {
-        // 더미: 아무 것도 안 함
-    }
+    func markRead(threadId: String) async throws { }
 }
 
 // MARK: - Live Repository (Firebase / API)
@@ -114,7 +100,7 @@ struct LiveShareRepository: ShareRepository {
             ChatThread(
                 id: s.id,
                 title: s.title,
-                participantIds: [],              // 필요 시 채우기
+                participantIds: [],
                 lastMessageText: s.lastMessage,
                 lastMessageAt: s.updatedAt,
                 unreadCount: s.unreadCount
@@ -144,7 +130,6 @@ struct LiveShareRepository: ShareRepository {
 final class ShareViewModel: ObservableObject {
     @Published private(set) var friends: [Friend] = []
     @Published private(set) var threads: [ChatThread] = []
-    /// 채팅방별 메시지 캐시
     @Published private(set) var messagesByThread: [String: [ChatMessage]] = [:]
 
     @Published var searchKeyword: String = ""
@@ -152,10 +137,8 @@ final class ShareViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let repo: ShareRepository
-
     init(repo: ShareRepository) { self.repo = repo }
 
-    // 전체 목록 로드
     func loadAll() async {
         isLoading = true
         defer { isLoading = false }
@@ -164,7 +147,6 @@ final class ShareViewModel: ObservableObject {
             async let t = repo.fetchChatThreads()
             let (friends, threads) = try await (f, t)
             self.friends = friends
-            // 최신순 정렬(옵션)
             self.threads = threads.sorted { ($0.lastMessageAt ?? .distantPast) > ($1.lastMessageAt ?? .distantPast) }
         } catch {
             self.errorMessage = error.localizedDescription
@@ -176,13 +158,10 @@ final class ShareViewModel: ObservableObject {
         return friends.filter { $0.name.localizedCaseInsensitiveContains(searchKeyword) }
     }
 
-    // 채팅방 입장: 메시지 로드 + 읽음 처리
     func openThread(_ threadId: String) async {
         do {
             let msgs = try await repo.fetchMessages(threadId: threadId)
             messagesByThread[threadId] = msgs
-
-            // 읽음 처리: 배지 0으로
             if let idx = threads.firstIndex(where: { $0.id == threadId }) {
                 threads[idx].unreadCount = 0
             }
@@ -192,19 +171,14 @@ final class ShareViewModel: ObservableObject {
         }
     }
 
-    // 메시지 전송
     func send(to threadId: String, text: String) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         do {
             let msg = try await repo.sendMessage(threadId: threadId, text: trimmed)
-
-            // 로컬 메시지 갱신
             var arr = messagesByThread[threadId] ?? []
             arr.append(msg)
             messagesByThread[threadId] = arr
-
-            // 목록 최상단으로 올리고 내용/시간 업데이트
             if let idx = threads.firstIndex(where: { $0.id == threadId }) {
                 var t = threads.remove(at: idx)
                 t.lastMessageText = msg.text
@@ -217,14 +191,13 @@ final class ShareViewModel: ObservableObject {
         }
     }
 
-    // 목록 우측의 “작은 시간 텍스트” 포맷터
     func timeString(for date: Date?) -> String {
         guard let date else { return "" }
         let cal = Calendar.current
         if cal.isDateInToday(date) {
             let f = DateFormatter()
             f.locale = Locale(identifier: "ko_KR")
-            f.dateFormat = "a h:mm"   // 예: 오전 6:09
+            f.dateFormat = "a h:mm"
             return f.string(from: date)
         } else if cal.isDate(date, equalTo: Date(), toGranularity: .year) {
             let f = DateFormatter()

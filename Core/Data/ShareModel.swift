@@ -1,68 +1,74 @@
 import Foundation
 
 // MARK: - Friend
-struct Friend: Identifiable, Codable, Hashable {
-    let id: String
-    let name: String
-    let status: String?
-    let avatarURL: URL?
+public struct Friend: Identifiable, Codable, Hashable {
+    public let id: String
+    public let name: String
+    public let avatarURL: URL?
+    
+    public init(id: String, name: String, avatarURL: URL?) {
+        self.id = id
+        self.name = name
+        self.avatarURL = avatarURL
+    }
 }
 
-// MARK: - Chat
-struct ChatSummary: Identifiable, Codable, Hashable {
-    let id: String
-    let title: String
-    let lastMessage: String
-    let updatedAt: Date
-    let unreadCount: Int
-    let avatarURL: URL?
+// MARK: - Chat (서버 요약 모델)
+public struct ChatSummary: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String
+    public let lastMessage: String
+    public let updatedAt: Date
+    public let unreadCount: Int
+    public let avatarURL: URL?
 }
 
-struct Message: Identifiable, Codable, Hashable {
-    let id: String
-    let chatId: String
-    let senderId: String
-    let senderName: String
-    let text: String
-    let createdAt: Date
+// 서버 메시지 모델
+public struct Message: Identifiable, Codable, Hashable {
+    public let id: String
+    public let chatId: String
+    public let senderId: String
+    public let senderName: String
+    public let text: String
+    public let createdAt: Date
 }
 
 // MARK: - Share
-struct Share: Identifiable, Codable, Hashable {
-    let id: String
-    let title: String
-    let createdAt: Date?
-    let updatedAt: Date?
+public struct Share: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String
+    public let createdAt: Date?
+    public let updatedAt: Date?
 }
 
-struct ShareDetail: Identifiable, Codable, Hashable {
-    let id: String
-    let title: String
-    let members: [ShareMember]
-    let screenshots: [ShareScreenshot]?
-    let createdAt: Date
+public struct ShareDetail: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String
+    public let members: [ShareMember]
+    public let screenshots: [ShareScreenshot]?
+    public let createdAt: Date
 }
 
-struct ShareMember: Identifiable, Codable, Hashable {
-    let id: String
-    let userId: String
-    let name: String
-    let role: String?
-    let avatarURL: URL?
+public struct ShareMember: Identifiable, Codable, Hashable {
+    public let id: String
+    public let userId: String
+    public let name: String
+    public let role: String?
+    public let avatarURL: URL?
 }
 
-struct ShareScreenshot: Identifiable, Codable, Hashable {
-    let id: String
-    let title: String?
-    let thumbnailURL: URL?
+public struct ShareScreenshot: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String?
+    public let thumbnailURL: URL?
 }
 
 // MARK: - Comment
-struct Comment: Identifiable, Codable, Hashable {
-    let id: String
-    let shareId: String
-    let userId: String
-    let userName: String
-    let text: String
-    let createdAt: Date
+public struct Comment: Identifiable, Codable, Hashable {
+    public let id: String
+    public let shareId: String
+    public let userId: String
+    public let userName: String
+    public let text: String
+    public let createdAt: Date
 }
