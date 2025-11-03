@@ -8,6 +8,7 @@ enum APIError: LocalizedError {
     case server(String)
     case network(Error)
     case invalidResponse
+    case timeout
 
     var errorDescription: String? {
         switch self {
@@ -16,6 +17,7 @@ enum APIError: LocalizedError {
         case .server(let msg):  return msg
         case .network(let err): return err.localizedDescription
         case .invalidResponse:  return "유효하지 않은 서버 응답입니다."
+        case .timeout:          return "요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요."
         }
     }
 }
@@ -24,7 +26,12 @@ enum APIError: LocalizedError {
 
 struct APIClient {
     var authStore: AuthStoring = AuthStorage.shared
-    var urlSession: URLSession = .shared
+    var urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30  // ✅ 요청 타임아웃: 30초
+        config.timeoutIntervalForResource = 60 // ✅ 리소스 타임아웃: 60초
+        return URLSession(configuration: config)
+    }()
 
     // 공용 인코더/디코더 (ISO-8601 날짜 처리)
     private var encoder: JSONEncoder {
@@ -58,6 +65,8 @@ struct APIClient {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
+        // ✅ 타임아웃 명시적 설정
+        req.timeoutInterval = 30
 
         if let body = body {
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -84,15 +93,26 @@ struct APIClient {
                     throw APIError.decodeFailed
                 }
                 do { return try decoder.decode(T.self, from: data) }
-                catch { throw APIError.decodeFailed }
+                catch {
+                    print("❌ Decode error: \(error)")
+                    print("📦 Response data: \(String(data: data, encoding: .utf8) ?? "nil")")
+                    throw APIError.decodeFailed
+                }
 
             case 401:
                 throw APIError.unauthorized
 
             default:
                 let msg = String(data: data, encoding: .utf8) ?? "Status \(http.statusCode)"
+                print("❌ Server error: \(msg)")
                 throw APIError.server(msg)
             }
+        } catch let error as URLError {
+            // ✅ 타임아웃 에러 명시적 처리
+            if error.code == .timedOut {
+                throw APIError.timeout
+            }
+            throw APIError.network(error)
         } catch {
             if let apiErr = error as? APIError { throw apiErr }
             throw APIError.network(error)

@@ -55,18 +55,16 @@ final class MyPageViewModel: ObservableObject {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    var isEmailValid: Bool {
-        let pattern = #"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"#
-        return email.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
-    }
-
+    // ✅ 이메일 validation 제거 - 이메일은 수정 불가능한 필드이므로 검증 불필요
+    
     var isBirthdayValid: Bool {
         guard let b = birthday else { return true }
         return b <= Date()
     }
 
+    // ✅ 수정: 이메일 검증 제거, 이름만 체크
     var canSaveProfile: Bool {
-        isNameValid && isEmailValid && isBirthdayValid && !isLoading
+        isNameValid && isBirthdayValid && !isLoading
     }
 
     var birthdayYMDString: String? {
@@ -106,11 +104,25 @@ final class MyPageViewModel: ObservableObject {
         }
     }
 
+    // ✅ 수정: 에러 메시지 개선
     func saveProfile() async {
-        guard canSaveProfile else {
-            errorMessage = "입력값을 확인해주세요. (닉네임/이메일/생년월일)"
+        // 이름 validation
+        guard isNameValid else {
+            errorMessage = "이름을 입력해주세요."
             return
         }
+        
+        // 생년월일 validation
+        guard isBirthdayValid else {
+            errorMessage = "생년월일이 올바르지 않습니다."
+            return
+        }
+        
+        guard !isLoading else { return }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
         do {
             let updated = try await userService.updateMe(
                 nickname: name,
@@ -119,6 +131,9 @@ final class MyPageViewModel: ObservableObject {
             )
             name = updated.nickname
             email = updated.email
+            
+            // ✅ 성공 메시지 (선택사항)
+            // errorMessage = "프로필이 저장되었습니다."
         } catch {
             errorMessage = error.localizedDescription
         }

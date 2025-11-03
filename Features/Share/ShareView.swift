@@ -4,8 +4,10 @@ enum ShareInnerTab { case friends, chats }
 
 struct ShareView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
+    
+    // ✅ dismiss 환경 변수 추가
+    @Environment(\.dismiss) private var dismiss
 
-    // 🔹 공유 VM을 상위에서 한 번만 생성
     @StateObject private var vm = ShareViewModel(repo: MockShareRepository())
 
     // 하단 글로벌 탭 라우팅
@@ -43,7 +45,7 @@ struct ShareView: View {
                     }
                     .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 6)
 
-                    // 내부 탭 컨텐츠 (같은 vm 주입)
+                    // 내부 탭 컨텐츠
                     Group {
                         switch innerTab {
                         case .friends: ShareFriendListView(vm: vm)
@@ -54,7 +56,18 @@ struct ShareView: View {
             }
             .navigationTitle(innerTab == .friends ? "친구" : "채팅")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await vm.loadAll() } // 최초 로드
+            // ✅ 커스텀 백버튼 (아이콘만)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            .task { await vm.loadAll() }
 
             // 하단 글로벌 탭바
             .safeAreaInset(edge: .bottom) {

@@ -4,6 +4,9 @@ import SwiftUI
 struct FolderView: View {
     @StateObject private var manager = FolderManager()
     
+    // ✅ dismiss 환경 변수 추가
+    @Environment(\.dismiss) private var dismiss
+    
     // 탭 선택 및 화면 전환을 위한 상태 변수
     @State private var selectedTab: CaplogTab = .folder
     @State private var goHome = false
@@ -12,6 +15,7 @@ struct FolderView: View {
     @State private var goMyPage = false
 
     var body: some View {
+        // ✅ 여기는 NavigationStack 유지 (Folder 내부 네비게이션용)
         NavigationStack {
             FolderCategoryListView()
                 .environmentObject(manager)
@@ -22,6 +26,18 @@ struct FolderView: View {
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarBackground(Color.white, for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)
+                
+                // ✅ 커스텀 백버튼 (아이콘만)
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
 
                 .safeAreaInset(edge: .bottom) {
                     CaplogTabBar(selected: selectedTab) { tab in
@@ -89,14 +105,14 @@ struct FolderCategoryListView: View {
                                 Spacer()
                             }
                         }
-                        .buttonStyle(.plain) // 파란 틴트 방지
+                        .buttonStyle(.plain)
                         .padding(.leading, 20)
                     }
                 }
                 .padding(.top, 16)
             }
             .frame(width: UIScreen.main.bounds.width / 2)
-            .background(Color.white) // 왼쪽은 항상 흰색
+            .background(Color.white)
 
             // --- 오른쪽: 소분류 리스트 ---
             List {
@@ -127,14 +143,13 @@ struct FolderCategoryListView: View {
                 .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
-            // ✅ 오른쪽 회색은 타이틀 아래부터 보이도록 (상단 바가 불투명 흰색이므로 자연스레 밑에서 시작됨)
             .background(Color(red: 246/255, green: 248/255, blue: 246/255))
         }
         .ignoresSafeArea(edges: .bottom)
     }
 }
 
-// MARK: - FolderItemListView 및 FolderItemRow (수정 없음)
+// MARK: - FolderItemListView 및 FolderItemRow
 struct FolderItemListView: View {
     @EnvironmentObject private var manager: FolderManager
     let category: FolderCategory
@@ -159,9 +174,9 @@ struct FolderItemListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button(action: { /* 정렬/필터 자리 */ }) { Image(systemName: "line.3.horizontal.decrease.circle") }
-                Button(action: { /* 공유 시트 */ }) { Image(systemName: "square.and.arrow.up") }
-                Button(action: { /* 아이템 추가 */ }) { Image(systemName: "plus.circle") }
+                Button(action: { /* 정렬/필터 */ }) { Image(systemName: "line.3.horizontal.decrease.circle") }
+                Button(action: { /* 공유 */ }) { Image(systemName: "square.and.arrow.up") }
+                Button(action: { /* 추가 */ }) { Image(systemName: "plus.circle") }
             }
         }
     }

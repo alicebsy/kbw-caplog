@@ -4,17 +4,19 @@ import Combine
 struct SearchView: View {
     @FocusState private var isFocused: Bool
     @StateObject private var vm = SearchViewModel()
+    
+    // ✅ dismiss 환경 변수 추가
+    @Environment(\.dismiss) private var dismiss
 
-    // 로고 표시 규칙: 포커스 중엔 숨김, 검색 완료/포커스 해제 시 노출
     private var showLogo: Bool { !isFocused }
 
     var body: some View {
         VStack(spacing: 0) {
 
-            // ===== 상단 행: 로고 + 검색창 + 돋보기(같은 높이) =====
+            // ===== 상단 행: 로고 + 검색창 + 돋보기 =====
             HStack(spacing: 2) {
 
-                // Ⓛ Caplog 로고: 포커스 시 숨기고, 해제 시 다시 표시
+                // Caplog 로고
                 Image("caplog_letter")
                     .resizable()
                     .scaledToFit()
@@ -22,7 +24,7 @@ struct SearchView: View {
                     .opacity(showLogo ? 1 : 0)
                     .animation(.easeInOut(duration: 0.18), value: showLogo)
 
-                // ⓒ 검색창
+                // 검색창
                 HStack(spacing: 5) {
                     TextField("검색어를 입력해주세요.", text: $vm.query)
                         .textInputAutocapitalization(.never)
@@ -55,7 +57,7 @@ struct SearchView: View {
                         )
                 )
 
-                // Ⓡ 돋보기 버튼
+                // 돋보기 버튼
                 Button {
                     isFocused = false
                     vm.resetAndSearch()
@@ -75,7 +77,6 @@ struct SearchView: View {
             // ===== 콘텐츠 =====
             Group {
                 if !vm.hasSearched {
-                    // 1) 검색 전: 최근 검색만 표시
                     RecentSearchList(
                         items: vm.recentQueries,
                         tap: { term in
@@ -91,7 +92,6 @@ struct SearchView: View {
                     .padding(.top, 18)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 } else {
-                    // 2) 검색 후
                     if vm.isLoading && vm.results.isEmpty {
                         SearchLoadingView().padding(.top, 24)
                     } else if vm.results.isEmpty {
@@ -125,7 +125,17 @@ struct SearchView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.white, for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
-        .navigationBarBackButtonHidden(false)
+        // ✅ 커스텀 백버튼 (아이콘만)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+            }
+        }
     }
 }
 
@@ -176,7 +186,7 @@ private struct RecentSearchList: View {
     }
 }
 
-// MARK: - Search Result Item Row (Folder 스타일과 동일)
+// MARK: - Search Result Item Row
 private struct SearchResultItemRow: View {
     let item: FolderItem
     
