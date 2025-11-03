@@ -6,7 +6,11 @@ struct MyPageAccountSection: View {
     var onChangePassword: () -> Void
     var onSave: () -> Void
     var isSaveEnabled: Bool = true
-
+    
+    // ✅ 이름 입력 포커스 상태 추적
+    @FocusState private var isNameFocused: Bool
+    @State private var originalName: String = ""
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             MyPageSectionHeader(title: "가입정보")
@@ -18,19 +22,33 @@ struct MyPageAccountSection: View {
                     .frame(width: 90, alignment: .leading)
                 
                 TextField(
-                    "", text: $name,
+                    "",
+                    text: $name,
                     prompt: Text("강배우").foregroundColor(.gray)
                 )
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                
+                .focused($isNameFocused)
+                // ✅ 텍스트 색상 조건 변경
+                .foregroundColor(nameColor)
+                .onAppear {
+                    originalName = name
+                }
+                .onChange(of: isNameFocused) { focused in
+                    // 포커스 잃었을 때 업데이트 반영
+                    if !focused {
+                        originalName = originalName // 유지
+                    }
+                }
+
                 CapsuleButton(title: "저장", action: onSave)
             }
 
+            // ✅ 이메일: 항상 검은색
             LabeledRow(label: "이메일") {
                 Text(email)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(.black)
                     .textSelection(.enabled)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -43,5 +61,12 @@ struct MyPageAccountSection: View {
             }
         }
         .sectionContainer()
+    }
+
+    // ✅ 이름 색상 로직
+    private var nameColor: Color {
+        if isNameFocused { return .black } // 입력 중이면 검정
+        if name != originalName { return .black } // 수정 후 변경됨
+        return .gray // 기본 상태
     }
 }
