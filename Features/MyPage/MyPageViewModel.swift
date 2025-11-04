@@ -31,13 +31,11 @@ final class MyPageViewModel: ObservableObject {
     private let userService = UserService()
     private let screenshotService = ScreenshotService()
     
-    // 권한 매니저
     private let locationPermission = LocationPermission()
     private let notificationPermission = NotificationPermission()
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // 권한 상태 모니터링
         locationPermission.$status
             .map { $0 == .authorizedWhenInUse || $0 == .authorizedAlways }
             .assign(to: &$allowLocationRecommend)
@@ -47,22 +45,14 @@ final class MyPageViewModel: ObservableObject {
             .assign(to: &$allowNotification)
     }
 
-    var displayName: String {
-        name
-    }
+    var displayName: String { name }
+    var isNameValid: Bool { !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
-    var isNameValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    // ✅ 이메일 validation 제거 - 이메일은 수정 불가능한 필드이므로 검증 불필요
-    
     var isBirthdayValid: Bool {
         guard let b = birthday else { return true }
         return b <= Date()
     }
 
-    // ✅ 수정: 이메일 검증 제거, 이름만 체크
     var canSaveProfile: Bool {
         isNameValid && isBirthdayValid && !isLoading
     }
@@ -96,7 +86,7 @@ final class MyPageViewModel: ObservableObject {
             if let g = me.gender { gender = (g == "M") ? .male : .female }
             birthday = me.birthday
         } catch {
-            // Mock 데이터 사용 (API 연동 전)
+            // Mock 데이터 (API 연결 전)
             name = "강배우"
             email = "ewhakbw@gmail.com"
             gender = .male
@@ -104,22 +94,17 @@ final class MyPageViewModel: ObservableObject {
         }
     }
 
-    // ✅ 수정: 에러 메시지 개선
     func saveProfile() async {
-        // 이름 validation
         guard isNameValid else {
             errorMessage = "이름을 입력해주세요."
             return
         }
-        
-        // 생년월일 validation
         guard isBirthdayValid else {
             errorMessage = "생년월일이 올바르지 않습니다."
             return
         }
-        
         guard !isLoading else { return }
-        
+
         isLoading = true
         defer { isLoading = false }
         
@@ -131,9 +116,9 @@ final class MyPageViewModel: ObservableObject {
             )
             name = updated.nickname
             email = updated.email
-            
-            // ✅ 성공 메시지 (선택사항)
-            // errorMessage = "프로필이 저장되었습니다."
+
+            // ✅ 수정: 성공 시 팝업 메시지 표시
+            errorMessage = "프로필이 저장되었습니다."
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -149,25 +134,18 @@ final class MyPageViewModel: ObservableObject {
     }
     
     // MARK: - 권한 관리
-    
-    /// 위치 권한 토글 처리
     func toggleLocationPermission(_ newValue: Bool) {
         if newValue {
-            // 켜기: 권한 요청
             locationPermission.request()
         } else {
-            // 끄기: 설정 앱으로 이동
             locationPermission.openSettings()
         }
     }
     
-    /// 알림 권한 토글 처리
     func toggleNotificationPermission(_ newValue: Bool) {
         if newValue {
-            // 켜기: 권한 요청
             notificationPermission.request()
         } else {
-            // 끄기: 설정 앱으로 이동
             notificationPermission.openSettings()
         }
     }

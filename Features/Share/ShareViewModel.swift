@@ -41,30 +41,44 @@ struct MockShareRepository: ShareRepository {
         ]
     }
 
+    // ✅ unreadCount를 클래스 변수로 유지 (상태 보존)
+    private static var threadStates: [String: Int] = [
+        "t1": 1,
+        "t2": 0
+    ]
+
     private var _threads: [ChatThread] {
         [
             .init(
                 id: "t1",
                 title: "민하",
-                participantIds: ["u1"],
+                participantIds: ["me", "u1"],
                 lastMessageText: "이번 주말 일정 공유했어!",
                 lastMessageAt: Date().addingTimeInterval(-60 * 12),
-                unreadCount: 1
+                unreadCount: Self.threadStates["t1"] ?? 1
             ),
             .init(
                 id: "t2",
                 title: "강배우 팀",
-                participantIds: ["u1", "u2", "u3"],
-                lastMessageText: "폴더 구조 정리 완료",
-                lastMessageAt: Date().addingTimeInterval(-60 * 60 * 5),
-                unreadCount: 0
+                participantIds: ["me", "u1", "u2", "u3", "u4"],
+                lastMessageText: "알겠습니다!",
+                lastMessageAt: Date().addingTimeInterval(-60 * 5),
+                unreadCount: Self.threadStates["t2"] ?? 0
             )
         ]
     }
 
     private static var messageStore: [String: [ChatMessage]] = [
-        "t1": [.init(id: UUID().uuidString, senderId: "u1", text: "주말 일정 공유했어!", createdAt: Date().addingTimeInterval(-60*12))],
-        "t2": [.init(id: UUID().uuidString, senderId: "u2", text: "폴더 구조 정리 완료", createdAt: Date().addingTimeInterval(-60*60*5))]
+        "t1": [
+            .init(id: UUID().uuidString, senderId: "u1", text: "주말 일정 공유했어!", createdAt: Date().addingTimeInterval(-60*12))
+        ],
+        "t2": [
+            .init(id: UUID().uuidString, senderId: "u2", text: "폴더 구조 정리 필요해", createdAt: Date().addingTimeInterval(-60*60*5)),
+            .init(id: UUID().uuidString, senderId: "u3", text: "맞아, 체계적으로 정리하자", createdAt: Date().addingTimeInterval(-60*55)),
+            .init(id: UUID().uuidString, senderId: "u1", text: "다음 주 목요일 가능할까?", createdAt: Date().addingTimeInterval(-60*50)),
+            .init(id: UUID().uuidString, senderId: "me", text: "좋아! 함께 정리해보자", createdAt: Date().addingTimeInterval(-60*40)),
+            .init(id: UUID().uuidString, senderId: "u4", text: "알겠습니다!", createdAt: Date().addingTimeInterval(-60*5))
+        ]
     ]
 
     func fetchFriends() async throws -> [Friend] { _friends }
@@ -83,7 +97,10 @@ struct MockShareRepository: ShareRepository {
         return msg
     }
 
-    func markRead(threadId: String) async throws { }
+    func markRead(threadId: String) async throws {
+        // ✅ unreadCount를 0으로 설정
+        Self.threadStates[threadId] = 0
+    }
 }
 
 // MARK: - Live Repository (Firebase / API)
@@ -162,10 +179,16 @@ final class ShareViewModel: ObservableObject {
         do {
             let msgs = try await repo.fetchMessages(threadId: threadId)
             messagesByThread[threadId] = msgs
-            if let idx = threads.firstIndex(where: { $0.id == threadId }) {
-                threads[idx].unreadCount = 0
-            }
+            
+            // markRead 호출 - unreadCount를 0으로 설정
             try await repo.markRead(threadId: threadId)
+            
+            // UI 업데이트: threads 배열의 해당 항목 업데이트
+            if let idx = threads.firstIndex(where: { $0.id == threadId }) {
+                var updatedThread = threads[idx]
+                updatedThread.unreadCount = 0
+                threads[idx] = updatedThread
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }

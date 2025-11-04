@@ -5,6 +5,7 @@ struct ChatRoomView: View {
     @ObservedObject var vm: ShareViewModel
     let thread: ChatThread
     @State private var inputText = ""
+    @Environment(\.dismiss) var dismiss
     private let meId = "me"
 
     var body: some View {
@@ -27,7 +28,7 @@ struct ChatRoomView: View {
                                     senderInfo: getSenderInfo(msg.senderId)
                                 )
                                 .id(msg.id)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, 8)
                             }
                         }
                     }
@@ -53,7 +54,30 @@ struct ChatRoomView: View {
         }
         .navigationTitle(thread.title)
         .navigationBarTitleDisplayMode(.inline)
+        // ✅ 참여자 수 표시 (단체 톡방일 경우) - 제목 옆에 통합
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 0) {
+                    HStack(spacing: 4) {
+                        Text(thread.title)
+                            .font(.system(size: 16, weight: .semibold))
+                        
+                        if thread.participantIds.count > 1 {
+                            Text("\(thread.participantIds.count)")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
         .task { await vm.openThread(thread.id) }
+        .onDisappear {
+            // 채팅방에서 나갈 때 목록 새로고침하여 unreadCount 반영
+            Task {
+                await vm.loadAll()
+            }
+        }
     }
 
     private func send() {
@@ -82,7 +106,7 @@ struct ChatRoomView: View {
     // ✅ 메시지를 날짜별로 그룹화
     private var groupedMessages: [MessageGroup] {
         let messages = vm.messagesByThread[thread.id] ?? []
-        let calendar = Calendar.current
+        _ = Calendar.current
         
         // 날짜별로 그룹화
         var groups: [String: [ChatMessage]] = [:]

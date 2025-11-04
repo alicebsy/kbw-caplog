@@ -12,15 +12,13 @@ struct MyPageProfileSection: View {
         VStack(alignment: .leading, spacing: 12) {
             MyPageSectionHeader(title: "프로필")
 
-            // 성별
             LabeledRow(label: "성별") {
                 HStack(spacing: 24) {
-                    RadioButton(isOn: gender == .male, title: "남성") { gender = .male }
+                    RadioButton(isOn: gender == .male,   title: "남성") { gender = .male }
                     RadioButton(isOn: gender == .female, title: "여성") { gender = .female }
                 }
             }
 
-            // 생년월일
             HStack(spacing: 12) {
                 Text("생년월일")
                     .font(.system(size: 15, weight: .semibold))
@@ -28,16 +26,19 @@ struct MyPageProfileSection: View {
 
                 Text(birthday.map { DateFormatter.display.string(from: $0) } ?? "미설정")
                     .font(profileFieldFont)
-                    .lineLimit(1)                 // ✅ 한 줄 고정
+                    .lineLimit(1)
                     .truncationMode(.tail)
-                    .layoutPriority(1)            // ✅ 텍스트가 가용 공간 먼저 차지
+                    .layoutPriority(1)
 
                 Spacer(minLength: 8)
 
-                CapsuleButton(title: "날짜 선택하기") { showPicker = true }
-                    .fixedSize(horizontal: true, vertical: false) // ✅ 버튼 폭 고정
+                CapsuleButton(
+                    title: "날짜 선택하기",
+                    action: { showPicker = true },
+                    tint: .primary,
+                    fill: .white
+                )
             }
-            // ✅ 생일 값 갱신 시 애니메이션 제거(시트 닫힘과 겹쳐 느리게 보이는 문제 완화)
             .animation(.none, value: birthday)
         }
         .sectionContainer()
@@ -67,7 +68,6 @@ struct MyPageProfileSection: View {
     }
 }
 
-// ✅ 날짜 포맷: 2025.06.02. (끝에 점 포함)
 private extension DateFormatter {
     static let display: DateFormatter = {
         let f = DateFormatter()

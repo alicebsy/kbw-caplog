@@ -1,36 +1,37 @@
 import SwiftUI
 
 extension Color {
-    // MARK: - Brand palette (was `Brand`)
+    // Brand (기존 팔레트 유지)
     static let brandGradientTop    = Color(hex: "#87ABA4")
     static let brandGradientBottom = Color(hex: "#FFFCF1")
-    
     static let joinButton  = Color(hex: "#AABBBE")
     static let loginButton = Color(hex: "#5E5858")
+    static let brandBgTop      = Color(hex: "#FFFCC1")
+    static let brandBgBottom   = Color(hex: "#87ABA4")
+    static let brandHeader     = Color(hex: "#CFE8E0")
+    static let brandCardBG     = Color(hex: "#FAFAFA")
+    static let brandLine       = Color(hex: "#EDEDED")
+    static let brandAccent     = Color(hex: "#96BAC1")
+    static let brandGreenCard  = Color(hex: "#4AA465")
+    static let brandTextMain   = Color.black.opacity(0.85)
+    static let brandTextSub    = Color.black.opacity(0.4)
 
-    
-    static let brandBgTop    = Color(hex: "#FFFCC1")
-    static let brandBgBottom = Color(hex: "#87ABA4")
-    static let brandHeader   = Color(hex: "#CFE8E0")
-    static let brandCardBG   = Color(hex: "#FAFAFA")
-    static let brandLine     = Color(hex: "#EDEDED")
-    static let brandAccent   = Color(hex: "#96BAC1")
-    static let brandGreenCard = Color(hex: "#4AA465")
-    static let brandTextMain = Color.black.opacity(0.85)
-    static let brandTextSub  = Color.black.opacity(0.4)
-
-    // MARK: - Global color tokens
+    // Global
     static let caplogBlack       = Color(hex: "#000000")
     static let caplogWhite       = Color(hex: "#FFFFFF")
     static let caplogGrayLight   = Color(hex: "#EEEEEE")
     static let caplogGrayMedium  = Color(hex: "#C4C4C4")
     static let caplogGrayDark    = Color(hex: "#5D5858")
-    static let accentGreen = Color(red: 0.06, green: 0.36, blue: 0)
 
+    // 기존 사용 중
+    static let accentGreen       = Color(red: 0.06, green: 0.36, blue: 0)
+
+    // Register 등
     static let registerGreen         = Color(hex: "#34A853")
     static let registerGoogleBlue    = Color(hex: "#4285F4")
     static let registerKakaoYellow   = Color(hex: "#FBBC05")
     static let registerRed           = Color(hex: "#EA4335")
+    static let unreadBadgeRed        = Color(hex: "#F4525F")
     static let registerGray          = Color(hex: "#AABABE")
     static let registerGrayLight     = Color(hex: "#F1F1F1")
     static let registerGrayMid       = Color(hex: "#BEC1C2")
@@ -56,28 +57,30 @@ extension Color {
     static let homeBlackOpacity60  = Color.black.opacity(0.6)
     static let homeBlackOpacity30  = Color.black.opacity(0.3)
 
-    // --- 기존 컴포넌트 호환용 별칭 ---
-    static let checkMint   = Color(hex: "#8FD694")           // CheckBoxView
-    static let divider     = Color.gray.opacity(0.3)         // UnderlineTextField
-    static let placeholder = Color(.placeholderText)         // 호환용
+    // Common aliases
+    static let checkMint   = Color(hex: "#8FD694")
+    static let divider     = Color.gray.opacity(0.3)
+    static let placeholder = Color(.placeholderText)
+
+    // === MyPage 전용 토큰 ===
+    static let myPageActionBlue   = Color(hex: "#2E6CF6")
+    static let myPageActionBlueBg = Color(hex: "#2E6CF6").opacity(0.12)
+    static let myPageSectionGreen = Color.accentGreen
 }
 
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
+        var int: UInt64 = 0; Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3:  (a, r, g, b) = (255, (int>>8)*17, (int>>4 & 0xF)*17, (int & 0xF)*17)
-        case 6:  (a, r, g, b) = (255, int>>16, int>>8 & 0xFF, int & 0xFF)
-        case 8:  (a, r, g, b) = (int>>24, int>>16 & 0xFF, int>>8 & 0xFF, int & 0xFF)
-        default: (a, r, g, b) = (255, 0, 0, 0)
+        case 3: (a,r,g,b) = (255,(int>>8)*17,(int>>4&0xF)*17,(int&0xF)*17)
+        case 6: (a,r,g,b) = (255,int>>16,int>>8&0xFF,int&0xFF)
+        case 8: (a,r,g,b) = (int>>24,int>>16&0xFF,int>>8&0xFF,int&0xFF)
+        default: (a,r,g,b) = (255,0,0,0)
         }
         self.init(.sRGB,
-                  red:   Double(r)/255,
-                  green: Double(g)/255,
-                  blue:  Double(b)/255,
+                  red: Double(r)/255, green: Double(g)/255, blue: Double(b)/255,
                   opacity: Double(a)/255)
     }
 }
