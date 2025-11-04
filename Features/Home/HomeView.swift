@@ -3,7 +3,6 @@ import SwiftUI
 struct HomeView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
     
-    // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var vm = HomeViewModel()
@@ -21,16 +20,20 @@ struct HomeView: View {
     @State private var showMyPage = false
 
     var body: some View {
-        // ✅ NavigationStack 제거 - 상위에서 관리
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
 
-                    // Header (알림만 남기고 프로필 제거)
+                    // Header
                     HomeHeader(
                         userName: vm.userName,
                         onTapNotification: { vm.showNotificationView = true }
                     )
+
+                    // ✅ "Today's Summary" - 통일된 스타일로 변경
+                    HomeSectionHeader(title: "Today's Summary")
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
 
                     // Coupon (green)
                     ExpiringCouponCard(
@@ -110,7 +113,6 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         
-        // ✅ 커스텀 백버튼 (아이콘만)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -162,7 +164,15 @@ struct HomeView: View {
         .navigationDestination(isPresented: $showSearch) { SearchView() }
         .navigationDestination(isPresented: $showShare)  { ShareView() }
         
-        .task { await vm.load() }
+        // ✅ 화면 나타날 때마다 최신 데이터 로드
+        .onAppear {
+            Task {
+                await vm.load()
+            }
+        }
+        .task {
+            await vm.load()
+        }
     }
 
     // MARK: - 라우팅 함수

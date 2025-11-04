@@ -30,16 +30,22 @@ struct CapsuleButton: View {
     var fill: Color = .white
     var fullWidth: Bool = false
     var isEnabled: Bool = true
+    
+    // ✅ 1. 이 두 줄이 추가되어야 합니다.
+    var verticalPadding: CGFloat = 8
+    var fontSize: CGFloat = 14
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                // ✅ 2. 폰트 크기 파라미터 적용
+                .font(.system(size: fontSize, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.9)
                 .foregroundColor(isEnabled ? tint : Color.gray.opacity(0.5))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                // ✅ 3. 세로 높이(패딩) 파라미터 적용
+                .padding(.vertical, verticalPadding)
                 .frame(maxWidth: fullWidth ? .infinity : nil)
                 .background(fill)
                 .overlay(Capsule().stroke(Color(uiColor: .systemGray4), lineWidth: 0.5))

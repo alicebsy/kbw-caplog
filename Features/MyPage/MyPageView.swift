@@ -54,13 +54,34 @@ struct MyPageView: View {
                 name: $vm.name,
                 email: vm.email,
                 onChangePassword: { showPasswordSheet = true },
-                onSave: { Task { await vm.saveProfile() } },
-                isSaveEnabled: vm.canSaveProfile
+                // ✅ Task 내부에서 await 호출
+                onSave: {
+                    print("🔥 MyPageView: onSave 호출됨")
+                    Task {
+                        print("🔥 Task 시작")
+                        await vm.saveProfile()
+                        print("🔥 Task 완료")
+                    }
+                },
+                isSaveEnabled: true
             )
 
             MyPageUsageCard(savedCount: vm.savedCount, recommendedCount: vm.recommendedCount)
 
-            MyPageProfileSection(gender: $vm.gender, birthday: $vm.birthday)
+            MyPageProfileSection(
+                gender: $vm.gender,
+                birthday: $vm.birthday,
+                // ✅ Task 내부에서 await 호출
+                onSave: {
+                    print("🔥 MyPageView: 프로필 onSave 호출됨")
+                    Task {
+                        print("🔥 프로필 Task 시작")
+                        await vm.saveProfile()
+                        print("🔥 프로필 Task 완료")
+                    }
+                },
+                isSaveEnabled: true
+            )
 
             MyPageSettingsSection(
                 allowLocationRecommend: $vm.allowLocationRecommend,

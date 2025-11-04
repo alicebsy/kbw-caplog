@@ -23,9 +23,8 @@ struct MyPageProfileHeader: View {
                         .foregroundColor(.black)
                 }
             }
-            // --- ⬇️ 추가된 수정사항 ⬇️ ---
-            // 텍스트 그룹 전체를 y축으로 2만큼 살짝 내려서 시각적 중심을 맞춥니다.
-            .offset(y: 5)
+            // ✅ 텍스트를 위로 살짝 이동하여 중심 맞춤
+            .offset(y: -2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)

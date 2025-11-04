@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Section Header
+// MARK: - Section Header (통일된 스타일)
 struct HomeSectionHeader: View {
     let title: String
     var body: some View {
@@ -135,34 +135,32 @@ struct RecentlyRow: View {
     }
 }
 
-// MARK: - Minimal HomeHeader (stub for compile)
+// MARK: - HomeHeader
 struct HomeHeader: View {
     let userName: String
     var onTapNotification: () -> Void
 
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Hello, \(userName)")
-                    .font(.system(size: 22, weight: .bold))
-                Text("Today’s Summary")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color.brandTextSub)
-            }
+        HStack(alignment: .center, spacing: 16) {
+            // ✅ "Hello, 강배우" 폰트 크기 증가 + 상단 여백
+            Text("Hello, \(userName)")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.black)
+            
             Spacer()
-            HStack(spacing: 12) {
-                Button(action: onTapNotification) {
-                    Image(systemName: "bell")
-                }
+            
+            Button(action: onTapNotification) {
+                Image(systemName: "bell")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.primary)
             }
-            .font(.system(size: 20, weight: .semibold))
-            .padding(.trailing, 12) // ← 기존보다 왼쪽으로 이동
         }
         .padding(.horizontal, 20)
+        .padding(.top, 12)  // ✅ 상단 여백 추가
     }
 }
 
-// MARK: - Minimal ExpiringCouponCard (stub for compile)
+// MARK: - ExpiringCouponCard (개선됨)
 struct ExpiringCouponCard: View {
     let title: String
     let date: String
@@ -170,21 +168,30 @@ struct ExpiringCouponCard: View {
     var onOpen: () -> Void
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white.opacity(0.95))
-                Text(date).font(.system(size: 28, weight: .bold)).foregroundStyle(.white)
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                // ✅ "Starbucks | 무료 음료 쿠폰" 형식 + 굵게
+                Text("\(brand) | \(title)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                
+                Text(date)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
             }
+            
             Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
-                Text(brand).font(.system(size: 13)).foregroundStyle(.white.opacity(0.9))
-                Button(action: onOpen) { Image(systemName: "chevron.right.circle.fill").font(.system(size: 24)) }
-                    .tint(.white)
+            
+            Button(action: onOpen) {
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.white)
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, minHeight: 110)
+        .padding(20)
+        .frame(maxWidth: .infinity, minHeight: 100)
         .background(Color.brandGreenCard)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }

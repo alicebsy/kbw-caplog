@@ -30,7 +30,11 @@ struct MyPagePasswordChangeView: View {
                         tint: Color.myPageActionBlue,
                         fill: Color.myPageActionBlueBg,
                         fullWidth: true,
-                        isEnabled: true
+                        isEnabled: true,
+                        // ✅ 2. 버튼 세로 높이 (기본 8 -> 12로)
+                        verticalPadding: 12,
+                        // ✅ 3. 버튼 폰트 크기 (기본 14 -> 16으로)
+                        fontSize: 16
                     )
                 }
                 .padding(.horizontal, 20)
@@ -40,7 +44,11 @@ struct MyPagePasswordChangeView: View {
                     .foregroundColor(.secondary)
                     .padding(.bottom, 8)
             }
+            // ✅ 1. 상단 타이틀과 Form(입력칸) 사이 간격 추가
+            .padding(.top, 16)
             .navigationTitle("비밀번호 변경")
+            // ✅ 4. 타이틀 폰트 작게 (인라인 스타일)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("취소") { dismiss() }

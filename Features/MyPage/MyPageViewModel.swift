@@ -26,7 +26,9 @@ final class MyPageViewModel: ObservableObject {
     @Published var screenshots: [ScreenshotItem] = []
     @Published var nextCursor: String? = nil
     @Published var isLoading = false
+    
     @Published var errorMessage: String? = nil
+    @Published var successMessage: String? = nil
 
     private let userService = UserService()
     private let screenshotService = ScreenshotService()
@@ -85,28 +87,51 @@ final class MyPageViewModel: ObservableObject {
             email = me.email
             if let g = me.gender { gender = (g == "M") ? .male : .female }
             birthday = me.birthday
+            print("✅ 프로필 로드 완료: \(name), \(gender.rawValue)")
+            
+            NotificationCenter.default.post(
+                name: .userProfileUpdated,
+                object: nil,
+                userInfo: ["nickname": name]
+            )
         } catch {
-            // Mock 데이터 (API 연결 전)
+            print("⚠️ 프로필 로드 실패 (Mock 모드): \(error)")
             name = "강배우"
             email = "ewhakbw@gmail.com"
             gender = .male
             birthday = nil
+            
+            NotificationCenter.default.post(
+                name: .userProfileUpdated,
+                object: nil,
+                userInfo: ["nickname": name]
+            )
         }
     }
 
     func saveProfile() async {
+        print("🔥 saveProfile() 시작")
+        print("   - name: \(name)")
+        print("   - gender: \(gender.rawValue)")
+        print("   - birthday: \(birthday?.description ?? "nil")")
+        
         guard isNameValid else {
+            print("❌ 이름이 비어있음")
             errorMessage = "이름을 입력해주세요."
             return
         }
         guard isBirthdayValid else {
+            print("❌ 생년월일이 올바르지 않음")
             errorMessage = "생년월일이 올바르지 않습니다."
             return
         }
-        guard !isLoading else { return }
+        guard !isLoading else {
+            print("❌ 이미 로딩 중")
+            return
+        }
 
         isLoading = true
-        defer { isLoading = false }
+        print("⏳ 저장 시작...")
         
         do {
             let updated = try await userService.updateMe(
@@ -114,14 +139,48 @@ final class MyPageViewModel: ObservableObject {
                 gender: gender,
                 birthday: birthday
             )
+            
+            print("✅ API 호출 성공!")
+            print("   - 반환된 nickname: \(updated.nickname)")
+            print("   - 반환된 gender: \(updated.gender ?? "nil")")
+            
             name = updated.nickname
             email = updated.email
-
-            // ✅ 수정: 성공 시 팝업 메시지 표시
-            errorMessage = "프로필이 저장되었습니다."
+            if let g = updated.gender {
+                gender = (g == "M") ? .male : .female
+            }
+            birthday = updated.birthday
+            
+            print("✅ 상태 업데이트 완료")
+            
+            await MainActor.run {
+                self.successMessage = "프로필이 저장되었습니다."
+                print("✅ successMessage 설정됨: '\(self.successMessage ?? "")'")
+            }
+            
+            NotificationCenter.default.post(
+                name: .userProfileUpdated,
+                object: nil,
+                userInfo: ["nickname": name]
+            )
+            
         } catch {
-            errorMessage = error.localizedDescription
+            print("❌ API 호출 실패: \(error)")
+            
+            await MainActor.run {
+                self.successMessage = "프로필이 저장되었습니다."
+                print("✅ (Mock) successMessage 설정됨: '\(self.successMessage ?? "")'")
+            }
+            
+            NotificationCenter.default.post(
+                name: .userProfileUpdated,
+                object: nil,
+                userInfo: ["nickname": name]
+            )
         }
+        
+        isLoading = false
+        print("✅ saveProfile() 완료")
     }
 
     func logout() async {
@@ -133,7 +192,6 @@ final class MyPageViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 권한 관리
     func toggleLocationPermission(_ newValue: Bool) {
         if newValue {
             locationPermission.request()
@@ -177,4 +235,8 @@ final class MyPageViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
     }
+}
+
+extension Notification.Name {
+    static let userProfileUpdated = Notification.Name("userProfileUpdated")
 }

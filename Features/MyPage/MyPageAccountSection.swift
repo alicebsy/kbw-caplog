@@ -27,11 +27,13 @@ struct MyPageAccountSection: View {
                     .foregroundColor(nameColor)
                     .onAppear { originalName = name }
 
+                Spacer(minLength: 8)
+
                 CapsuleButton(
                     title: "저장",
                     action: onSave,
-                    tint: Color.myPageActionBlue,
-                    fill: Color.myPageActionBlueBg,
+                    tint: .primary,
+                    fill: .white,
                     fullWidth: false,
                     isEnabled: isSaveEnabled
                 )
