@@ -99,7 +99,14 @@ struct SearchView: View {
                     } else {
                         List {
                             ForEach(vm.results) { item in
-                                SearchResultItemRow(item: item)
+                                UnifiedCardView(
+                                    card: item,
+                                    style: .compact,
+                                    onTap: {},
+                                    onShare: {},
+                                    onMore: {},
+                                    onTapImage: {}
+                                )
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                     .listRowBackground(Color.clear)
@@ -186,56 +193,5 @@ private struct RecentSearchList: View {
     }
 }
 
-// MARK: - Search Result Item Row
-private struct SearchResultItemRow: View {
-    let item: FolderItem
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(item.category.rawValue) - \(item.subcategory)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Text(item.title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.primary)
-                if !item.summary.isEmpty {
-                    Text(item.summary)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-                if !item.locationText.isEmpty {
-                    Text(item.locationText)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                if !item.date.isEmpty {
-                    Text(item.date)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer(minLength: 10)
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.tertiarySystemFill))
-                .frame(width: 80, height: 80)
-                .overlay(
-                    Group {
-                        if let name = item.imageName, !name.isEmpty {
-                            Image(name)
-                                .resizable()
-                                .scaledToFill()
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    }
-                )
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-    }
-}
+// MARK: - SearchResultItemRow 삭제됨
+// → UnifiedCardView(style: .compact) 사용

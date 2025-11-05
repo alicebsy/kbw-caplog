@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct ContentEditSheet: View {
-    var content: Content
+struct CardEditSheet: View {
+    var card: Card
     var onSave: (String) -> Void = { _ in }
 
     var body: some View {
@@ -12,6 +12,6 @@ struct ContentEditSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
-        .presentationDetents([.medium, .large]) // ← 스텁에도 부착
+        .presentationDetents([.medium, .large])
     }
 }

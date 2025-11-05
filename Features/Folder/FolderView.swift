@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Entry (탭에서 이걸 불러오면 됨)
 struct FolderView: View {
-    @StateObject private var manager = FolderManager()
+    @StateObject private var manager = CardManager()
     
     // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
@@ -62,7 +62,7 @@ struct FolderView: View {
 
 // MARK: - 1) 대분류 + 소분류 리스트 (피그마 디자인 최종본)
 struct FolderCategoryListView: View {
-    @EnvironmentObject private var manager: FolderManager
+    @EnvironmentObject private var manager: CardManager
     @State private var selectedCategory: FolderCategory = .info
 
     private var groupedSubcategories: [String: [FolderSubcategory]] {
@@ -151,18 +151,25 @@ struct FolderCategoryListView: View {
 
 // MARK: - FolderItemListView 및 FolderItemRow
 struct FolderItemListView: View {
-    @EnvironmentObject private var manager: FolderManager
+    @EnvironmentObject private var manager: CardManager
     let category: FolderCategory
     let subcategory: String
-    private var filtered: [FolderItem] {
-        manager.items.filter { $0.category == category && $0.subcategory == subcategory }
+    private var filtered: [Card] {
+        manager.cards(for: category, subcategory: subcategory)
     }
     var body: some View {
         List {
             if filtered.isEmpty { emptyState }
             else {
                 ForEach(filtered) { item in
-                    FolderItemRow(item: item)
+                    UnifiedCardView(
+                        card: item,
+                        style: .compact,
+                        onTap: {},
+                        onShare: {},
+                        onMore: {},
+                        onTapImage: {}
+                    )
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .background(Color.clear)
@@ -194,58 +201,5 @@ struct FolderItemListView: View {
     }
 }
 
-private struct FolderItemRow: View {
-    let item: FolderItem
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(item.category.rawValue) - \(item.subcategory)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Text(item.title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.primary)
-                if !item.summary.isEmpty {
-                    Text(item.summary)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                if !item.fields.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(Array(item.fields.keys.prefix(3)), id: \.self) { key in
-                            if let value = item.fields[key], !value.isEmpty {
-                                Text("\(key): \(value)")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                }
-                if !item.date.isEmpty {
-                    Text(item.date)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer(minLength: 10)
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.tertiarySystemFill))
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Group {
-                        if let name = item.imageName, !name.isEmpty {
-                            Image(name)
-                                .resizable().scaledToFill().clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    }
-                )
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-    }
-}
+// MARK: - FolderItemRow 삭제됨
+// → UnifiedCardView(style: .compact) 사용

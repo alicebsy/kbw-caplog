@@ -18,7 +18,8 @@ final class HomeViewModel: ObservableObject {
     // 데이터
     @Published var userName: String = "강배우"
     @Published var coupon: CouponInfo = .init(title: "", expireDate: "", brand: "", screenshotName: nil)
-    @Published var recommended: [Content] = []
+    @Published var recommended: [Card] = []
+    @Published var recent: [Card] = []
 
     // 공유용 친구 목록(임시)
     @Published var friends: [ShareFriend] = [
@@ -28,13 +29,17 @@ final class HomeViewModel: ObservableObject {
         .init(id: UUID(), name: "바리", avatar: "avatar4")
     ]
     
-    // ✅ 🔥 추가: UserService 인스턴스
+    // ✅ CardManager 사용
+    private let cardManager: CardManager
     private let userService = UserService()
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // ✅ 🔥 추가: MyPage에서 프로필 업데이트 알림 수신
+        self.cardManager = CardManager()
+        
+        // MyPage에서 프로필 업데이트 알림 수신
         NotificationCenter.default.publisher(for: .userProfileUpdated)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 if let nickname = notification.userInfo?["nickname"] as? String {
                     print("✅ HomeViewModel: 사용자 이름 업데이트됨 - \(nickname)")
@@ -45,31 +50,31 @@ final class HomeViewModel: ObservableObject {
     }
 
     func load() async {
-        // ✅ 🔥 수정: UserService에서 실제 사용자 정보 로드
+        // 사용자 정보 로드
         do {
             let userProfile = try await userService.fetchMe()
             userName = userProfile.nickname
             print("✅ HomeViewModel: 사용자 이름 로드됨 - \(userName)")
         } catch {
             print("⚠️ HomeViewModel: 사용자 정보 로드 실패 (Mock 사용): \(error)")
-            // Mock 데이터
             userName = "강배우"
         }
         
-        // TODO: Spring Boot API 연동 (쿠폰, 추천 콘텐츠)
-        // let url = URL(string: "https://api.caplog.com/home")!
-        // let (data, _) = try await URLSession.shared.data(from: url)
-        // let decoded = try JSONDecoder().decode(HomeResponse.self, from: data)
-        // self.coupon   = .init(title: decoded.coupon.title, expireDate: decoded.coupon.expire, brand: decoded.coupon.brand, screenshotName: decoded.coupon.image)
-        // self.recommended = decoded.recommended
-
-        // 데모 데이터
+        // 카드 데이터 로드
+        await cardManager.loadAllCards()
+        
+        // 추천 카드 및 최근 카드 가져오기
+        recommended = cardManager.recommendedCards(limit: 5)
+        recent = cardManager.recentCards(limit: 10)
+        
+        // 쿠폰 데이터 (Mock)
         self.coupon = .init(
             title: "무료 음료 쿠폰",
             expireDate: "2025-10-20",
             brand: "Starbucks",
             screenshotName: "shot_coupon"
         )
-        self.recommended = sampleContents
+        
+        print("✅ HomeViewModel: 추천 \(recommended.count)개, 최근 \(recent.count)개 카드 로드 완료")
     }
 }

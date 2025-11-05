@@ -7,10 +7,10 @@ struct HomeView: View {
 
     @StateObject private var vm = HomeViewModel()
 
-    @State private var selectedContent: Content? = nil
-    @State private var shareTarget: Content? = nil
+    @State private var selectedCard: Card? = nil
+    @State private var shareTarget: Card? = nil
     @State private var fullscreenImage: String? = nil
-    @State private var editingContent: Content? = nil
+    @State private var editingCard: Card? = nil
     @State private var selectedTab: CaplogTab = .home
 
     // 탭 이동용 상태
@@ -55,17 +55,18 @@ struct HomeView: View {
                             .padding(.bottom, -20)
 
                         TabView {
-                            ForEach(vm.recommended.prefix(3)) { content in
-                                HomeCardRow(
-                                    content: content,
-                                    onTap: { selectedContent = content },
-                                    onShare: { shareTarget = content },
-                                    onTapMore: { editingContent = content },
-                                    onTapThumb: {
-                                        if let first = content.screenshots.first {
+                            ForEach(vm.recommended.prefix(3)) { card in
+                                UnifiedCardView(
+                                    card: card,
+                                    style: .row,
+                                    onTap: { selectedCard = card },
+                                    onShare: { shareTarget = card },
+                                    onMore: { editingCard = card },
+                                    onTapImage: {
+                                        if let first = card.screenshotURLs.first {
                                             fullscreenImage = first
                                         } else {
-                                            fullscreenImage = content.thumbnail
+                                            fullscreenImage = card.thumbnailName
                                         }
                                     }
                                 )
@@ -81,19 +82,18 @@ struct HomeView: View {
                         .padding(.horizontal, 20)
 
                     VStack(spacing: 12) {
-                        ForEach(vm.recommended.prefix(3)) { content in
-                            RecentlyRow(
-                                title: content.name,
-                                meta: content.address,
-                                thumb: content.thumbnail,
-                                onTapCenter: { selectedContent = content },
-                                onTapShare: { shareTarget = content },
-                                onTapMore:  { editingContent = content },
-                                onTapThumb: {
-                                    if let first = content.screenshots.first {
+                        ForEach(vm.recommended.prefix(3)) { card in
+                            UnifiedCardView(
+                                card: card,
+                                style: .compact,
+                                onTap: { selectedCard = card },
+                                onShare: { shareTarget = card },
+                                onMore: { editingCard = card },
+                                onTapImage: {
+                                    if let first = card.screenshotURLs.first {
                                         fullscreenImage = first
                                     } else {
-                                        fullscreenImage = content.thumbnail
+                                        fullscreenImage = card.thumbnailName
                                     }
                                 }
                             )
@@ -136,8 +136,8 @@ struct HomeView: View {
         }
 
         // 편집 시트
-        .sheet(item: $editingContent) { ct in
-            ContentEditSheet(content: ct) { updated in
+        .sheet(item: $editingCard) { card in
+            CardEditSheet(card: card) { updated in
                 print("업데이트: \(updated)")
             }
             .presentationDetents([.medium, .large])
@@ -153,9 +153,9 @@ struct HomeView: View {
             }
         }
 
-        // 상세 이동 – id를 String으로 맞춰 전달
-        .navigationDestination(item: $selectedContent) { ct in
-            HomeContentDetailView(id: ct.id.uuidString)
+        // 상세 이동
+        .navigationDestination(item: $selectedCard) { card in
+            CardDetailView(card: card)
         }
 
         .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }

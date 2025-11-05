@@ -9,16 +9,16 @@
 import SwiftUI
 
 struct TagEditSheet: View {
-    let content: Content
+    let card: Card
     var onSave: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var tags: String
 
-    init(content: Content, onSave: @escaping (String) -> Void) {
-        self.content = content
+    init(card: Card, onSave: @escaping (String) -> Void) {
+        self.card = card
         self.onSave = onSave
-        _tags = State(initialValue: content.tags)
+        _tags = State(initialValue: card.tagsString)
     }
 
     var body: some View {
