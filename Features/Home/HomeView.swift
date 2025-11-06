@@ -2,9 +2,8 @@ import SwiftUI
 
 struct HomeView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
-    
-    @Environment(\.dismiss) private var dismiss
 
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
 
     @State private var selectedCard: Card? = nil
@@ -13,111 +12,108 @@ struct HomeView: View {
     @State private var editingCard: Card? = nil
     @State private var selectedTab: CaplogTab = .home
 
-    // 탭 이동용 상태
+    // 하단 탭 라우팅
     @State private var showFolder = false
     @State private var showSearch = false
     @State private var showShare  = false
     @State private var showMyPage = false
 
+    // 메트릭
+    private let S = HomeMetrics.sectionSpacing // 24pt
+    private let couponH   = HomeMetrics.couponHeight
+    private let rowH      = HomeMetrics.rowHeight
+
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {  // ✅ spacing 제거, 각 섹션에서 개별 관리
+        // ✅ 수정: VStack(spacing: 0) 제거
+        ScrollView(showsIndicators: false) {
+            // 섹션 간격은 아래 Spacer로만 통제
+            VStack(spacing: 0) {
 
-                    // Header
-                    HomeHeader(
-                        userName: vm.userName,
-                        onTapNotification: { vm.showNotificationView = true }
-                    )
-                    .padding(.bottom, 24)  // ✅ Header → Today's Summary 간격
+                // ── 상단 인사 헤더 ──
+                HomeHeader(
+                    userName: vm.userName,
+                    onTapNotification: { vm.showNotificationView = true }
+                )
+                Spacer().frame(height: S) // 24pt
 
-                    // ✅ "Today's Summary"
-                    HomeSectionHeader(title: "🗓️ Today's Summary")
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)  // ✅ 타이틀 아래 간격 추가
-
-                    // Coupon Card
-                    if let coupon = vm.coupon {
-                        UnifiedCardView(
-                            card: coupon,
-                            style: .coupon,
-                            onTap: { selectedCard = coupon },
-                            onShare: { shareTarget = coupon },
-                            onMore: { editingCard = coupon },
-                            onTapImage: {
-                                if let thumb = coupon.thumbnailURL {
-                                    fullscreenImage = thumb
-                                } else if let first = coupon.screenshotURLs.first {
-                                    fullscreenImage = first
-                                }
-                            }
-                        )
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    // ✅ Coupon 유무와 관계없이 일정한 간격 유지
-                    Spacer()
-                        .frame(height: 24)  // ✅ Today's Summary → Recommended 간격
-
-                    // Recommended
-                    VStack(alignment: .leading, spacing: 0) {
-                        HomeSectionHeader(title: "💡 Recommended Contents")
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, -8)  // ✅ 타이틀과 카드 사이 여백 줄임
-
+                // ── 섹션 1: Today's Summary (쿠폰 캐러셀) ──
+                if !vm.coupons.isEmpty {
+                    HomeSection(title: "🗓️ Today's Summary") {
                         TabView {
-                            ForEach(vm.recommended.prefix(3)) { card in
+                            ForEach(vm.coupons) { card in
                                 UnifiedCardView(
                                     card: card,
-                                    style: .row,
+                                    style: .coupon,
                                     onTap: { selectedCard = card },
                                     onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
-                                        if let first = card.screenshotURLs.first {
-                                            fullscreenImage = first
-                                        } else {
-                                            fullscreenImage = card.thumbnailName
+                                        if let url = card.thumbnailURL ?? card.screenshotURLs.first {
+                                            fullscreenImage = url
                                         }
                                     }
                                 )
+                                .frame(height: couponH)
                                 .padding(.horizontal, 20)
                             }
                         }
-                        .frame(height: 180)  // ✅ 200 → 180으로 더 줄임
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
+                        .frame(height: couponH)
+                        .tabViewStyle(.page(indexDisplayMode: .never))
                     }
-                    .padding(.bottom, 12)  // ✅ 16 → 12로 더 줄임
-
-                    // Recently Viewed
-                    HomeSectionHeader(title: "👀 Recently Viewed")
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)  // ✅ 타이틀 아래 간격
-
-                    VStack(spacing: 12) {
-                        ForEach(vm.recommended.prefix(3)) { card in
-                            UnifiedCardView(
-                                card: card,
-                                style: .row,
-                                onTap: { selectedCard = card },
-                                onShare: { shareTarget = card },
-                                onMore: { editingCard = card },
-                                onTapImage: {
-                                    if let first = card.screenshotURLs.first {
-                                        fullscreenImage = first
-                                    } else {
-                                        fullscreenImage = card.thumbnailName
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 80)  // ✅ 하단 탭바 여백
+                    Spacer().frame(height: S) // 24pt
                 }
-            }
 
-            // 하단 탭
+                // ── 섹션 2: Recommended Contents ──
+                if !vm.recommended.isEmpty {
+                    HomeSection(title: "💡 Recommended Contents") {
+                        TabView {
+                            ForEach(vm.recommended.prefix(3)) { card in
+                                UnifiedCardView(
+                                    card: card, style: .row,
+                                    onTap: { selectedCard = card },
+                                    onShare: { shareTarget = card },
+                                    onMore: { editingCard = card },
+                                    onTapImage: {
+                                        fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
+                                    }
+                                )
+                                .frame(minHeight: rowH)
+                                .padding(.horizontal, 20)
+                            }
+                        }
+                        .frame(height: rowH)
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                    }
+                    Spacer().frame(height: S) // 24pt
+                }
+
+                // ── 섹션 3: Recently Viewed ──
+                if !vm.recent.isEmpty {
+                    HomeSection(title: "👀 Recently Viewed") {
+                        VStack(spacing: 12) {
+                            ForEach(vm.recent.prefix(3)) { card in
+                                UnifiedCardView(
+                                    card: card, style: .row,
+                                    onTap: { selectedCard = card },
+                                    onShare: { shareTarget = card },
+                                    onMore: { editingCard = card },
+                                    onTapImage: {
+                                        fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
+                                    }
+                                )
+                                .frame(minHeight: rowH)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    Spacer().frame(height: S) // 24pt
+                }
+                
+                // ✅ 수정: 50pt 고정 Spacer 제거 (safeAreaInset이 처리)
+            }
+        }
+        // ✅ 수정: 탭 바를 ScrollView의 safeAreaInset으로 이동
+        .safeAreaInset(edge: .bottom) {
             CaplogTabBar(selected: selectedTab) { tab in
                 selectedTab = tab
                 onSelectTab?(tab)
@@ -125,7 +121,8 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        
+        .navigationTitle("Home")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -137,26 +134,21 @@ struct HomeView: View {
             }
         }
 
-        // ShareSheet
+        // ... (이하 Sheet 및 NavigationDestination 동일) ...
+
+        // 공유 시트
         .sheet(item: $shareTarget) { target in
-            ShareSheetView(
-                target: target,
-                friends: vm.friends
-            ) { ids, msg in
-                print("Home 공유 → 대상: \(ids), 메시지: \(msg)")
-            }
-            .presentationDetents([.height(350)])
+            ShareSheetView(target: target, friends: vm.friends) { _, _ in }
+                .presentationDetents([.height(350)])
         }
 
         // 편집 시트
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card) { updated in
-                print("업데이트: \(updated)")
-            }
-            .presentationDetents([.medium, .large])
+            CardEditSheet(card: card) { _ in }
+                .presentationDetents([.medium, .large])
         }
 
-        // 전체 이미지
+        // 전체 이미지 보기
         .fullScreenCover(isPresented: Binding(
             get: { fullscreenImage != nil },
             set: { if !$0 { fullscreenImage = nil } }
@@ -166,29 +158,18 @@ struct HomeView: View {
             }
         }
 
-        // 상세 이동
-        .navigationDestination(item: $selectedCard) { card in
-            CardDetailView(card: card)
-        }
-
+        // 네비게이션
+        .navigationDestination(item: $selectedCard) { CardDetailView(card: $0) }
         .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }
         .navigationDestination(isPresented: $showMyPage) { MyPageView() }
         .navigationDestination(isPresented: $showFolder) { FolderView() }
         .navigationDestination(isPresented: $showSearch) { SearchView() }
         .navigationDestination(isPresented: $showShare)  { ShareView() }
-        
-        // ✅ 화면 나타날 때마다 최신 데이터 로드
-        .onAppear {
-            Task {
-                await vm.load()
-            }
-        }
-        .task {
-            await vm.load()
-        }
+
+        .task { await vm.load() }
     }
 
-    // MARK: - 라우팅 함수
+    // MARK: - 탭 라우팅
     private func route(from current: CaplogTab, to tab: CaplogTab) {
         guard current != tab else { return }
         switch tab {

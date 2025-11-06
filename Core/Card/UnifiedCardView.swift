@@ -110,7 +110,7 @@ struct UnifiedCardView: View {
             }
         }
         .padding(16)
-        .background(Color.brandCardBG)
+        .background(Color.brandCardBG) // ✅ 이 부분이 Colors.swift의 #F1F1F1을 사용합니다.
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
@@ -145,7 +145,7 @@ struct UnifiedCardView: View {
             }
         }
         .padding(16)
-        .background(Color.brandCardBG)
+        .background(Color.brandCardBG) // ✅ 이 부분이 Colors.swift의 #F1F1F1을 사용합니다.
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 3, y: 2)
         .onTapGesture { onTap() }

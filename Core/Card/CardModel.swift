@@ -119,7 +119,7 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
             return [
                 FolderSubcategory(name: "맛집", group: "장소"),
                 FolderSubcategory(name: "카페", group: "장소"),
-                FolderSubcategory(name: "공부/학업", group: "학업/업무"),
+                FolderSubcategory(name: "공부", group: "학업/업무"),
                 FolderSubcategory(name: "공고", group: "학업/업무"),
                 FolderSubcategory(name: "취업", group: "학업/업무"),
                 FolderSubcategory(name: "필기", group: "학업/업무"),

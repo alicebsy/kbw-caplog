@@ -9,7 +9,7 @@ extension Color {
     static let brandBgTop      = Color(hex: "#FFFCC1")
     static let brandBgBottom   = Color(hex: "#87ABA4")
     static let brandHeader     = Color(hex: "#CFE8E0")
-    static let brandCardBG     = Color(hex: "#FAFAFA")
+    static let brandCardBG     = Color(hex: "#F5F5F5")
     static let brandLine       = Color(hex: "#EDEDED")
     static let brandAccent     = Color(hex: "#96BAC1")
     static let brandGreenCard  = Color(hex: "#4AA465")

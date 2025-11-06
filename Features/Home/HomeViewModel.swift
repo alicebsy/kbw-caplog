@@ -10,7 +10,7 @@ final class HomeViewModel: ObservableObject {
 
     // 데이터
     @Published var userName: String = "강배우"
-    @Published var coupon: Card? = nil  // ✅ Card로 변경
+    @Published var coupons: [Card] = []  // ✅ 수정: 단일 coupon -> coupons 배열
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
 
@@ -56,21 +56,31 @@ final class HomeViewModel: ObservableObject {
         recommended = cardManager.recommendedCards(limit: 5)
         recent = cardManager.recentCards(limit: 10)
         
-        // 쿠폰 데이터 (Card 모델 사용)
-        self.coupon = Card(
-            title: "무료 음료 쿠폰",
-            summary: "스타벅스 무료 음료 1잔",
-            category: .info,
-            subcategory: "쿠폰",
-            tags: ["스타벅스", "무료음료"],
-            fields: [
-                "브랜드": "Starbucks",
-                "만료일": "2025. 10. 20."  // ✅ 날짜 형식 변경
-            ],
-            thumbnailURL: "shot_coupon",
-            screenshotURLs: ["shot_coupon"]
-        )
+        // ✅ 수정: 쿠폰 데이터를 3개 생성 (날짜 임박 순)
+        self.coupons = [
+            Card(
+                title: "무료 음료 쿠폰",
+                summary: "스타벅스 무료 음료 1잔",
+                category: .info, subcategory: "쿠폰", tags: ["스타벅스", "무료음료"],
+                fields: ["브랜드": "Starbucks", "만료일": "2025. 10. 20."],
+                thumbnailURL: "shot_coupon", screenshotURLs: ["shot_coupon"]
+            ),
+            Card(
+                title: "10,000원 할인권",
+                summary: "올리브영 1만원 할인",
+                category: .info, subcategory: "쿠폰", tags: ["올리브영", "할인"],
+                fields: ["브랜드": "Olive Young", "만료일": "2025. 10. 22."],
+                thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+            ),
+            Card(
+                title: "치킨 5,000원 할인",
+                summary: "배달의민족 치킨 할인 쿠폰",
+                category: .info, subcategory: "쿠폰", tags: ["배달", "치킨"],
+                fields: ["브랜드": "배달의민족", "만료일": "2025. 10. 25."],
+                thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+            )
+        ]
         
-        print("✅ HomeViewModel: 추천 \(recommended.count)개, 최근 \(recent.count)개 카드 로드 완료")
+        print("✅ HomeViewModel: 쿠폰 \(coupons.count)개, 추천 \(recommended.count)개, 최근 \(recent.count)개 카드 로드 완료")
     }
 }

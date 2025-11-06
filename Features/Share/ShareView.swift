@@ -5,7 +5,6 @@ enum ShareInnerTab { case friends, chats }
 struct ShareView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
     
-    // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var vm = ShareViewModel(repo: MockShareRepository())
@@ -22,10 +21,11 @@ struct ShareView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+                // ✅ 수정: Color(.systemBackground) 제거
+                // Color(.systemBackground).ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // 상단 내부 탭 스위처
+                    // ... (이하 탭 스위처, 콘텐츠 동일) ...
                     HStack(spacing: 12) {
                         Button { innerTab = .friends } label: {
                             Label("친구", systemImage: "person.2.fill")
@@ -44,8 +44,7 @@ struct ShareView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 6)
-
-                    // 내부 탭 컨텐츠
+                    
                     Group {
                         switch innerTab {
                         case .friends: ShareFriendListView(vm: vm)
@@ -54,9 +53,8 @@ struct ShareView: View {
                     }
                 }
             }
-            .navigationTitle(innerTab == .friends ? "친구" : "채팅")
+            .navigationTitle("Share")
             .navigationBarTitleDisplayMode(.inline)
-            // ✅ 커스텀 백버튼 (아이콘만)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -69,7 +67,8 @@ struct ShareView: View {
             }
             .task { await vm.loadAll() }
 
-            // 하단 글로벌 탭바
+            // ... (이하 탭 바, NavigationDestination 동일) ...
+            
             .safeAreaInset(edge: .bottom) {
                 CaplogTabBar(selected: .share) { tab in
                     onSelectTab?(tab)

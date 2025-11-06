@@ -4,7 +4,6 @@ import SwiftUI
 struct FolderView: View {
     @StateObject private var manager = CardManager()
     
-    // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
     
     // 탭 선택 및 화면 전환을 위한 상태 변수
@@ -15,19 +14,14 @@ struct FolderView: View {
     @State private var goMyPage = false
 
     var body: some View {
-        // ✅ 여기는 NavigationStack 유지 (Folder 내부 네비게이션용)
         NavigationStack {
             FolderCategoryListView()
                 .environmentObject(manager)
                 .navigationTitle("Folder")
                 .navigationBarTitleDisplayMode(.inline)
-
-                // ✅ 네비게이션 바를 '불투명한 흰색'으로 고정
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarBackground(Color.white, for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)
-                
-                // ✅ 커스텀 백버튼 (아이콘만)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -38,32 +32,28 @@ struct FolderView: View {
                         }
                     }
                 }
-
-                .safeAreaInset(edge: .bottom) {
-                    CaplogTabBar(selected: selectedTab) { tab in
-                        selectedTab = tab
-                        switch tab {
-                        case .home:   goHome = true
-                        case .search: goSearch = true
-                        case .share:  goShare = true
-                        case .myPage: goMyPage = true
-                        case .folder: break
-                        }
-                    }
-                }
-
-                .navigationDestination(isPresented: $goHome)   { HomeView() }
-                .navigationDestination(isPresented: $goSearch) { SearchView() }
-                .navigationDestination(isPresented: $goShare)  { ShareView() }
-                .navigationDestination(isPresented: $goMyPage) { MyPageView() }
-                
-                // ✅ 데이터 로드
-                .onAppear {
-                    Task {
-                        await manager.loadAllCards()
-                    }
-                }
         }
+        .safeAreaInset(edge: .bottom) {
+            CaplogTabBar(selected: selectedTab) { tab in
+                selectedTab = tab
+                switch tab {
+                case .home:   goHome = true
+                case .search: goSearch = true
+                case .share:  goShare = true
+                case .myPage: goMyPage = true
+                case .folder: break
+                }
+            }
+        }
+        .onAppear {
+            Task {
+                await manager.loadAllCards()
+            }
+        }
+        .navigationDestination(isPresented: $goHome)   { HomeView() }
+        .navigationDestination(isPresented: $goSearch) { SearchView() }
+        .navigationDestination(isPresented: $goShare)  { ShareView() }
+        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
 }
 
@@ -90,7 +80,7 @@ struct FolderCategoryListView: View {
         HStack(spacing: 0) {
             // --- 왼쪽: 대분류 리스트 ---
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 28) {
                     ForEach(FolderCategory.allCases) { category in
                         Button(action: {
                             selectedCategory = category
@@ -101,7 +91,7 @@ struct FolderCategoryListView: View {
                                     .frame(width: 4, height: 24)
 
                                 Text("\(category.emoji) \(category.rawValue)")
-                                    .font(.system(size: 17, weight: .bold))
+                                    .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(
                                         selectedCategory == category
                                         ? .homeGreenDark
@@ -125,6 +115,14 @@ struct FolderCategoryListView: View {
             List {
                 ForEach(orderedGroupKeys, id: \.self) { key in
                     Section {
+                        if !key.isEmpty {
+                            Text(key)
+                                // ✅ 수정: 17pt, bold -> 13pt, semibold
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.gray)
+                                .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
+                        }
+                        
                         ForEach(groupedSubcategories[key] ?? []) { sub in
                             NavigationLink {
                                 FolderItemListView(category: selectedCategory, subcategory: sub.name)
@@ -136,14 +134,6 @@ struct FolderCategoryListView: View {
                             }
                             .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
                         }
-                    } header: {
-                        if !key.isEmpty {
-                            Text(key)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.gray)
-                                .padding(.leading, 20)
-                                .padding(.bottom, 4)
-                        }
                     }
                     .listRowSeparator(.hidden)
                 }
@@ -152,7 +142,6 @@ struct FolderCategoryListView: View {
             .listStyle(.plain)
             .background(Color(red: 246/255, green: 248/255, blue: 246/255))
         }
-        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -162,22 +151,23 @@ struct FolderItemListView: View {
     let category: FolderCategory
     let subcategory: String
     
-    // ✅ 상세/공유/편집/이미지 팝업 상태
     @State private var selectedCard: Card? = nil
     @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     
-    // ✅ FriendManager 사용
     @StateObject private var friendManager = FriendManager.shared
     
+    @State private var selectedTab: CaplogTab = .folder
+    @State private var goHome = false
+    @State private var goSearch = false
+    @State private var goShare  = false
+    @State private var goMyPage = false
+    
     private var filtered: [Card] {
-        let result = manager.cards(for: category, subcategory: subcategory)
-        print("📁 FolderItemListView - category: \(category.rawValue), subcategory: \(subcategory)")
-        print("📁 Filtered cards: \(result.count)개")
-        print("📁 All cards in manager: \(manager.allCards.count)개")
-        return result
+        manager.cards(for: category, subcategory: subcategory)
     }
+    
     var body: some View {
         List {
             if filtered.isEmpty { emptyState }
@@ -185,11 +175,11 @@ struct FolderItemListView: View {
                 ForEach(filtered) { item in
                     UnifiedCardView(
                         card: item,
-                        style: .row,  // ✅ compact → row로 변경
-                        onTap: { selectedCard = item },  // ✅ 상세 화면
-                        onShare: { shareTarget = item }, // ✅ 공유
-                        onMore: { editingCard = item },  // ✅ 편집
-                        onTapImage: {  // ✅ 이미지 전체보기
+                        style: .row,
+                        onTap: { selectedCard = item },
+                        onShare: { shareTarget = item },
+                        onMore: { editingCard = item },
+                        onTapImage: {
                             if let first = item.screenshotURLs.first {
                                 fullscreenImage = first
                             } else {
@@ -207,26 +197,21 @@ struct FolderItemListView: View {
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
         
-        // ✅ 공유 시트
         .sheet(item: $shareTarget) { target in
             ShareSheetView(
                 target: target,
-                friends: friendManager.friends  // ✅ FriendManager 사용
+                friends: friendManager.friends
             ) { ids, msg in
                 print("Folder 공유 → 대상: \(ids), 메시지: \(msg)")
             }
             .presentationDetents([.height(350)])
         }
-        
-        // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) { updated in
                 print("업데이트: \(updated)")
             }
             .presentationDetents([.medium, .large])
         }
-        
-        // ✅ 전체 이미지 팝업
         .fullScreenCover(isPresented: Binding(
             get: { fullscreenImage != nil },
             set: { if !$0 { fullscreenImage = nil } }
@@ -235,12 +220,27 @@ struct FolderItemListView: View {
                 HomeImagePopupView(imageName: name)
             }
         }
-        
-        // ✅ 상세 화면 이동
         .navigationDestination(item: $selectedCard) { card in
             CardDetailView(card: card)
         }
+        .safeAreaInset(edge: .bottom) {
+            CaplogTabBar(selected: selectedTab) { tab in
+                selectedTab = tab
+                switch tab {
+                case .home:   goHome = true
+                case .search: goSearch = true
+                case .share:  goShare = true
+                case .myPage: goMyPage = true
+                case .folder: break
+                }
+            }
+        }
+        .navigationDestination(isPresented: $goHome)   { HomeView() }
+        .navigationDestination(isPresented: $goSearch) { SearchView() }
+        .navigationDestination(isPresented: $goShare)  { ShareView() }
+        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
+    
     private var emptyState: some View {
         VStack(alignment: .center, spacing: 8) {
             Image(systemName: "tray")
@@ -254,6 +254,3 @@ struct FolderItemListView: View {
         .padding(.vertical, 40)
     }
 }
-
-// MARK: - FolderItemRow 삭제됨
-// → UnifiedCardView(style: .compact) 사용

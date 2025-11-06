@@ -5,17 +5,23 @@ struct SearchView: View {
     @FocusState private var isFocused: Bool
     @StateObject private var vm = SearchViewModel()
     
-    // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
 
-    // ✅ 상세/공유/편집/이미지 팝업 상태
+    // 상세/공유/편집/이미지 팝업 상태
     @State private var selectedCard: Card? = nil
     @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     
-    // ✅ FriendManager 사용
+    // FriendManager 사용
     @StateObject private var friendManager = FriendManager.shared
+
+    // 탭 라우팅을 위한 변수 추가
+    var onSelectTab: ((CaplogTab) -> Void)? = nil
+    @State private var goHome = false
+    @State private var goFolder = false
+    @State private var goShare = false
+    @State private var goMyPage = false
 
     private var showLogo: Bool { !isFocused }
 
@@ -24,16 +30,13 @@ struct SearchView: View {
 
             // ===== 상단 행: 로고 + 검색창 + 돋보기 =====
             HStack(spacing: 2) {
-
-                // Caplog 로고
+                // ... (상단 검색바 동일) ...
                 Image("caplog_letter")
                     .resizable()
                     .scaledToFit()
                     .frame(width: showLogo ? 76 : 0, height: 22)
                     .opacity(showLogo ? 1 : 0)
                     .animation(.easeInOut(duration: 0.18), value: showLogo)
-
-                // 검색창
                 HStack(spacing: 5) {
                     TextField("검색어를 입력해주세요.", text: $vm.query)
                         .textInputAutocapitalization(.never)
@@ -44,14 +47,13 @@ struct SearchView: View {
                             isFocused = false
                             vm.resetAndSearch()
                         }
-
                     if !vm.query.isEmpty {
                         Button {
                             vm.query = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundStyle(Color.brandTextSub)  // ✅ 명시적으로 회색 지정
+                                .foregroundStyle(Color.brandTextSub)
                         }
                     }
                 }
@@ -65,8 +67,6 @@ struct SearchView: View {
                                 .stroke(Color.brandLine, lineWidth: 1)
                         )
                 )
-
-                // 돋보기 버튼
                 Button {
                     isFocused = false
                     vm.resetAndSearch()
@@ -86,6 +86,7 @@ struct SearchView: View {
             // ===== 콘텐츠 =====
             Group {
                 if !vm.hasSearched {
+                    // ... (RecentSearchList 동일) ...
                     RecentSearchList(
                         items: vm.recentQueries,
                         tap: { term in
@@ -107,14 +108,15 @@ struct SearchView: View {
                         SearchEmptyStateView().padding(.top, 24)
                     } else {
                         List {
+                            // ... (검색 결과 List 동일) ...
                             ForEach(vm.results) { item in
                                 UnifiedCardView(
                                     card: item,
                                     style: .row,
-                                    onTap: { selectedCard = item },  // ✅ 상세 화면
-                                    onShare: { shareTarget = item }, // ✅ 공유
-                                    onMore: { editingCard = item },  // ✅ 편집
-                                    onTapImage: {  // ✅ 이미지 전체보기
+                                    onTap: { selectedCard = item },
+                                    onShare: { shareTarget = item },
+                                    onMore: { editingCard = item },
+                                    onTapImage: {
                                         if let first = item.screenshotURLs.first {
                                             fullscreenImage = first
                                         } else {
@@ -142,12 +144,12 @@ struct SearchView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .background(Color.white)
+        // ✅ 수정: .background(Color.white) 제거
+        .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.white, for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
-        // ✅ 커스텀 백버튼 (아이콘만)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -159,18 +161,20 @@ struct SearchView: View {
             }
         }
         
-        // ✅ 공유 시트
+        // ... (이하 Sheet, NavigationDestination, TabBar 등 동일) ...
+        
+        // 공유 시트
         .sheet(item: $shareTarget) { target in
             ShareSheetView(
                 target: target,
-                friends: friendManager.friends  // ✅ FriendManager 사용
+                friends: friendManager.friends
             ) { ids, msg in
                 print("Search 공유 → 대상: \(ids), 메시지: \(msg)")
             }
             .presentationDetents([.height(350)])
         }
         
-        // ✅ 편집 시트
+        // 편집 시트
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) { updated in
                 print("업데이트: \(updated)")
@@ -178,7 +182,7 @@ struct SearchView: View {
             .presentationDetents([.medium, .large])
         }
         
-        // ✅ 전체 이미지 팝업
+        // 전체 이미지 팝업
         .fullScreenCover(isPresented: Binding(
             get: { fullscreenImage != nil },
             set: { if !$0 { fullscreenImage = nil } }
@@ -188,15 +192,35 @@ struct SearchView: View {
             }
         }
         
-        // ✅ 상세 화면 이동
+        // 상세 화면 이동
         .navigationDestination(item: $selectedCard) { card in
             CardDetailView(card: card)
         }
+
+        // 하단 탭 바
+        .safeAreaInset(edge: .bottom) {
+            CaplogTabBar(selected: .search) { tab in
+                onSelectTab?(tab)
+                switch tab {
+                case .home:   goHome   = true
+                case .folder: goFolder = true
+                case .search: break
+                case .share:  goShare  = true
+                case .myPage: goMyPage = true
+                }
+            }
+        }
+        // 탭 라우팅
+        .navigationDestination(isPresented: $goHome)   { HomeView() }
+        .navigationDestination(isPresented: $goFolder) { FolderView() }
+        .navigationDestination(isPresented: $goShare)  { ShareView() }
+        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
 }
 
 // MARK: - Recent Search List
 private struct RecentSearchList: View {
+    // ... (이하 RecentSearchList 동일) ...
     let items: [String]
     let tap: (String) -> Void
     let remove: (String) -> Void
@@ -241,6 +265,3 @@ private struct RecentSearchList: View {
         }
     }
 }
-
-// MARK: - SearchResultItemRow 삭제됨
-// → UnifiedCardView(style: .compact) 사용
