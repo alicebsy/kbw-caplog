@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Entry (탭에서 이걸 불러오면 됨)
 struct FolderView: View {
-    @StateObject private var manager = CardManager()
+    @StateObject private var manager = CardManager.shared
     
     @Environment(\.dismiss) private var dismiss
     
@@ -117,7 +117,6 @@ struct FolderCategoryListView: View {
                     Section {
                         if !key.isEmpty {
                             Text(key)
-                                // ✅ 수정: 17pt, bold -> 13pt, semibold
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Color.gray)
                                 .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
@@ -170,7 +169,10 @@ struct FolderItemListView: View {
     
     var body: some View {
         List {
-            if filtered.isEmpty { emptyState }
+            if filtered.isEmpty {
+                emptyState
+                    .listRowSeparator(.hidden)
+            }
             else {
                 ForEach(filtered) { item in
                     UnifiedCardView(
@@ -185,6 +187,8 @@ struct FolderItemListView: View {
                             } else {
                                 fullscreenImage = item.thumbnailName
                             }
+                            // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
+                            CardManager.shared.markCardAsViewed(item)
                         }
                     )
                         .listRowSeparator(.hidden)

@@ -30,7 +30,6 @@ struct SearchView: View {
 
             // ===== 상단 행: 로고 + 검색창 + 돋보기 =====
             HStack(spacing: 2) {
-                // ... (상단 검색바 동일) ...
                 Image("caplog_letter")
                     .resizable()
                     .scaledToFit()
@@ -86,7 +85,6 @@ struct SearchView: View {
             // ===== 콘텐츠 =====
             Group {
                 if !vm.hasSearched {
-                    // ... (RecentSearchList 동일) ...
                     RecentSearchList(
                         items: vm.recentQueries,
                         tap: { term in
@@ -108,7 +106,6 @@ struct SearchView: View {
                         SearchEmptyStateView().padding(.top, 24)
                     } else {
                         List {
-                            // ... (검색 결과 List 동일) ...
                             ForEach(vm.results) { item in
                                 UnifiedCardView(
                                     card: item,
@@ -122,6 +119,8 @@ struct SearchView: View {
                                         } else {
                                             fullscreenImage = item.thumbnailName
                                         }
+                                        // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
+                                        CardManager.shared.markCardAsViewed(item)
                                     }
                                 )
                                     .listRowSeparator(.hidden)
@@ -144,7 +143,6 @@ struct SearchView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        // ✅ 수정: .background(Color.white) 제거
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -160,8 +158,6 @@ struct SearchView: View {
                 }
             }
         }
-        
-        // ... (이하 Sheet, NavigationDestination, TabBar 등 동일) ...
         
         // 공유 시트
         .sheet(item: $shareTarget) { target in
@@ -220,7 +216,6 @@ struct SearchView: View {
 
 // MARK: - Recent Search List
 private struct RecentSearchList: View {
-    // ... (이하 RecentSearchList 동일) ...
     let items: [String]
     let tap: (String) -> Void
     let remove: (String) -> Void

@@ -169,7 +169,6 @@ struct CardDetailView: View {
                 }
             }
         }
-        // 전체 화면 이미지 뷰
         .fullScreenCover(isPresented: Binding(
             get: { selectedImage != nil },
             set: { if !$0 { selectedImage = nil } }
@@ -177,6 +176,10 @@ struct CardDetailView: View {
             if let imageName = selectedImage {
                 FullScreenImageView(imageName: imageName)
             }
+        }
+        // ✅ 수정: 화면이 나타날 때 "최근 본"으로 등록
+        .onAppear {
+            CardManager.shared.markCardAsViewed(card)
         }
     }
     

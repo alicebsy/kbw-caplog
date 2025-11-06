@@ -11,11 +11,12 @@ final class SearchViewModel: ObservableObject {
     @Published var hasSearched: Bool = false
     @Published var recentQueries: [String] = []
 
-    private let cardManager: CardManager
+    private let cardManager: CardManager // ✅ 공유 인스턴스
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        self.cardManager = CardManager()
+        // ✅ 수정: 새 인스턴스 생성 -> 공유 인스턴스 사용
+        self.cardManager = CardManager.shared
         self.loadRecent()
         
         // CardManager 데이터 로드

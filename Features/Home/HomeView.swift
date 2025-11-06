@@ -24,9 +24,7 @@ struct HomeView: View {
     private let rowH      = HomeMetrics.rowHeight
 
     var body: some View {
-        // ✅ 수정: VStack(spacing: 0) 제거
         ScrollView(showsIndicators: false) {
-            // 섹션 간격은 아래 Spacer로만 통제
             VStack(spacing: 0) {
 
                 // ── 상단 인사 헤더 ──
@@ -51,6 +49,8 @@ struct HomeView: View {
                                         if let url = card.thumbnailURL ?? card.screenshotURLs.first {
                                             fullscreenImage = url
                                         }
+                                        // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
+                                        CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
                                 .frame(height: couponH)
@@ -75,6 +75,8 @@ struct HomeView: View {
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
+                                        // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
+                                        CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
                                 .frame(minHeight: rowH)
@@ -99,6 +101,8 @@ struct HomeView: View {
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
+                                        // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
+                                        CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
                                 .frame(minHeight: rowH)
@@ -108,11 +112,8 @@ struct HomeView: View {
                     }
                     Spacer().frame(height: S) // 24pt
                 }
-                
-                // ✅ 수정: 50pt 고정 Spacer 제거 (safeAreaInset이 처리)
             }
         }
-        // ✅ 수정: 탭 바를 ScrollView의 safeAreaInset으로 이동
         .safeAreaInset(edge: .bottom) {
             CaplogTabBar(selected: selectedTab) { tab in
                 selectedTab = tab
@@ -133,8 +134,6 @@ struct HomeView: View {
                 }
             }
         }
-
-        // ... (이하 Sheet 및 NavigationDestination 동일) ...
 
         // 공유 시트
         .sheet(item: $shareTarget) { target in

@@ -92,10 +92,8 @@ struct UnifiedCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .onTapGesture { onTapImage() }
                 
-                // ✅ 간격 추가 (썸네일과 버튼 사이)
                 Spacer().frame(height: 12)
                 
-                // ✅ 액션 버튼 (썸네일 중심 기준 가운데 정렬)
                 HStack(spacing: 14) {
                     Button(action: onShare) {
                         Image(systemName: "square.and.arrow.up")
@@ -106,11 +104,11 @@ struct UnifiedCardView: View {
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color.brandTextSub)
-                .frame(width: 80)  // ✅ 썸네일과 같은 너비로 중앙 정렬
+                .frame(width: 80)
             }
         }
         .padding(16)
-        .background(Color.brandCardBG) // ✅ 이 부분이 Colors.swift의 #F1F1F1을 사용합니다.
+        .background(Color.brandCardBG)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
@@ -122,7 +120,7 @@ struct UnifiedCardView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(height: 160)
-                .clipped()  // ✅ 넘치는 부분 잘라내기
+                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .onTapGesture { onTapImage() }
             
@@ -145,7 +143,7 @@ struct UnifiedCardView: View {
             }
         }
         .padding(16)
-        .background(Color.brandCardBG) // ✅ 이 부분이 Colors.swift의 #F1F1F1을 사용합니다.
+        .background(Color.brandCardBG)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 3, y: 2)
         .onTapGesture { onTap() }
@@ -191,7 +189,7 @@ struct UnifiedCardView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: 64, height: 64)
-                .clipped()  // ✅ 넘치는 부분 잘라내기
+                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .padding(16)
@@ -234,8 +232,7 @@ struct UnifiedCardView: View {
                         .foregroundStyle(.primary)
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { onTap() }
+            // ❌ 수정: .contentShape와 .onTapGesture를 이곳에서 제거
             
             Spacer(minLength: 10)
             
@@ -247,9 +244,8 @@ struct UnifiedCardView: View {
                     .frame(width: 80, height: 80)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() }
+                    .onTapGesture { onTapImage() } // (이미지 탭은 유지)
                 
-                // ✅ 액션 버튼 (썸네일 중심 기준 가운데 정렬)
                 HStack(spacing: 14) {
                     Button(action: onShare) {
                         Image(systemName: "square.and.arrow.up")
@@ -260,11 +256,14 @@ struct UnifiedCardView: View {
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color.brandTextSub)
-                .frame(width: 80)  // ✅ 썸네일과 같은 너비로 중앙 정렬
+                .frame(width: 80)
             }
         }
         .padding(16)
-        .background(Color.homeGreenLight.opacity(0.7))  // ✅ 투명도 70%로 조정
+        // ✅ 수정: .contentShape와 .onTapGesture를 HStack 전체에 적용
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
+        .background(Color.homeGreenLight.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

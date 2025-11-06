@@ -62,7 +62,7 @@ struct Card: Identifiable, Hashable, Codable {
     /// 날짜 문자열 (표시용)
     var dateString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy. MM. dd."  // ✅ 2025. 03. 02. 형식
+        formatter.dateFormat = "yyyy. MM. dd."
         return formatter.string(from: createdAt)
     }
     
@@ -119,15 +119,16 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
             return [
                 FolderSubcategory(name: "맛집", group: "장소"),
                 FolderSubcategory(name: "카페", group: "장소"),
-                FolderSubcategory(name: "공부", group: "학업/업무"),
-                FolderSubcategory(name: "공고", group: "학업/업무"),
-                FolderSubcategory(name: "취업", group: "학업/업무"),
-                FolderSubcategory(name: "필기", group: "학업/업무"),
+                FolderSubcategory(name: "공부", group: "공부"),
+                FolderSubcategory(name: "공고", group: "공부"),
+                FolderSubcategory(name: "취업", group: "공부"),
+                FolderSubcategory(name: "필기", group: "공부"),
                 FolderSubcategory(name: "뉴스", group: "라이프스타일"),
                 FolderSubcategory(name: "문화생활", group: "라이프스타일"),
                 FolderSubcategory(name: "운동/건강", group: "라이프스타일"),
                 FolderSubcategory(name: "기타", group: "라이프스타일"),
-                FolderSubcategory(name: "소비", group: "소비")
+                FolderSubcategory(name: "소비", group: "소비"),
+                FolderSubcategory(name: "쿠폰", group: "소비") // ✅ 쿠폰 카테고리 추가
             ]
         case .contents:
             return [
@@ -168,6 +169,30 @@ struct FolderSubcategory: Identifiable, Hashable {
 // MARK: - 더미 샘플 데이터
 extension Card {
     static let sampleCards: [Card] = [
+        // ✅ 수정: 3개의 쿠폰 데이터를 HomeViewModel에서 이곳으로 이동
+        Card(
+            title: "무료 음료 쿠폰",
+            summary: "스타벅스 무료 음료 1잔",
+            category: .info, subcategory: "쿠폰", tags: ["스타벅스", "무료음료"],
+            fields: ["브랜드": "Starbucks", "만료일": "2025. 10. 20."],
+            thumbnailURL: "shot_coupon", screenshotURLs: ["shot_coupon"]
+        ),
+        Card(
+            title: "10,000원 할인권",
+            summary: "올리브영 1만원 할인",
+            category: .info, subcategory: "쿠폰", tags: ["올리브영", "할인"],
+            fields: ["브랜드": "Olive Young", "만료일": "2025. 10. 22."],
+            thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+        ),
+        Card(
+            title: "치킨 5,000원 할인",
+            summary: "배달의민족 치킨 할인 쿠폰",
+            category: .info, subcategory: "쿠폰", tags: ["배달", "치킨"],
+            fields: ["브랜드": "배달의민족", "만료일": "2025. 10. 25."],
+            thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+        ),
+        
+        // (기존 샘플 데이터)
         Card(
             title: "이목리 막국수",
             summary: "동치미막국수, 명태회막국수",
