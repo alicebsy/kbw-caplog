@@ -124,7 +124,7 @@ struct MyPageProfileSection: View {
 private extension DateFormatter {
     static let display: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy.MM.dd."
+        f.dateFormat = "yyyy. MM. dd."
         return f
     }()
 }

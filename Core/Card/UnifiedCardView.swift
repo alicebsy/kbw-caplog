@@ -15,6 +15,7 @@ struct UnifiedCardView: View {
         case row        // 좌측 정보 + 우측 썸네일 (HomeCardRow, RecentlyRow)
         case horizontal // 상단 썸네일 + 하단 정보 (HomeCardHorizontal)
         case compact    // 작은 카드 (검색 결과, 폴더 목록)
+        case coupon     // 쿠폰 전용 (초록색 배경)
     }
     
     var body: some View {
@@ -26,6 +27,8 @@ struct UnifiedCardView: View {
                 horizontalStyle
             case .compact:
                 compactStyle
+            case .coupon:
+                couponStyle
             }
         }
     }
@@ -73,8 +76,26 @@ struct UnifiedCardView: View {
                         .foregroundStyle(Color.brandTextSub)
                         .lineLimit(1)
                 }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { onTap() }
+            
+            Spacer(minLength: 10)
+            
+            // RIGHT: 썸네일 + 버튼
+            VStack(spacing: 0) {
+                Image(card.thumbnailName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 80, height: 80)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .onTapGesture { onTapImage() }
                 
-                // 액션 버튼
+                // ✅ 간격 추가 (썸네일과 버튼 사이)
+                Spacer().frame(height: 12)
+                
+                // ✅ 액션 버튼 (썸네일 중심 기준 가운데 정렬)
                 HStack(spacing: 14) {
                     Button(action: onShare) {
                         Image(systemName: "square.and.arrow.up")
@@ -85,19 +106,8 @@ struct UnifiedCardView: View {
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color.brandTextSub)
+                .frame(width: 80)  // ✅ 썸네일과 같은 너비로 중앙 정렬
             }
-            .contentShape(Rectangle())
-            .onTapGesture { onTap() }
-            
-            Spacer(minLength: 10)
-            
-            // RIGHT: 썸네일
-            Image(card.thumbnailName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .onTapGesture { onTapImage() }
         }
         .padding(16)
         .background(Color.brandCardBG)
@@ -112,6 +122,7 @@ struct UnifiedCardView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(height: 160)
+                .clipped()  // ✅ 넘치는 부분 잘라내기
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .onTapGesture { onTapImage() }
             
@@ -176,15 +187,12 @@ struct UnifiedCardView: View {
             
             Spacer(minLength: 10)
             
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.tertiarySystemFill))
+            Image(card.thumbnailName)
+                .resizable()
+                .scaledToFill()
                 .frame(width: 64, height: 64)
-                .overlay(
-                    Image(card.thumbnailName)
-                        .resizable()
-                        .scaledToFill()
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                )
+                .clipped()  // ✅ 넘치는 부분 잘라내기
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .padding(16)
         .background(
@@ -192,6 +200,72 @@ struct UnifiedCardView: View {
                 .fill(Color(.secondarySystemBackground))
         )
         .onTapGesture { onTap() }
+    }
+    
+    // MARK: - Coupon Style (연한 파란색 배경)
+    
+    private var couponStyle: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // LEFT: 텍스트 블록
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(card.category.rawValue + " - " + card.subcategory)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.brandTextSub)
+                        .lineLimit(1)
+                    
+                    Text(card.title)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                }
+                
+                if !card.summary.isEmpty {
+                    Text(card.summary)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.brandTextSub)
+                        .lineLimit(2)
+                }
+                
+                // 만료일 표시
+                if let expireDate = card.fields["만료일"] {
+                    Text(expireDate)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.primary)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { onTap() }
+            
+            Spacer(minLength: 10)
+            
+            // RIGHT: 썸네일 + 버튼
+            VStack(spacing: 8) {
+                Image(card.thumbnailName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 80, height: 80)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .onTapGesture { onTapImage() }
+                
+                // ✅ 액션 버튼 (썸네일 중심 기준 가운데 정렬)
+                HStack(spacing: 14) {
+                    Button(action: onShare) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    Button(action: onMore) {
+                        Image(systemName: "ellipsis")
+                    }
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.brandTextSub)
+                .frame(width: 80)  // ✅ 썸네일과 같은 너비로 중앙 정렬
+            }
+        }
+        .padding(16)
+        .background(Color.homeGreenLight.opacity(0.7))  // ✅ 투명도 70%로 조정
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

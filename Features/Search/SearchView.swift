@@ -8,6 +8,12 @@ struct SearchView: View {
     // ✅ dismiss 환경 변수 추가
     @Environment(\.dismiss) private var dismiss
 
+    // ✅ 상세/공유/편집/이미지 팝업 상태
+    @State private var selectedCard: Card? = nil
+    @State private var shareTarget: Card? = nil
+    @State private var editingCard: Card? = nil
+    @State private var fullscreenImage: String? = nil
+
     private var showLogo: Bool { !isFocused }
 
     var body: some View {
@@ -42,7 +48,7 @@ struct SearchView: View {
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)  // ✅ 명시적으로 회색 지정
                         }
                     }
                 }
@@ -101,11 +107,17 @@ struct SearchView: View {
                             ForEach(vm.results) { item in
                                 UnifiedCardView(
                                     card: item,
-                                    style: .compact,
-                                    onTap: {},
-                                    onShare: {},
-                                    onMore: {},
-                                    onTapImage: {}
+                                    style: .row,
+                                    onTap: { selectedCard = item },  // ✅ 상세 화면
+                                    onShare: { shareTarget = item }, // ✅ 공유
+                                    onMore: { editingCard = item },  // ✅ 편집
+                                    onTapImage: {  // ✅ 이미지 전체보기
+                                        if let first = item.screenshotURLs.first {
+                                            fullscreenImage = first
+                                        } else {
+                                            fullscreenImage = item.thumbnailName
+                                        }
+                                    }
                                 )
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -142,6 +154,40 @@ struct SearchView: View {
                         .foregroundColor(.primary)
                 }
             }
+        }
+        
+        // ✅ 공유 시트
+        .sheet(item: $shareTarget) { target in
+            ShareSheetView(
+                target: target,
+                friends: []
+            ) { ids, msg in
+                print("Search 공유 → 대상: \(ids), 메시지: \(msg)")
+            }
+            .presentationDetents([.height(350)])
+        }
+        
+        // ✅ 편집 시트
+        .sheet(item: $editingCard) { card in
+            CardEditSheet(card: card) { updated in
+                print("업데이트: \(updated)")
+            }
+            .presentationDetents([.medium, .large])
+        }
+        
+        // ✅ 전체 이미지 팝업
+        .fullScreenCover(isPresented: Binding(
+            get: { fullscreenImage != nil },
+            set: { if !$0 { fullscreenImage = nil } }
+        )) {
+            if let name = fullscreenImage {
+                HomeImagePopupView(imageName: name)
+            }
+        }
+        
+        // ✅ 상세 화면 이동
+        .navigationDestination(item: $selectedCard) { card in
+            CardDetailView(card: card)
         }
     }
 }

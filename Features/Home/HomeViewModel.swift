@@ -4,20 +4,13 @@ import Combine
 // MARK: - ViewModel
 @MainActor
 final class HomeViewModel: ObservableObject {
-    struct CouponInfo {
-        var title: String
-        var expireDate: String
-        var brand: String
-        var screenshotName: String?
-    }
-
     // 화면 상태
     @Published var showNotificationView: Bool = false
     @Published var showMyPageView: Bool = false
 
     // 데이터
     @Published var userName: String = "강배우"
-    @Published var coupon: CouponInfo = .init(title: "", expireDate: "", brand: "", screenshotName: nil)
+    @Published var coupon: Card? = nil  // ✅ Card로 변경
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
 
@@ -67,12 +60,19 @@ final class HomeViewModel: ObservableObject {
         recommended = cardManager.recommendedCards(limit: 5)
         recent = cardManager.recentCards(limit: 10)
         
-        // 쿠폰 데이터 (Mock)
-        self.coupon = .init(
+        // 쿠폰 데이터 (Card 모델 사용)
+        self.coupon = Card(
             title: "무료 음료 쿠폰",
-            expireDate: "2025-10-20",
-            brand: "Starbucks",
-            screenshotName: "shot_coupon"
+            summary: "스타벅스 무료 음료 1잔",
+            category: .info,
+            subcategory: "쿠폰",
+            tags: ["스타벅스", "무료음료"],
+            fields: [
+                "브랜드": "Starbucks",
+                "만료일": "2025. 10. 20."  // ✅ 날짜 형식 변경
+            ],
+            thumbnailURL: "shot_coupon",
+            screenshotURLs: ["shot_coupon"]
         )
         
         print("✅ HomeViewModel: 추천 \(recommended.count)개, 최근 \(recent.count)개 카드 로드 완료")

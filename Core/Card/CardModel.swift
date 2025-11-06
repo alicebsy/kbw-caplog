@@ -52,17 +52,17 @@ struct Card: Identifiable, Hashable, Codable {
     
     /// 주소/위치 정보
     var location: String {
-        fields["주소"] ?? 
-        fields["위치"] ?? 
-        fields["장소명"] ?? 
-        fields["가게명"] ?? 
+        fields["주소"] ??
+        fields["위치"] ??
+        fields["장소명"] ??
+        fields["가게명"] ??
         ""
     }
     
     /// 날짜 문자열 (표시용)
     var dateString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd"
+        formatter.dateFormat = "yyyy. MM. dd."  // ✅ 2025. 03. 02. 형식
         return formatter.string(from: createdAt)
     }
     

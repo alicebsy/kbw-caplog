@@ -31,25 +31,32 @@ struct HomeView: View {
                     )
 
                     // ✅ "Today's Summary" - 통일된 스타일로 변경
-                    HomeSectionHeader(title: "Today's Summary")
+                    HomeSectionHeader(title: "🗓️ Today's Summary")
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
 
-                    // Coupon (green)
-                    ExpiringCouponCard(
-                        title: vm.coupon.title,
-                        date: vm.coupon.expireDate,
-                        brand: vm.coupon.brand
-                    ) {
-                        if let name = vm.coupon.screenshotName {
-                            fullscreenImage = name
-                        }
+                    // Coupon Card (초록색 배경)
+                    if let coupon = vm.coupon {
+                        UnifiedCardView(
+                            card: coupon,
+                            style: .coupon,
+                            onTap: { selectedCard = coupon },
+                            onShare: { shareTarget = coupon },
+                            onMore: { editingCard = coupon },
+                            onTapImage: {
+                                if let thumb = coupon.thumbnailURL {
+                                    fullscreenImage = thumb
+                                } else if let first = coupon.screenshotURLs.first {
+                                    fullscreenImage = first
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
 
                     // Recommended
                     VStack(alignment: .leading, spacing: 0) {
-                        HomeSectionHeader(title: "Recommended Contents")
+                        HomeSectionHeader(title: "💡 Recommended Contents")
                             .padding(.top, 20)
                             .padding(.horizontal, 20)
                             .padding(.bottom, -20)
@@ -78,14 +85,14 @@ struct HomeView: View {
                     }
 
                     // Recently Viewed
-                    HomeSectionHeader(title: "Recently Viewed")
+                    HomeSectionHeader(title: "👀 Recently Viewed")
                         .padding(.horizontal, 20)
 
                     VStack(spacing: 12) {
                         ForEach(vm.recommended.prefix(3)) { card in
                             UnifiedCardView(
                                 card: card,
-                                style: .compact,
+                                style: .row,  // ✅ compact → row로 변경
                                 onTap: { selectedCard = card },
                                 onShare: { shareTarget = card },
                                 onMore: { editingCard = card },
