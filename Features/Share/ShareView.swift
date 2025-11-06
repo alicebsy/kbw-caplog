@@ -5,10 +5,8 @@ enum ShareInnerTab { case friends, chats }
 struct ShareView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
     
-    // 🚨 @Environment(\.dismiss)는 더 이상 필요하지 않을 수 있습니다.
-    // @Environment(\.dismiss) private var dismiss
-
-    @StateObject private var vm = ShareViewModel(repo: MockShareRepository())
+    // ✅ (수정) 싱글톤 ViewModel 사용
+    @StateObject private var vm = ShareViewModel.shared
 
     // 하단 글로벌 탭 라우팅
     @State private var goHome = false
@@ -17,11 +15,9 @@ struct ShareView: View {
     @State private var goMyPage = false
 
     // 상단 내부 탭
-    @State private var innerTab: ShareInnerTab = .friends // ✅ 1. 초기 탭 수정
+    @State private var innerTab: ShareInnerTab = .friends
 
     var body: some View {
-        // ❌ NavigationStack { ... } 제거
-        
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Button { innerTab = .friends } label: {
@@ -51,27 +47,11 @@ struct ShareView: View {
                 }
             }
         }
-        // ✅ 이 View가 AppRootView의 NavigationStack에 의해 표시될 때 제목을 설정합니다.
         .navigationTitle("Share")
         .navigationBarTitleDisplayMode(.inline)
         
-        // ✅ 2. 문제의 원인이었던 커스텀 '뒤로가기' 툴바 제거
-        /*
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        */
         .task { await vm.loadAll() }
         
-        // 🚨 참고: AppRootView에서 이미 TabView를 사용 중인데,
-        //    여기서 CaplogTabBar를 또 safeAreaInset으로 추가하고 있습니다.
-        //    현재 네비게이션 문제와는 별개지만, 탭바가 2개 생길 수 있습니다.
         .safeAreaInset(edge: .bottom) {
             CaplogTabBar(selected: .share) { tab in
                 onSelectTab?(tab)
@@ -88,7 +68,5 @@ struct ShareView: View {
         .navigationDestination(isPresented: $goFolder) { FolderView() }
         .navigationDestination(isPresented: $goSearch) { SearchView() }
         .navigationDestination(isPresented: $goMyPage) { MyPageView() }
-        
-        // ❌ .navigationBarBackButtonHidden(true) 제거
     }
 }

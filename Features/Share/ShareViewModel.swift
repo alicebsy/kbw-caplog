@@ -2,9 +2,6 @@ import Foundation
 import SwiftUI
 import Combine
 
-// ❌ (제거) MockFriendIDStrings 구조체 (데이터 중복)
-
-// MARK: - Local UI Models
 // ... (ChatMessage, ChatThread 정의는 변경 없음) ...
 struct ChatMessage: Identifiable, Codable, Equatable {
     let id: String
@@ -31,7 +28,6 @@ struct ChatThread: Identifiable, Codable, Equatable, Hashable {
     var lastMessageCardTitle: String?
 }
 
-// MARK: - Repository Protocol
 // ... (ShareRepository 프로토콜 정의는 변경 없음) ...
 protocol ShareRepository {
     func fetchFriends() async throws -> [Friend]
@@ -49,7 +45,10 @@ extension ShareRepository {
 // MARK: - Mock Repository
 final class MockShareRepository: ShareRepository {
     
-    // ✅ FriendManager의 static 데이터에서 ID를 직접 가져옴
+    // ✅ (추가) 싱글톤 인스턴스
+    static let shared = MockShareRepository()
+    
+    // ... (ID 정의는 변경 없음) ...
     private static let minhaID = FriendManager.mockFriends.first(where: { $0.name == "우민하" })!.id
     private static let dahyeID = FriendManager.mockFriends.first(where: { $0.name == "강다혜" })!.id
     private static let seoyeonID = FriendManager.mockFriends.first(where: { $0.name == "배서연" })!.id
@@ -69,8 +68,8 @@ final class MockShareRepository: ShareRepository {
     private var _threads: [ChatThread] = []
     private var messageStore: [String: [ChatMessage]] = [:]
 
-    // ✅ (수정) init에서 모든 목업 데이터를 생성
-    init() {
+    // ✅ (수정) init을 private으로 변경
+    private init() {
         // --- 1. 메시지 저장소(messageStore) 정의 ---
         
         let t1Messages: [ChatMessage] = [
@@ -140,7 +139,7 @@ final class MockShareRepository: ShareRepository {
         self.messageStore = [
             "t1": t1Messages, "t2": t2Messages, "t3": t3Messages, "t4": t4Messages,
             "t5": t5Messages, "t6": t6Messages, "t7": t7Messages, "t8": t8Messages,
-            "t9": t9Messages, "t10": t10Messages
+            "t9": t9Messages, "t1J0": t10Messages
         ]
         
         // --- 2. 채팅방(_threads) 정의 ---
@@ -270,6 +269,10 @@ struct LiveShareRepository: ShareRepository {
 // MARK: - ViewModel
 @MainActor
 final class ShareViewModel: ObservableObject {
+    
+    // ✅ (추가) ViewModel 싱글톤 인스턴스
+    static let shared = ShareViewModel(repo: MockShareRepository.shared)
+    
     private let friendManager = FriendManager.shared
     private let cardManager = CardManager.shared
     
@@ -292,7 +295,12 @@ final class ShareViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let repo: ShareRepository
-    init(repo: ShareRepository) { self.repo = repo }
+    
+    // ✅ (수정) init을 private으로 변경
+    private init(repo: ShareRepository) {
+        self.repo = repo
+        print("✅ ShareViewModel.shared initialized")
+    }
     
     func getCard(byId id: UUID) -> Card? {
         return cardManager.card(withId: id)
@@ -310,8 +318,6 @@ final class ShareViewModel: ObservableObject {
             for i in 0..<fetchedThreads.count {
                 var thread = fetchedThreads[i]
                 
-                // ✅ (수정) 1:1이든 그룹이든 항상 이름 목록을 새로 생성
-                
                 // 1. 참여자 이름 목록 (가나다순)
                 let participantNames = thread.participantIds.compactMap { id -> String? in
                     guard id != "me" else { return nil }
@@ -327,7 +333,7 @@ final class ShareViewModel: ObservableObject {
                     thread.title = participantNames.first!
                 } else {
                     // 그룹 채팅 (글자 수 기반 축약)
-                    let maxTitleLength = 18 // ✅ (수정) 20 -> 18로 더 줄임
+                    let maxTitleLength = 18
                     var currentTitle = ""
                     var namesAdded = 0
                     

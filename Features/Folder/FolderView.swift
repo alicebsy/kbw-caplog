@@ -151,11 +151,13 @@ struct FolderItemListView: View {
     let subcategory: String
     
     @State private var selectedCard: Card? = nil
-    @State private var shareTarget: Card? = nil
+    // ❌ (제거) shareTarget
+    // @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     
-    @StateObject private var friendManager = FriendManager.shared
+    // ❌ (제거) friendManager
+    // @StateObject private var friendManager = FriendManager.shared
     
     @State private var selectedTab: CaplogTab = .folder
     @State private var goHome = false
@@ -179,7 +181,8 @@ struct FolderItemListView: View {
                         card: item,
                         style: .row,
                         onTap: { selectedCard = item },
-                        onShare: { shareTarget = item },
+                        // ❌ (제거) onShare
+                        // onShare: { shareTarget = item },
                         onMore: { editingCard = item },
                         onTapImage: {
                             if let first = item.screenshotURLs.first {
@@ -187,7 +190,6 @@ struct FolderItemListView: View {
                             } else {
                                 fullscreenImage = item.thumbnailName
                             }
-                            // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
                             CardManager.shared.markCardAsViewed(item)
                         }
                     )
@@ -201,15 +203,13 @@ struct FolderItemListView: View {
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
         
+        // ❌ (제거) ShareSheetView
+        /*
         .sheet(item: $shareTarget) { target in
-            ShareSheetView(
-                target: target,
-                friends: friendManager.friends
-            ) { ids, msg in
-                print("Folder 공유 → 대상: \(ids), 메시지: \(msg)")
-            }
-            .presentationDetents([.height(350)])
+            ...
         }
+        */
+        
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) { updated in
                 print("업데이트: \(updated)")

@@ -9,12 +9,13 @@ struct SearchView: View {
 
     // 상세/공유/편집/이미지 팝업 상태
     @State private var selectedCard: Card? = nil
-    @State private var shareTarget: Card? = nil
+    // ❌ (제거) shareTarget
+    // @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     
-    // FriendManager 사용
-    @StateObject private var friendManager = FriendManager.shared
+    // ❌ (제거) friendManager
+    // @StateObject private var friendManager = FriendManager.shared
 
     // 탭 라우팅을 위한 변수 추가
     var onSelectTab: ((CaplogTab) -> Void)? = nil
@@ -111,7 +112,8 @@ struct SearchView: View {
                                     card: item,
                                     style: .row,
                                     onTap: { selectedCard = item },
-                                    onShare: { shareTarget = item },
+                                    // ❌ (제거) onShare
+                                    // onShare: { shareTarget = item },
                                     onMore: { editingCard = item },
                                     onTapImage: {
                                         if let first = item.screenshotURLs.first {
@@ -119,7 +121,6 @@ struct SearchView: View {
                                         } else {
                                             fullscreenImage = item.thumbnailName
                                         }
-                                        // ✅ 수정: 이미지 클릭 시에도 최근 본 항목으로 등록
                                         CardManager.shared.markCardAsViewed(item)
                                     }
                                 )
@@ -159,7 +160,8 @@ struct SearchView: View {
             }
         }
         
-        // 공유 시트
+        // ❌ (제거) 공유 시트
+        /*
         .sheet(item: $shareTarget) { target in
             ShareSheetView(
                 target: target,
@@ -169,6 +171,7 @@ struct SearchView: View {
             }
             .presentationDetents([.height(350)])
         }
+        */
         
         // 편집 시트
         .sheet(item: $editingCard) { card in

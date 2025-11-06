@@ -238,7 +238,7 @@ struct MessageRow: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .padding(.bottom, 2)
-                                .layoutPriority(1) // ✅ (추가)
+                                // ❌ (제거) .layoutPriority(1)
                         }
                         
                         UnifiedCardView(card: card, style: .chat)
@@ -252,7 +252,7 @@ struct MessageRow: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .padding(.bottom, 2)
-                                .layoutPriority(1) // ✅ (추가)
+                                // ❌ (제거) .layoutPriority(1)
                         }
                     }
                     

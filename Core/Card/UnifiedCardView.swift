@@ -7,16 +7,19 @@ struct UnifiedCardView: View {
     let style: CardStyle
     
     var onTap: () -> Void = {}
-    var onShare: () -> Void = {}
+    // ❌ onShare 콜백 제거
     var onMore: () -> Void = {}
     var onTapImage: () -> Void = {}
     
+    // ✅ (추가) 공유 시트를 띄우기 위한 내부 상태
+    @State private var isShareSheetPresented = false
+    
     enum CardStyle {
-        case row        // 좌측 정보 + 우측 썸네일 (HomeCardRow, RecentlyRow)
-        case horizontal // 상단 썸네일 + 하단 정보 (HomeCardHorizontal)
-        case compact    // 작은 카드 (검색 결과, 폴더 목록)
-        case coupon     // 쿠폰 전용 (초록색 배경)
-        case chat       // ✅ (추가) 채팅방 전용 (compact보다 폰트 작게)
+        case row
+        case horizontal
+        case compact
+        case coupon
+        case chat
     }
     
     var body: some View {
@@ -30,9 +33,64 @@ struct UnifiedCardView: View {
                 compactStyle
             case .coupon:
                 couponStyle
-            case .chat: // ✅ (추가)
+            case .chat:
                 chatStyle
             }
+        }
+        // ✅ (수정) .sheet 수정자에 실제 전송 로직 추가
+        .sheet(isPresented: $isShareSheetPresented) {
+            ShareSheetView(
+                target: card
+            ) { friendIDs, threadIDs, msg in
+                
+                // ✅ (추가) 싱글톤 VM을 가져와서 전송 로직 실행
+                let vm = ShareViewModel.shared
+                let cardToSend = self.card
+                
+                Task {
+                    // 1. 선택된 기존 채팅방에 전송
+                    for threadId in threadIDs {
+                        await vm.sendCard(to: threadId, card: cardToSend)
+                        if !msg.isEmpty {
+                            await vm.send(to: threadId, text: msg)
+                        }
+                    }
+                    
+                    // 2. 선택된 친구와 1:1 채팅방을 찾아 전송
+                    for friendId in friendIDs {
+                        // 친구 객체 찾기
+                        guard let friend = vm.friends.first(where: { $0.id == friendId }) else { continue }
+                        
+                        // 기존 1:1 채팅방 찾기
+                        var targetThreadId: String
+                        if let existingThread = vm.threads.first(where: {
+                            $0.participantIds.count == 2 && $0.participantIds.contains(friend.id)
+                        }) {
+                            targetThreadId = existingThread.id
+                        } else {
+                            // 새 1:1 채팅방 생성
+                            let newThread = ChatThread(
+                                id: "new_\(friend.id)_\(UUID().uuidString)",
+                                title: friend.name, // (loadAll에서 어차피 다시 계산됨)
+                                participantIds: ["me", friend.id],
+                                lastMessageText: nil,
+                                lastMessageAt: Date(),
+                                unreadCount: 0,
+                                lastMessageCardTitle: nil
+                            )
+                            await vm.addNewThread(newThread)
+                            targetThreadId = newThread.id
+                        }
+                        
+                        // 카드 및 메시지 전송
+                        await vm.sendCard(to: targetThreadId, card: cardToSend)
+                        if !msg.isEmpty {
+                            await vm.send(to: targetThreadId, text: msg)
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.height(420)])
         }
     }
     
@@ -40,7 +98,7 @@ struct UnifiedCardView: View {
     
     private var rowStyle: some View {
         HStack(alignment: .top, spacing: 12) {
-            // LEFT: 텍스트 블록
+            // ... (VStack: 텍스트 블록) ...
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.category.rawValue + " - " + card.subcategory)
@@ -98,7 +156,8 @@ struct UnifiedCardView: View {
                 Spacer().frame(height: 12)
                 
                 HStack(spacing: 14) {
-                    Button(action: onShare) {
+                    // ✅ (수정) onShare -> isShareSheetPresented = true
+                    Button(action: { isShareSheetPresented = true }) {
                         Image(systemName: "square.and.arrow.up")
                     }
                     Button(action: onMore) {
@@ -203,57 +262,58 @@ struct UnifiedCardView: View {
         .onTapGesture { onTap() }
     }
     
-    // MARK: - ✅ (수정) Chat Style
+    // MARK: - Chat Style
     
     private var chatStyle: some View {
-        HStack(alignment: .top, spacing: 10) { // spacing 12 -> 10
-            VStack(alignment: .leading, spacing: 6) { // spacing 8 -> 6
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(card.category.rawValue + " - " + card.subcategory)
-                    .font(.system(size: 11, weight: .semibold)) // 12pt -> 11pt
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
                 Text(card.title)
-                    .font(.system(size: 16, weight: .bold)) // 18pt -> 16pt
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true) // ✅ 단어 잘림 방지
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if !card.summary.isEmpty {
                     Text(card.summary)
-                        .font(.system(size: 13)) // 14pt -> 13pt
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true) // ✅ 단어 잘림 방지
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 if !card.location.isEmpty {
                     Text(card.location)
-                        .font(.system(size: 12)) // 13pt -> 12pt
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 
                 if !card.dateString.isEmpty {
                     Text(card.dateString)
-                        .font(.system(size: 11)) // 12pt -> 11pt
+                        .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
             }
             
-            Spacer(minLength: 8) // minLength 10 -> 8
+            Spacer(minLength: 8)
             
             Image(card.thumbnailName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 60, height: 60) // 64x64 -> 60x60
+                .frame(width: 60, height: 60)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 8)) // 10 -> 8
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .padding(14) // padding 16 -> 14
+        .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
         .onTapGesture { onTap() }
+        .frame(maxWidth: 200)
     }
     
     // MARK: - Coupon Style (연한 파란색 배경)
@@ -281,7 +341,6 @@ struct UnifiedCardView: View {
                         .lineLimit(2)
                 }
                 
-                // 만료일 표시
                 if let expireDate = card.fields["만료일"] {
                     Text(expireDate)
                         .font(.system(size: 20, weight: .bold))
@@ -302,7 +361,8 @@ struct UnifiedCardView: View {
                     .onTapGesture { onTapImage() }
                 
                 HStack(spacing: 14) {
-                    Button(action: onShare) {
+                    // ✅ (수정) onShare -> isShareSheetPresented = true
+                    Button(action: { isShareSheetPresented = true }) {
                         Image(systemName: "square.and.arrow.up")
                     }
                     Button(action: onMore) {
@@ -323,7 +383,6 @@ struct UnifiedCardView: View {
 }
 
 // MARK: - Preview
-
 #Preview("Card Styles") {
     let sampleCard = Card.sampleCards[0]
     
@@ -338,10 +397,9 @@ struct UnifiedCardView: View {
             Text("Compact Style").font(.headline)
             UnifiedCardView(card: sampleCard, style: .compact)
             
-            // ✅ (추가) Chat 스타일 프리뷰
             Text("Chat Style").font(.headline)
             UnifiedCardView(card: sampleCard, style: .chat)
-                .frame(width: 200) // 채팅방에서 사용할 프레임
+                .frame(maxWidth: 200)
         }
         .padding()
     }
