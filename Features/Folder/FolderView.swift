@@ -56,6 +56,13 @@ struct FolderView: View {
                 .navigationDestination(isPresented: $goSearch) { SearchView() }
                 .navigationDestination(isPresented: $goShare)  { ShareView() }
                 .navigationDestination(isPresented: $goMyPage) { MyPageView() }
+                
+                // ✅ 데이터 로드
+                .onAppear {
+                    Task {
+                        await manager.loadAllCards()
+                    }
+                }
         }
     }
 }
@@ -154,8 +161,22 @@ struct FolderItemListView: View {
     @EnvironmentObject private var manager: CardManager
     let category: FolderCategory
     let subcategory: String
+    
+    // ✅ 상세/공유/편집/이미지 팝업 상태
+    @State private var selectedCard: Card? = nil
+    @State private var shareTarget: Card? = nil
+    @State private var editingCard: Card? = nil
+    @State private var fullscreenImage: String? = nil
+    
+    // ✅ FriendManager 사용
+    @StateObject private var friendManager = FriendManager.shared
+    
     private var filtered: [Card] {
-        manager.cards(for: category, subcategory: subcategory)
+        let result = manager.cards(for: category, subcategory: subcategory)
+        print("📁 FolderItemListView - category: \(category.rawValue), subcategory: \(subcategory)")
+        print("📁 Filtered cards: \(result.count)개")
+        print("📁 All cards in manager: \(manager.allCards.count)개")
+        return result
     }
     var body: some View {
         List {
@@ -164,11 +185,17 @@ struct FolderItemListView: View {
                 ForEach(filtered) { item in
                     UnifiedCardView(
                         card: item,
-                        style: .compact,
-                        onTap: {},
-                        onShare: {},
-                        onMore: {},
-                        onTapImage: {}
+                        style: .row,  // ✅ compact → row로 변경
+                        onTap: { selectedCard = item },  // ✅ 상세 화면
+                        onShare: { shareTarget = item }, // ✅ 공유
+                        onMore: { editingCard = item },  // ✅ 편집
+                        onTapImage: {  // ✅ 이미지 전체보기
+                            if let first = item.screenshotURLs.first {
+                                fullscreenImage = first
+                            } else {
+                                fullscreenImage = item.thumbnailName
+                            }
+                        }
                     )
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -179,12 +206,39 @@ struct FolderItemListView: View {
         .listStyle(.plain)
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button(action: { /* 정렬/필터 */ }) { Image(systemName: "line.3.horizontal.decrease.circle") }
-                Button(action: { /* 공유 */ }) { Image(systemName: "square.and.arrow.up") }
-                Button(action: { /* 추가 */ }) { Image(systemName: "plus.circle") }
+        
+        // ✅ 공유 시트
+        .sheet(item: $shareTarget) { target in
+            ShareSheetView(
+                target: target,
+                friends: friendManager.friends  // ✅ FriendManager 사용
+            ) { ids, msg in
+                print("Folder 공유 → 대상: \(ids), 메시지: \(msg)")
             }
+            .presentationDetents([.height(350)])
+        }
+        
+        // ✅ 편집 시트
+        .sheet(item: $editingCard) { card in
+            CardEditSheet(card: card) { updated in
+                print("업데이트: \(updated)")
+            }
+            .presentationDetents([.medium, .large])
+        }
+        
+        // ✅ 전체 이미지 팝업
+        .fullScreenCover(isPresented: Binding(
+            get: { fullscreenImage != nil },
+            set: { if !$0 { fullscreenImage = nil } }
+        )) {
+            if let name = fullscreenImage {
+                HomeImagePopupView(imageName: name)
+            }
+        }
+        
+        // ✅ 상세 화면 이동
+        .navigationDestination(item: $selectedCard) { card in
+            CardDetailView(card: card)
         }
     }
     private var emptyState: some View {

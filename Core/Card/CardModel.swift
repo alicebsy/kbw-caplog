@@ -186,7 +186,7 @@ extension Card {
             title: "낭만식탁",
             summary: "사케동, 간장새우, 감성 인테리어",
             category: .info,
-            subcategory: "카페",
+            subcategory: "맛집",
             tags: ["데이트", "분위기좋음", "서대문"],
             fields: [
                 "장소명": "낭만식탁",

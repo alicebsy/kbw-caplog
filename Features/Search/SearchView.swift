@@ -13,6 +13,9 @@ struct SearchView: View {
     @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
+    
+    // ✅ FriendManager 사용
+    @StateObject private var friendManager = FriendManager.shared
 
     private var showLogo: Bool { !isFocused }
 
@@ -160,7 +163,7 @@ struct SearchView: View {
         .sheet(item: $shareTarget) { target in
             ShareSheetView(
                 target: target,
-                friends: []
+                friends: friendManager.friends  // ✅ FriendManager 사용
             ) { ids, msg in
                 print("Search 공유 → 대상: \(ids), 메시지: \(msg)")
             }

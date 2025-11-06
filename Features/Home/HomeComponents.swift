@@ -7,7 +7,7 @@ struct HomeSectionHeader: View {
         HStack {
             Text(title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Color.brandTextMain)
+                .foregroundStyle(Color.black)  // ✅ brandTextMain → black
                 .lineLimit(1)
             Spacer()
         }
@@ -24,22 +24,23 @@ struct HomeHeader: View {
     var onTapNotification: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            // ✅ "Hello, 강배우" 폰트 크기 증가 + 상단 여백
-            Text("Hello, \(userName)")
+        HStack(alignment: .center, spacing: 12) {  // ✅ spacing 16 → 12
+            // ✅ "Hello, 강배우 😊" 이모지 추가
+            Text("Hello, \(userName) 😊")
                 .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.black)
             
             Spacer()
             
+            // ✅ 알림 아이콘: 테두리만, 파란색
             Button(action: onTapNotification) {
                 Image(systemName: "bell")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color.blue)  // ✅ 파란색
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 12)  // ✅ 상단 여백 추가
+        .padding(.top, 12)  // ✅ 상단 여백 유지
     }
 }
 

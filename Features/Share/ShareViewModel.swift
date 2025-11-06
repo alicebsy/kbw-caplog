@@ -145,7 +145,19 @@ struct LiveShareRepository: ShareRepository {
 // MARK: - ViewModel
 @MainActor
 final class ShareViewModel: ObservableObject {
-    @Published private(set) var friends: [Friend] = []
+    // ✅ FriendManager 사용 (전역 친구 목록)
+    private let friendManager = FriendManager.shared
+    var friends: [Friend] {
+        // ShareFriend → Friend 변환
+        friendManager.friends.map { shareFriend in
+            Friend(
+                id: shareFriend.id.uuidString,
+                name: shareFriend.name,
+                avatarURL: URL(string: shareFriend.avatar)
+            )
+        }
+    }
+    
     @Published private(set) var threads: [ChatThread] = []
     @Published private(set) var messagesByThread: [String: [ChatMessage]] = [:]
 
@@ -160,11 +172,11 @@ final class ShareViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            async let f = repo.fetchFriends()
-            async let t = repo.fetchChatThreads()
-            let (friends, threads) = try await (f, t)
-            self.friends = friends
-            self.threads = threads.sorted { ($0.lastMessageAt ?? .distantPast) > ($1.lastMessageAt ?? .distantPast) }
+            // ✅ 친구 목록은 FriendManager에서 관리
+            await friendManager.loadFriends()
+            
+            let t = try await repo.fetchChatThreads()
+            self.threads = t.sorted { ($0.lastMessageAt ?? .distantPast) > ($1.lastMessageAt ?? .distantPast) }
         } catch {
             self.errorMessage = error.localizedDescription
         }

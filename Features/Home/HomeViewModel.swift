@@ -14,13 +14,9 @@ final class HomeViewModel: ObservableObject {
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
 
-    // 공유용 친구 목록(임시)
-    @Published var friends: [ShareFriend] = [
-        .init(id: UUID(), name: "다혜", avatar: "avatar1"),
-        .init(id: UUID(), name: "서연", avatar: "avatar2"),
-        .init(id: UUID(), name: "민하", avatar: "avatar3"),
-        .init(id: UUID(), name: "바리", avatar: "avatar4")
-    ]
+    // ✅ FriendManager 사용
+    private let friendManager = FriendManager.shared
+    var friends: [ShareFriend] { friendManager.friends }
     
     // ✅ CardManager 사용
     private let cardManager: CardManager

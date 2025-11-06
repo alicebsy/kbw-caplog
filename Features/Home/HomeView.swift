@@ -22,20 +22,21 @@ struct HomeView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 10) {
+                VStack(spacing: 0) {  // ✅ spacing 제거, 각 섹션에서 개별 관리
 
                     // Header
                     HomeHeader(
                         userName: vm.userName,
                         onTapNotification: { vm.showNotificationView = true }
                     )
+                    .padding(.bottom, 24)  // ✅ Header → Today's Summary 간격
 
-                    // ✅ "Today's Summary" - 통일된 스타일로 변경
+                    // ✅ "Today's Summary"
                     HomeSectionHeader(title: "🗓️ Today's Summary")
                         .padding(.horizontal, 20)
-                        .padding(.top, 8)
+                        .padding(.bottom, 12)  // ✅ 타이틀 아래 간격 추가
 
-                    // Coupon Card (초록색 배경)
+                    // Coupon Card
                     if let coupon = vm.coupon {
                         UnifiedCardView(
                             card: coupon,
@@ -53,13 +54,16 @@ struct HomeView: View {
                         )
                         .padding(.horizontal, 20)
                     }
+                    
+                    // ✅ Coupon 유무와 관계없이 일정한 간격 유지
+                    Spacer()
+                        .frame(height: 24)  // ✅ Today's Summary → Recommended 간격
 
                     // Recommended
                     VStack(alignment: .leading, spacing: 0) {
                         HomeSectionHeader(title: "💡 Recommended Contents")
-                            .padding(.top, 20)
                             .padding(.horizontal, 20)
-                            .padding(.bottom, -20)
+                            .padding(.bottom, -8)  // ✅ 타이틀과 카드 사이 여백 줄임
 
                         TabView {
                             ForEach(vm.recommended.prefix(3)) { card in
@@ -80,19 +84,21 @@ struct HomeView: View {
                                 .padding(.horizontal, 20)
                             }
                         }
-                        .frame(height: 250)
+                        .frame(height: 180)  // ✅ 200 → 180으로 더 줄임
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
                     }
+                    .padding(.bottom, 12)  // ✅ 16 → 12로 더 줄임
 
                     // Recently Viewed
                     HomeSectionHeader(title: "👀 Recently Viewed")
                         .padding(.horizontal, 20)
+                        .padding(.bottom, 8)  // ✅ 타이틀 아래 간격
 
                     VStack(spacing: 12) {
                         ForEach(vm.recommended.prefix(3)) { card in
                             UnifiedCardView(
                                 card: card,
-                                style: .row,  // ✅ compact → row로 변경
+                                style: .row,
                                 onTap: { selectedCard = card },
                                 onShare: { shareTarget = card },
                                 onMore: { editingCard = card },
@@ -107,7 +113,7 @@ struct HomeView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 80)
+                    .padding(.bottom, 80)  // ✅ 하단 탭바 여백
                 }
             }
 
