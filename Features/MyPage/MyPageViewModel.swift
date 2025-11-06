@@ -5,15 +5,23 @@ import CoreLocation
 @MainActor
 final class MyPageViewModel: ObservableObject {
     enum Gender: String, CaseIterable, Identifiable {
-        case male = "남성", female = "여성"
+        case male = "남성"
+        case female = "여성"
+        
         var id: String { rawValue }
-        var apiCode: String { self == .male ? "M" : "F" }
+        var apiCode: String {
+            switch self {
+            case .male: return "M"
+            case .female: return "F"
+            }
+        }
     }
 
     // UI 바인딩 상태
+    @Published var userId: String = ""
     @Published var name: String = ""
     @Published var email: String = ""
-    @Published var gender: Gender = .male
+    @Published var gender: Gender? = nil  // nil = 선택 안 함
     @Published var birthday: Date? = nil
 
     @Published var allowLocationRecommend = true
@@ -83,11 +91,12 @@ final class MyPageViewModel: ObservableObject {
     func loadProfile() async {
         do {
             let me = try await userService.fetchMe()
+            userId = me.userId
             name = me.nickname
             email = me.email
-            if let g = me.gender { gender = (g == "M") ? .male : .female }
+            gender = me.gender.map { $0 == "M" ? .male : .female }
             birthday = me.birthday
-            print("✅ 프로필 로드 완료: \(name), \(gender.rawValue)")
+            print("✅ 프로필 로드 완료: \(userId), \(name), \(gender?.rawValue ?? "미선택")")
             
             NotificationCenter.default.post(
                 name: .userProfileUpdated,
@@ -96,9 +105,10 @@ final class MyPageViewModel: ObservableObject {
             )
         } catch {
             print("⚠️ 프로필 로드 실패 (Mock 모드): \(error)")
+            userId = "ewhakbw"
             name = "강배우"
             email = "ewhakbw@gmail.com"
-            gender = .male
+            gender = nil
             birthday = nil
             
             NotificationCenter.default.post(
@@ -112,7 +122,7 @@ final class MyPageViewModel: ObservableObject {
     func saveProfile() async {
         print("🔥 saveProfile() 시작")
         print("   - name: \(name)")
-        print("   - gender: \(gender.rawValue)")
+        print("   - gender: \(gender?.rawValue ?? "미선택")")
         print("   - birthday: \(birthday?.description ?? "nil")")
         
         guard isNameValid else {
@@ -141,14 +151,14 @@ final class MyPageViewModel: ObservableObject {
             )
             
             print("✅ API 호출 성공!")
+            print("   - 반환된 userId: \(updated.userId)")
             print("   - 반환된 nickname: \(updated.nickname)")
             print("   - 반환된 gender: \(updated.gender ?? "nil")")
             
+            userId = updated.userId
             name = updated.nickname
             email = updated.email
-            if let g = updated.gender {
-                gender = (g == "M") ? .male : .female
-            }
+            gender = updated.gender.map { $0 == "M" ? .male : .female }
             birthday = updated.birthday
             
             print("✅ 상태 업데이트 완료")

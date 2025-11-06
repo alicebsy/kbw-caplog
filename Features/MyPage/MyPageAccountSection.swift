@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MyPageAccountSection: View {
     @Binding var name: String
+    let userId: String
     let email: String
     var onChangePassword: () -> Void
     var onSave: () -> Void
@@ -37,6 +38,14 @@ struct MyPageAccountSection: View {
                     fullWidth: false,
                     isEnabled: isSaveEnabled
                 )
+            }
+
+            LabeledRow(label: "아이디") {
+                Text(userId)
+                    .foregroundColor(.black)
+                    .textSelection(.enabled)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
 
             LabeledRow(label: "이메일") {

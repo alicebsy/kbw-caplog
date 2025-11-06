@@ -52,6 +52,7 @@ struct MyPageView: View {
 
             MyPageAccountSection(
                 name: $vm.name,
+                userId: vm.userId,
                 email: vm.email,
                 onChangePassword: { showPasswordSheet = true },
                 // ✅ Task 내부에서 await 호출
@@ -66,7 +67,10 @@ struct MyPageView: View {
                 isSaveEnabled: true
             )
 
-            MyPageUsageCard(savedCount: vm.savedCount, recommendedCount: vm.recommendedCount)
+            MyPageUsageCard(
+                savedCount: CardManager.shared.allCards.count,
+                recommendedCount: CardManager.shared.recommendedCards().count
+            )
 
             MyPageProfileSection(
                 gender: $vm.gender,

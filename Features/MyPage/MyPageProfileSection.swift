@@ -2,14 +2,14 @@ import SwiftUI
 
 struct MyPageProfileSection: View {
     typealias Gender = MyPageViewModel.Gender
-    @Binding var gender: Gender
+    @Binding var gender: Gender?
     @Binding var birthday: Date?
     @State private var showPicker = false
     var onSave: () -> Void
     var isSaveEnabled: Bool = true
     
     // ✅ 🔥 추가: 원래 값 추적
-    @State private var originalGender: Gender = .male
+    @State private var originalGender: Gender? = nil
     @State private var originalBirthday: Date? = nil
 
     private let profileFieldFont = Font.system(size: 16, weight: .regular)
@@ -24,11 +24,27 @@ struct MyPageProfileSection: View {
                     .frame(width: 90, alignment: .leading)
 
                 HStack(spacing: 24) {
-                    RadioButton(isOn: gender == .male,   title: "남성") {
+                    RadioButton(
+                        isOn: {
+                            if let g = gender {
+                                return g == .male
+                            }
+                            return false
+                        }(),
+                        title: "남성"
+                    ) {
                         print("✅ 남성 선택됨")
                         gender = .male
                     }
-                    RadioButton(isOn: gender == .female, title: "여성") {
+                    RadioButton(
+                        isOn: {
+                            if let g = gender {
+                                return g == .female
+                            }
+                            return false
+                        }(),
+                        title: "여성"
+                    ) {
                         print("✅ 여성 선택됨")
                         gender = .female
                     }
@@ -40,7 +56,7 @@ struct MyPageProfileSection: View {
                     title: "저장",
                     action: {
                         print("✅ 프로필 저장 버튼 클릭됨")
-                        print("✅ 현재 성별: \(gender.rawValue)")
+                        print("✅ 현재 성별: \(gender?.rawValue ?? "미선택")")
                         print("✅ 현재 생일: \(birthday?.description ?? "없음")")
                         onSave()
                         // ✅ 🔥 저장 후 원래 값 업데이트
@@ -84,7 +100,7 @@ struct MyPageProfileSection: View {
             originalBirthday = birthday
         }
         .onChange(of: gender) { oldValue, newValue in
-            print("✅ 성별 변경됨: \(oldValue.rawValue) -> \(newValue.rawValue)")
+            print("✅ 성별 변경됨: \(oldValue?.rawValue ?? "없음") -> \(newValue?.rawValue ?? "없음")")
         }
         .sheet(isPresented: $showPicker) {
             NavigationStack {

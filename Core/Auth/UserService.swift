@@ -14,9 +14,10 @@ struct UserService {
             print("🔧 Mock: fetchMe() - 더미 데이터 반환")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
             return UserProfile(
+                userId: "ewhakbw",
                 nickname: "강배우",
                 email: "ewhakbw@gmail.com",
-                gender: "M",
+                gender: nil,  // 미설정
                 birthday: nil
             )
         }
@@ -37,9 +38,10 @@ struct UserService {
             df.dateFormat = "yyyy-MM-dd"
             
             return UserProfile(
+                userId: "ewhakbw",
                 nickname: nickname,
                 email: "ewhakbw@gmail.com",
-                gender: gender.map { $0 == .male ? "M" : "F" },
+                gender: gender?.apiCode,
                 birthday: birthday
             )
         }
@@ -52,7 +54,7 @@ struct UserService {
 
         let body = UpdateUserProfileRequest(
             nickname: nickname,
-            gender: gender.map { $0 == .male ? "M" : "F" },
+            gender: gender?.apiCode,
             birthday: birthday.map { df.string(from: $0) }
         )
         return try await client.request("PUT", path: Endpoints.updateMe, body: body)
