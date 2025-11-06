@@ -1,16 +1,8 @@
-
-//
-//  ShareFriend.swift
-//  Caplog
-//
-//  Created by user on 10/14/25.
-//
-
-
 import SwiftUI
 
 struct ShareFriend: Identifiable, Hashable {
-    let id: UUID
+    // ✅ (수정) ID 타입을 UUID에서 String으로 변경
+    let id: String
     var name: String
     var avatar: String
 }
@@ -19,11 +11,13 @@ struct ShareFriend: Identifiable, Hashable {
 struct ShareSheetView<T: Identifiable>: View {
     let target: T
     let friends: [ShareFriend]
-    var onSend: (_ selectedFriendIDs: [UUID], _ message: String) -> Void
+    // ✅ (수정) ID 타입을 UUID에서 String으로 변경
+    var onSend: (_ selectedFriendIDs: [String], _ message: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var message = ""
-    @State private var selectedIDs: Set<UUID> = []
+    // ✅ (수정) ID 타입을 UUID에서 String으로 변경
+    @State private var selectedIDs: Set<String> = []
 
     var body: some View {
         VStack(spacing: 16) {

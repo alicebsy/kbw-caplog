@@ -7,6 +7,9 @@ struct ChatRoomView: View {
     @State private var inputText = ""
     @Environment(\.dismiss) var dismiss
     private let meId = "me"
+    
+    @State private var showCardSelection = false
+    @State private var showLeaveConfirm = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,14 +17,15 @@ struct ChatRoomView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(groupedMessages) { group in
-                            // ✅ 날짜 헤더 (카카오톡 스타일)
+                            // 날짜 헤더
                             DateHeaderView(date: group.date)
-                                .padding(.top, 24)      // ⬅️ 날짜 넘어갈 때 위 여백 확대
-                                .padding(.bottom, 12)   // ⬅️ 아래 여백은 기존 유지
+                                .padding(.top, 12)
+                                .padding(.bottom, 10)
                             
                             // 해당 날짜의 메시지들
                             ForEach(group.messages) { msg in
                                 MessageRow(
+                                    vm: vm,
                                     meId: meId,
                                     message: msg,
                                     timeText: formatTime(msg.createdAt),
@@ -32,7 +36,7 @@ struct ChatRoomView: View {
                             }
                         }
                     }
-                    .padding(.top, 12)
+                    .padding(.top, 8)
                 }
                 .onChange(of: vm.messagesByThread[thread.id]?.last?.id) { _, lastId in
                     if let lastId { withAnimation { proxy.scrollTo(lastId, anchor: .bottom) } }
@@ -41,6 +45,18 @@ struct ChatRoomView: View {
 
             // 입력 바
             HStack(spacing: 8) {
+                // + 버튼
+                Button {
+                    showCardSelection = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .background(Color.gray.opacity(0.15))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                
                 TextField("메시지 입력", text: $inputText)
                     .textFieldStyle(.roundedBorder)
                     .submitLabel(.send)
@@ -54,29 +70,50 @@ struct ChatRoomView: View {
         }
         .navigationTitle(thread.title)
         .navigationBarTitleDisplayMode(.inline)
-        // ✅ 참여자 수 표시 (단체 톡방일 경우) - 제목 옆에 통합
         .toolbar {
+            // 중앙 제목 (참여자 수)
             ToolbarItem(placement: .principal) {
-                VStack(spacing: 0) {
-                    HStack(spacing: 4) {
-                        Text(thread.title)
-                            .font(.system(size: 16, weight: .semibold))
-                        
-                        if thread.participantIds.count > 1 {
-                            Text("\(thread.participantIds.count)")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                        }
+                HStack(spacing: 4) {
+                    Text(thread.title)
+                        .font(.system(size: 16, weight: .semibold))
+                    if thread.participantIds.count > 2 {
+                        Text("\(thread.participantIds.count)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
                     }
+                }
+            }
+            
+            // 나가기 버튼
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showLeaveConfirm = true
+                } label: {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .task { await vm.openThread(thread.id) }
-        .onDisappear {
-            // 채팅방에서 나갈 때 목록 새로고침하여 unreadCount 반영
-            Task {
-                await vm.loadAll()
+        .sheet(isPresented: $showCardSelection) {
+            ShareCardSelectionSheet { selectedCards in
+                Task {
+                    for card in selectedCards {
+                        await vm.sendCard(to: thread.id, card: card)
+                    }
+                }
             }
+        }
+        .alert("채팅방 나가기", isPresented: $showLeaveConfirm) {
+            Button("취소", role: .cancel) { }
+            Button("나가기", role: .destructive) {
+                Task {
+                    await vm.leaveChat(threadId: thread.id)
+                    dismiss()
+                }
+            }
+        } message: {
+            Text("이 채팅방을 나가시겠습니까?\n대화 내용이 모두 삭제됩니다.")
         }
     }
 
@@ -89,28 +126,21 @@ struct ChatRoomView: View {
         }
     }
     
-    // ✅ 발신자 정보 가져오기
     private func getSenderInfo(_ senderId: String) -> SenderInfo {
         if senderId == meId {
             return SenderInfo(name: "나", avatarURL: nil)
         }
-        
         if let friend = vm.friends.first(where: { $0.id == senderId }) {
-            // 🔧 FIX: URL? -> String? 로 변환하여 타입 일치
             return SenderInfo(name: friend.name, avatarURL: friend.avatarURL?.absoluteString)
         }
-        
         return SenderInfo(name: "알 수 없음", avatarURL: nil)
     }
     
-    // ✅ 메시지를 날짜별로 그룹화
+    // ... (groupedMessages, formatDate, formatTime, parseDate 함수는 변경 없음) ...
     private var groupedMessages: [MessageGroup] {
         let messages = vm.messagesByThread[thread.id] ?? []
         _ = Calendar.current
-        
-        // 날짜별로 그룹화
         var groups: [String: [ChatMessage]] = [:]
-        
         for message in messages {
             let dateKey = formatDate(message.createdAt)
             if groups[dateKey] == nil {
@@ -118,8 +148,6 @@ struct ChatRoomView: View {
             }
             groups[dateKey]?.append(message)
         }
-        
-        // MessageGroup으로 변환 후 날짜순 정렬
         return groups.map { key, messages in
             MessageGroup(
                 id: key,
@@ -128,24 +156,18 @@ struct ChatRoomView: View {
             )
         }.sorted { parseDate($0.date) < parseDate($1.date) }
     }
-    
-    // ✅ 날짜 포맷: "2014년 10월 5일 일요일"
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "yyyy년 M월 d일 EEEE"
         return formatter.string(from: date)
     }
-    
-    // ✅ 시간 포맷: "오전 10:51"
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "a h:mm"
         return formatter.string(from: date)
     }
-    
-    // ✅ 문자열을 Date로 파싱 (정렬용)
     private func parseDate(_ dateString: String) -> Date {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
@@ -154,38 +176,33 @@ struct ChatRoomView: View {
     }
 }
 
-// ✅ 날짜별 메시지 그룹
+// ... (MessageGroup, SenderInfo, DateHeaderView 정의는 변경 없음) ...
 struct MessageGroup: Identifiable {
     let id: String
     let date: String
     let messages: [ChatMessage]
 }
-
-// ✅ 발신자 정보 구조체
 struct SenderInfo {
     let name: String
     let avatarURL: String?
 }
-
-// ✅ 날짜 헤더 (카카오톡 스타일)
 struct DateHeaderView: View {
     let date: String
-    
     var body: some View {
         Text(date)
             .font(.system(size: 13))
             .foregroundColor(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.gray.opacity(0.5))
-            )
+            .background(Capsule().fill(Color.gray.opacity(0.5)))
     }
 }
 
-// ✅ 프로필 + 이름 + 말풍선 + 시간 컴포넌트
+
+// MARK: - MessageRow
+
 struct MessageRow: View {
+    let vm: ShareViewModel
     let meId: String
     let message: ChatMessage
     let timeText: String
@@ -198,16 +215,13 @@ struct MessageRow: View {
             if isMine {
                 Spacer(minLength: 60)
             } else {
-                // ✅ 상대방 메시지: 프로필 이미지
                 VStack(spacing: 0) {
                     ProfileImage(avatarURL: senderInfo.avatarURL)
                     Spacer()
                 }
             }
             
-            // 메시지 영역
             VStack(alignment: isMine ? .trailing : .leading, spacing: 4) {
-                // ✅ 이름 표시 (상대방만)
                 if !isMine {
                     Text(senderInfo.name)
                         .font(.system(size: 12, weight: .semibold))
@@ -215,29 +229,56 @@ struct MessageRow: View {
                         .padding(.horizontal, 4)
                 }
                 
-                // 말풍선 + 시간
-                HStack(alignment: .bottom, spacing: 6) {
-                    if isMine {
-                        // ✅ 내 메시지: 시간 왼쪽
-                        Text(timeText)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .padding(.bottom, 2)
+                if let cardID = message.cardID, let card = vm.getCard(byId: cardID) {
+                    
+                    // --- 카드 메시지 ---
+                    HStack(alignment: .bottom, spacing: 6) {
+                        if isMine {
+                            Text(timeText)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .padding(.bottom, 2)
+                                .layoutPriority(1) // ✅ (추가)
+                        }
+                        
+                        UnifiedCardView(card: card, style: .chat)
+                            // ❌ (제거) .frame(width: 200)
+                            .onTapGesture {
+                                print("Tapped card: \(card.title)")
+                            }
+                        
+                        if !isMine {
+                            Text(timeText)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .padding(.bottom, 2)
+                                .layoutPriority(1) // ✅ (추가)
+                        }
                     }
                     
-                    // 말풍선
-                    Text(message.text)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(isMine ? Color.blue.opacity(0.2) : Color.gray.opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                } else if let text = message.text {
                     
-                    if !isMine {
-                        // ✅ 상대방 메시지: 시간 오른쪽
-                        Text(timeText)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .padding(.bottom, 2)
+                    // --- 텍스트 메시지 (기존과 동일) ---
+                    HStack(alignment: .bottom, spacing: 6) {
+                        if isMine {
+                            Text(timeText)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .padding(.bottom, 2)
+                        }
+                        
+                        Text(text)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(isMine ? Color.blue.opacity(0.2) : Color.gray.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        
+                        if !isMine {
+                            Text(timeText)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .padding(.bottom, 2)
+                        }
                     }
                 }
             }
@@ -250,20 +291,16 @@ struct MessageRow: View {
     }
 }
 
-// ✅ 재사용 가능한 프로필 이미지 컴포넌트
+// ... (ProfileImage 정의는 변경 없음) ...
 private struct ProfileImage: View {
     let avatarURL: String?
-    
     var body: some View {
         Group {
             if let avatarURL = avatarURL, !avatarURL.isEmpty, let url = URL(string: avatarURL) {
-                // 실제 이미지 로드
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
+                        image.resizable().scaledToFill()
                     case .failure(_), .empty:
                         defaultAvatar
                     @unknown default:
@@ -277,7 +314,6 @@ private struct ProfileImage: View {
             }
         }
     }
-    
     private var defaultAvatar: some View {
         Circle()
             .fill(Color.gray.opacity(0.3))

@@ -16,6 +16,7 @@ struct UnifiedCardView: View {
         case horizontal // 상단 썸네일 + 하단 정보 (HomeCardHorizontal)
         case compact    // 작은 카드 (검색 결과, 폴더 목록)
         case coupon     // 쿠폰 전용 (초록색 배경)
+        case chat       // ✅ (추가) 채팅방 전용 (compact보다 폰트 작게)
     }
     
     var body: some View {
@@ -29,6 +30,8 @@ struct UnifiedCardView: View {
                 compactStyle
             case .coupon:
                 couponStyle
+            case .chat: // ✅ (추가)
+                chatStyle
             }
         }
     }
@@ -70,7 +73,7 @@ struct UnifiedCardView: View {
                     }
                 }
                 
-                if !card.tags.isEmpty {
+                if !card.tagsString.isEmpty {
                     Text(card.tagsString)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.brandTextSub)
@@ -155,30 +158,30 @@ struct UnifiedCardView: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(card.category.rawValue + " - " + card.subcategory)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold)) // 12pt
                     .foregroundStyle(.secondary)
                 
                 Text(card.title)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 18, weight: .bold)) // 18pt
                     .foregroundStyle(.primary)
                 
                 if !card.summary.isEmpty {
                     Text(card.summary)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14)) // 14pt
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 
                 if !card.location.isEmpty {
                     Text(card.location)
-                        .font(.system(size: 13))
+                        .font(.system(size: 13)) // 13pt
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 
                 if !card.dateString.isEmpty {
                     Text(card.dateString)
-                        .font(.system(size: 12))
+                        .font(.system(size: 12)) // 12pt
                         .foregroundStyle(.secondary)
                 }
             }
@@ -193,6 +196,59 @@ struct UnifiedCardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .onTapGesture { onTap() }
+    }
+    
+    // MARK: - ✅ (수정) Chat Style
+    
+    private var chatStyle: some View {
+        HStack(alignment: .top, spacing: 10) { // spacing 12 -> 10
+            VStack(alignment: .leading, spacing: 6) { // spacing 8 -> 6
+                Text(card.category.rawValue + " - " + card.subcategory)
+                    .font(.system(size: 11, weight: .semibold)) // 12pt -> 11pt
+                    .foregroundStyle(.secondary)
+                
+                Text(card.title)
+                    .font(.system(size: 16, weight: .bold)) // 18pt -> 16pt
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true) // ✅ 단어 잘림 방지
+
+                if !card.summary.isEmpty {
+                    Text(card.summary)
+                        .font(.system(size: 13)) // 14pt -> 13pt
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true) // ✅ 단어 잘림 방지
+                }
+                
+                if !card.location.isEmpty {
+                    Text(card.location)
+                        .font(.system(size: 12)) // 13pt -> 12pt
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
+                if !card.dateString.isEmpty {
+                    Text(card.dateString)
+                        .font(.system(size: 11)) // 12pt -> 11pt
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Spacer(minLength: 8) // minLength 10 -> 8
+            
+            Image(card.thumbnailName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 60, height: 60) // 64x64 -> 60x60
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 8)) // 10 -> 8
+        }
+        .padding(14) // padding 16 -> 14
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
@@ -232,7 +288,6 @@ struct UnifiedCardView: View {
                         .foregroundStyle(.primary)
                 }
             }
-            // ❌ 수정: .contentShape와 .onTapGesture를 이곳에서 제거
             
             Spacer(minLength: 10)
             
@@ -244,7 +299,7 @@ struct UnifiedCardView: View {
                     .frame(width: 80, height: 80)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() } // (이미지 탭은 유지)
+                    .onTapGesture { onTapImage() }
                 
                 HStack(spacing: 14) {
                     Button(action: onShare) {
@@ -260,7 +315,6 @@ struct UnifiedCardView: View {
             }
         }
         .padding(16)
-        // ✅ 수정: .contentShape와 .onTapGesture를 HStack 전체에 적용
         .contentShape(Rectangle())
         .onTapGesture { onTap() }
         .background(Color.homeGreenLight.opacity(0.7))
@@ -283,6 +337,11 @@ struct UnifiedCardView: View {
             
             Text("Compact Style").font(.headline)
             UnifiedCardView(card: sampleCard, style: .compact)
+            
+            // ✅ (추가) Chat 스타일 프리뷰
+            Text("Chat Style").font(.headline)
+            UnifiedCardView(card: sampleCard, style: .chat)
+                .frame(width: 200) // 채팅방에서 사용할 프레임
         }
         .padding()
     }

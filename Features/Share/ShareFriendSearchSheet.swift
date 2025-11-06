@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct ShareFriendSearchSheet: View {
+    // ✅ (추가) ViewModel을 주입받음
+    @ObservedObject var vm: ShareViewModel
+    
     @Environment(\.dismiss) private var dismiss
     @State private var keyword = ""
     @State private var results: [Friend] = []
@@ -11,7 +14,17 @@ struct ShareFriendSearchSheet: View {
                 HStack(spacing: 8) {
                     TextField("친구 이름 검색", text: $keyword)
                         .textFieldStyle(.roundedBorder)
-                    Button("검색") { search() }
+                        // ✅ (수정) 검색어가 바뀔 때마다 바로 search() 호출
+                        .onChange(of: keyword) { _, newValue in
+                            search(newValue)
+                        }
+                    
+                    // (참고) '검색' 버튼이 꼭 필요하다면 .onChange를 빼고 이 버튼을 활성화하세요.
+                    /*
+                    Button("검색") {
+                        search(keyword)
+                    }
+                    */
                 }
                 .padding(.horizontal)
                 .padding(.top, 12)
@@ -27,18 +40,24 @@ struct ShareFriendSearchSheet: View {
                     Button("닫기") { dismiss() }
                 }
             }
+            .onAppear {
+                // ✅ (수정) 처음 나타날 때 vm.friends (정렬된) 목록을 표시
+                search("")
+            }
         }
     }
 
-    private func search() {
-        // 목업 데이터(상태 없음)
-        let all: [Friend] = [
-            Friend(id: "u1", name: "민하", avatarURL: nil),
-            Friend(id: "u2", name: "다혜", avatarURL: nil),
-            Friend(id: "u3", name: "서연", avatarURL: nil),
-            Friend(id: "u4", name: "배우", avatarURL: nil)
-        ]
-        let k = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
-        results = k.isEmpty ? all : all.filter { $0.name.localizedCaseInsensitiveContains(k) }
+    // ✅ (수정) 검색 로직이 vm.friends를 사용하도록 변경
+    private func search(_ k: String) {
+        let trimmed = k.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            // 키워드가 없으면 vm.friends (전체) 목록을 그대로 사용
+            results = vm.friends
+        } else {
+            // 키워드가 있으면 vm.friends (정렬된) 목록에서 필터링
+            results = vm.friends.filter {
+                $0.name.localizedCaseInsensitiveContains(trimmed)
+            }
+        }
     }
 }
