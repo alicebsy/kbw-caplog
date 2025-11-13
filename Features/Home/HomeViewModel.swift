@@ -37,13 +37,17 @@ final class HomeViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // CardManager의 "최근 본" ID 목록을 구독
-        cardManager.$viewedCardIDs
-            .receive(on: DispatchQueue.main)
-            .map { [weak self] (viewedIDs: [UUID]) in
-                self?.cardManager.recentlyViewedCards(limit: 3) ?? []
-            }
-            .assign(to: &$recent)
+        // ✅ 개선: CardManager의 "최근 본" ID 목록과 allCards를 함께 구독
+        Publishers.CombineLatest(
+            cardManager.$viewedCardIDs,
+            cardManager.$allCards
+        )
+        .map { [weak self] (viewedIDs, allCards) -> [Card] in
+            guard let self = self else { return [] }
+            return self.cardManager.recentlyViewedCards(limit: 3)
+        }
+        .receive(on: DispatchQueue.main)
+        .assign(to: &$recent)
     }
 
     func load() async {
@@ -63,7 +67,7 @@ final class HomeViewModel: ObservableObject {
         // 추천 카드 가져오기
         recommended = cardManager.recommendedCards(limit: 5)
         
-        // ✅ 수정: 쿠폰 데이터를 직접 만들지 않고, CardManager에서 가져옴
+        // ✅ 쿠폰 데이터를 CardManager에서 가져옴
         self.coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
             .sorted(by: { $0.fields["만료일", default: ""] < $1.fields["만료일", default: ""] })
         

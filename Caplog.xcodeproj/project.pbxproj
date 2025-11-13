@@ -15,20 +15,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3CE26BE42EBEFFAA009654F1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Caplog/Info.plist; sourceTree = "<group>"; };
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
 		CEB027E72E9FE78B007EE2D8 /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		CEEFC3912E9E78450002AAAF /* Exceptions for "Resources" folder in "Caplog" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = CEFCA11B2E8D8F5C0014AA05 /* Caplog */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CE81080E2E9CF94A00181F2D /* Theme */ = {
@@ -53,9 +42,6 @@
 		};
 		CEEFC38A2E9E507E0002AAAF /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				CEEFC3912E9E78450002AAAF /* Exceptions for "Resources" folder in "Caplog" target */,
-			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
@@ -92,7 +78,6 @@
 		CEFCA1132E8D8F5C0014AA05 = {
 			isa = PBXGroup;
 			children = (
-				3CE26BE42EBEFFAA009654F1 /* Info.plist */,
 				CEEFC37C2E9E4DEA0002AAAF /* Core */,
 				CEEFC3822E9E4EB50002AAAF /* UIComponents */,
 				CEEFC3892E9E501A0002AAAF /* Features */,

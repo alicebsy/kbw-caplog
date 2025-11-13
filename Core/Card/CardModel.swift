@@ -76,6 +76,7 @@ struct Card: Identifiable, Hashable, Codable {
 }
 
 // MARK: - FolderCategory (대분류)
+// ... (FolderCategory, FolderSubcategory enum/struct 정의는 변경 없음) ...
 enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
     case info = "Info"
     case contents = "Contents"

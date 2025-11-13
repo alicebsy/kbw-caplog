@@ -130,8 +130,8 @@ struct Register1View: View {
         }
         
         // ✅ OCR 결과가 생기면 자동 이동 (GPT 결과 없어도)
-        .onChange(of: recognizedText) { newText in
-            if !newText.isEmpty {
+        .onChange(of: recognizedText) {
+            if !recognizedText.isEmpty {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     showPhotoPicker = false
                     navigateToResult = true

@@ -151,13 +151,8 @@ struct FolderItemListView: View {
     let subcategory: String
     
     @State private var selectedCard: Card? = nil
-    // ❌ (제거) shareTarget
-    // @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
-    
-    // ❌ (제거) friendManager
-    // @StateObject private var friendManager = FriendManager.shared
     
     @State private var selectedTab: CaplogTab = .folder
     @State private var goHome = false
@@ -181,8 +176,6 @@ struct FolderItemListView: View {
                         card: item,
                         style: .row,
                         onTap: { selectedCard = item },
-                        // ❌ (제거) onShare
-                        // onShare: { shareTarget = item },
                         onMore: { editingCard = item },
                         onTapImage: {
                             if let first = item.screenshotURLs.first {
@@ -203,19 +196,10 @@ struct FolderItemListView: View {
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
         
-        // ❌ (제거) ShareSheetView
-        /*
-        .sheet(item: $shareTarget) { target in
-            ...
-        }
-        */
-        
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card) { updated in
-                print("업데이트: \(updated)")
-            }
-            .presentationDetents([.medium, .large])
+            CardEditSheet(card: card)
         }
+        
         .fullScreenCover(isPresented: Binding(
             get: { fullscreenImage != nil },
             set: { if !$0 { fullscreenImage = nil } }

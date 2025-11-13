@@ -12,54 +12,102 @@ struct MyPagePasswordChangeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                Form {
-                    Section {
-                        SecureField("현재 비밀번호", text: $currentPW)
-                        SecureField("새 비밀번호", text: $newPW)
-                        SecureField("새 비밀번호 확인", text: $confirmPW)
-                    }
-                }
-                .scrollDisabled(true)
-
-                // 가운데 정렬 + 파란색(토큰) 강조 버튼
-                HStack {
-                    CapsuleButton(
-                        title: "비밀번호 변경",
-                        action: validateAndSubmit,
-                        tint: Color.myPageActionBlue,
-                        fill: Color.myPageActionBlueBg,
-                        fullWidth: true,
-                        isEnabled: true,
-                        // ✅ 2. 버튼 세로 높이 (기본 8 -> 12로)
-                        verticalPadding: 12,
-                        // ✅ 3. 버튼 폰트 크기 (기본 14 -> 16으로)
-                        fontSize: 16
-                    )
+            VStack(spacing: 0) {
+                // 상단 여백
+                Spacer()
+                    .frame(height: 40)
+                
+                // 제목
+                Text("비밀번호 변경")
+                    .font(.system(size: 20, weight: .bold))
+                
+                Spacer()
+                    .frame(height: 32)
+                
+                // 입력 필드들
+                VStack(spacing: 16) {
+                    // 현재 비밀번호
+                    SecureField("현재 비밀번호", text: $currentPW)
+                        .font(.system(size: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                    
+                    // 새 비밀번호
+                    SecureField("새 비밀번호", text: $newPW)
+                        .font(.system(size: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                    
+                    // 새 비밀번호 확인
+                    SecureField("새 비밀번호 확인", text: $confirmPW)
+                        .font(.system(size: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
                 }
                 .padding(.horizontal, 20)
-
+                
+                Spacer()
+                    .frame(height: 24)
+                
+                // 변경 버튼
+                Button(action: validateAndSubmit) {
+                    Text("비밀번호 변경")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(allFieldsFilled ? Color.myPageActionBlue : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            allFieldsFilled
+                                ? Color.myPageActionBlueBg
+                                : Color(.systemGray5)
+                        )
+                        .cornerRadius(12)
+                }
+                .disabled(!allFieldsFilled)
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                    .frame(height: 20)
+                
+                // 안내 문구
                 Text("영문/숫자/특수문자 조합 8자 이상을 권장합니다.")
-                    .font(.footnote)
+                    .font(.system(size: 13))
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 8)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                
+                Spacer()
             }
-            // ✅ 1. 상단 타이틀과 Form(입력칸) 사이 간격 추가
-            .padding(.top, 16)
-            .navigationTitle("비밀번호 변경")
-            // ✅ 4. 타이틀 폰트 작게 (인라인 스타일)
+            .background(Color(.systemBackground))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }
+                    Button("취소") {
+                        dismiss()
+                    }
+                    .foregroundColor(.primary)
                 }
             }
             .alert("안내", isPresented: $showAlert) {
                 Button("확인") {
                     if alertMessage.contains("변경되었습니다") { dismiss() }
                 }
-            } message: { Text(alertMessage) }
+            } message: {
+                Text(alertMessage)
+            }
         }
+        .presentationDetents([.height(440)])
+        .presentationDragIndicator(.visible)
+    }
+    
+    private var allFieldsFilled: Bool {
+        !currentPW.isEmpty && !newPW.isEmpty && !confirmPW.isEmpty
     }
 
     private func validateAndSubmit() {
@@ -77,4 +125,8 @@ struct MyPagePasswordChangeView: View {
         alertMessage = "비밀번호가 변경되었습니다."
         showAlert = true
     }
+}
+
+#Preview {
+    MyPagePasswordChangeView()
 }

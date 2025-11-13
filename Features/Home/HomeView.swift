@@ -7,8 +7,6 @@ struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
 
     @State private var selectedCard: Card? = nil
-    // ❌ (제거) shareTarget
-    // @State private var shareTarget: Card? = nil
     @State private var fullscreenImage: String? = nil
     @State private var editingCard: Card? = nil
     @State private var selectedTab: CaplogTab = .home
@@ -44,8 +42,6 @@ struct HomeView: View {
                                     card: card,
                                     style: .coupon,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         if let url = card.thumbnailURL ?? card.screenshotURLs.first {
@@ -72,8 +68,6 @@ struct HomeView: View {
                                 UnifiedCardView(
                                     card: card, style: .row,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
@@ -98,8 +92,6 @@ struct HomeView: View {
                                 UnifiedCardView(
                                     card: card, style: .row,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
@@ -136,18 +128,9 @@ struct HomeView: View {
             }
         }
 
-        // ❌ (제거) 공유 시트
-        /*
-        .sheet(item: $shareTarget) { target in
-            ShareSheetView(target: target, friends: vm.friends) { _, _ in }
-                .presentationDetents([.height(350)])
-        }
-        */
-
-        // 편집 시트
+        // ✅ 편집 시트 (파라미터 제거)
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card) { _ in }
-                .presentationDetents([.medium, .large])
+            CardEditSheet(card: card)
         }
 
         // 전체 이미지 보기
