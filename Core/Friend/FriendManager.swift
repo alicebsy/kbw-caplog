@@ -65,13 +65,15 @@ final class FriendManager: ObservableObject {
     
     /// ✅ ShareFriend → Friend 변환 헬퍼 (profileImage 포함)
     static func toFriend(_ shareFriend: ShareFriend) -> Friend {
-        // ✅ avatar 값이 있으면 profileImage로 전달 ("avatar_default"도 포함)
-        let profileImage: String? = shareFriend.avatar.isEmpty ? nil : shareFriend.avatar
+        
+        // ❗️ [수정] "avatar_default"거나 비어있으면 nil을, 아니면 실제 이미지 이름을 전달
+        let isDefaultOrEmpty = shareFriend.avatar == "avatar_default" || shareFriend.avatar.isEmpty
+        let profileImage: String? = isDefaultOrEmpty ? nil : shareFriend.avatar
         
         return Friend(
             id: shareFriend.id,
             name: shareFriend.name,
-            avatarURL: nil,
+            avatarURL: nil, // avatarURL은 이 앱에서 사용하지 않음 (로컬 Asset만 사용)
             profileImage: profileImage
         )
     }
