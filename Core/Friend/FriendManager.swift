@@ -2,15 +2,12 @@ import Foundation
 import SwiftUI
 import Combine
 
-// ❌ MockFriendIDs (UUID) 구조체 삭제
-
 // MARK: - FriendManager (전역 친구 관리)
 
 @MainActor
 final class FriendManager: ObservableObject {
     
-    // ✅ (수정) 모든 Mock 데이터의 "원본" (Single Source of Truth)
-    // static으로 선언하여 다른 파일(MockShareRepository)에서 직접 접근 가능
+    // ✅ Mock 데이터 (개발용 - ShareFriend는 유지)
     static let mockFriends: [ShareFriend] = [
         ShareFriend(id: "2276003", name: "강다혜", avatar: "avatar1"),
         ShareFriend(id: "alicebsy", name: "배서연", avatar: "avatar3"),
@@ -45,11 +42,10 @@ final class FriendManager: ObservableObject {
     /// 친구 목록 로드
     func loadFriends() async {
         if useMockData {
-            // ✅ static 변수에서 데이터를 가져옴
             friends = Self.mockFriends
-            print("✅ FriendManager: Mock 친구 \(friends.count)명 로드 (정렬되지 않음)")
+            print("✅ FriendManager: Mock 친구 \(friends.count)명 로드")
         } else {
-            // (실제 API 호출)
+            // 실제 API 호출
             do {
                 let serverFriends = try await shareAPI.fetchFriends()
                 friends = serverFriends.map { friend in
@@ -65,6 +61,19 @@ final class FriendManager: ObservableObject {
                 friends = []
             }
         }
+    }
+    
+    /// ✅ ShareFriend → Friend 변환 헬퍼 (profileImage 포함)
+    static func toFriend(_ shareFriend: ShareFriend) -> Friend {
+        // ✅ avatar 값이 있으면 profileImage로 전달 ("avatar_default"도 포함)
+        let profileImage: String? = shareFriend.avatar.isEmpty ? nil : shareFriend.avatar
+        
+        return Friend(
+            id: shareFriend.id,
+            name: shareFriend.name,
+            avatarURL: nil,
+            profileImage: profileImage
+        )
     }
     
     /// 친구 추가

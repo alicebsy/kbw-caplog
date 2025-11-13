@@ -15,10 +15,12 @@ struct ShareFriendListView: View {
                 ForEach(vm.friends) { friend in // vm.friends는 이미 가나다순 정렬됨
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
-                            // 프로필 이미지
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 40, height: 40)
+                            
+                            // ✅ (수정) 공용 뷰 사용으로 로직 통일
+                            ProfileAvatarView(
+                                profileImage: friend.profileImage,
+                                avatarURL: friend.avatarURL?.absoluteString
+                            )
                             
                             // 이름
                             Text(friend.name)
@@ -26,34 +28,31 @@ struct ShareFriendListView: View {
                             
                             Spacer()
                             
-                            // 채팅 버튼
-                            Button {
-                                Task {
-                                    await startChat(with: friend)
+                            HStack(spacing: 16) { // ✅ 간격 8 → 16으로 증가
+                                // 채팅 버튼 (심플한 아이콘)
+                                Button {
+                                    Task {
+                                        await startChat(with: friend)
+                                    }
+                                } label: {
+                                    Image(systemName: "bubble.left.and.bubble.right")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(Color.blue.opacity(0.8))
                                 }
-                            } label: {
-                                Image(systemName: "bubble.left.and.bubble.right")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.blue)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.blue.opacity(0.1))
-                                    .clipShape(Circle())
+                                .buttonStyle(.plain)
+                                
+                                // 삭제 버튼 (심플한 아이콘)
+                                Button {
+                                    friendToDelete = friend
+                                    showDeleteConfirm = true
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 16, weight: .regular))
+                                        .foregroundColor(Color.registerRed.opacity(0.75))
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-                            
-                            // 삭제 버튼
-                            Button {
-                                friendToDelete = friend
-                                showDeleteConfirm = true
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.red)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.red.opacity(0.1))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(.plain)
+                            .padding(.trailing, 4) // ✅ trailing 8 → 4로 감소 (더 왼쪽으로)
                         }
                         .padding(.vertical, 16)
                         .padding(.horizontal, 16)

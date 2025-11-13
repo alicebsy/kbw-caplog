@@ -73,6 +73,52 @@ struct Card: Identifiable, Hashable, Codable {
     var firstScreenshot: String? {
         screenshotURLs.first
     }
+    
+    // ✅ (수정) 요청하신 이모지로 재변경
+    var subcategoryEmoji: String {
+        switch subcategory {
+        // Info (📂)
+        case "맛집": return "🍽️"
+        case "카페": return "☕️"
+        case "공부": return "📚"
+        case "공고": return "📢"
+        case "취업": return "💼"
+        case "필기": return "📝"
+        case "뉴스": return "📰"
+        case "문화생활": return "🖼️"
+        case "운동/건강": return "🏃"
+        case "소비": return "💳"
+        case "쿠폰": return "🏷️"
+        // Contents (😂)
+        case "글": return "✍️"
+        case "짤": return "😆"
+        // Social (👥)
+        case "채팅": return "💬"
+        case "사진": return "📷"
+        // Log (🎮)
+        case "기록": return "📓"
+        case "활동": return "🌟"
+        // Music/Art (🎵)
+        case "음악": return "🎧"
+        case "미술": return "🎨" // 수정 (🖌️ -> 🎨)
+        // Etc (🎸)
+        case "기타": return "❓"
+        // 그 외의 경우
+        default:
+            return "❓"
+        }
+    }
+    
+    // ✅ (수정) 변수명 및 로직 변경 (쿠폰 -> 만료일, 그외 -> 위치)
+    var contextualInfoText: String {
+        // 1. 쿠폰인 경우 "만료일"
+        if self.subcategory == "쿠폰" {
+            return fields["만료일"] ?? ""
+        }
+        
+        // 2. 그 외에는 "위치" (location이 알아서 "" 반환)
+        return self.location
+    }
 }
 
 // MARK: - FolderCategory (대분류)
@@ -100,7 +146,7 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
         switch self {
         case .info: return "📂"
         case .contents: return "😂"
-        case .social: return "💬"
+        case .social: return "👥" // ✅ 수정 (💬 -> 👥)
         case .log: return "🎮"
         case .musicArt: return "🎵"
         case .etc: return "🎸"
@@ -132,6 +178,7 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
             return [FolderSubcategory(name: "기록", group: nil), FolderSubcategory(name: "활동", group: nil)]
         case .musicArt:
             return [FolderSubcategory(name: "음악", group: nil), FolderSubcategory(name: "미술", group: nil)]
+        // ✅ (수정) 오타 수정 (name:t: -> name:)
         case .etc:
             return [FolderSubcategory(name: "기타", group: nil)]
         }

@@ -128,12 +128,19 @@ struct ChatRoomView: View {
     
     private func getSenderInfo(_ senderId: String) -> SenderInfo {
         if senderId == meId {
-            return SenderInfo(name: "나", avatarURL: nil)
+            // ✅ (수정) profileImage 필드 추가
+            return SenderInfo(name: "나", avatarURL: nil, profileImage: nil)
         }
         if let friend = vm.friends.first(where: { $0.id == senderId }) {
-            return SenderInfo(name: friend.name, avatarURL: friend.avatarURL?.absoluteString)
+            // ✅ (수정) profileImage 필드 추가
+            return SenderInfo(
+                name: friend.name,
+                avatarURL: friend.avatarURL?.absoluteString,
+                profileImage: friend.profileImage
+            )
         }
-        return SenderInfo(name: "알 수 없음", avatarURL: nil)
+        // ✅ (수정) profileImage 필드 추가
+        return SenderInfo(name: "알 수 없음", avatarURL: nil, profileImage: nil)
     }
     
     // ... (groupedMessages, formatDate, formatTime, parseDate 함수는 변경 없음) ...
@@ -176,15 +183,18 @@ struct ChatRoomView: View {
     }
 }
 
-// ... (MessageGroup, SenderInfo, DateHeaderView 정의는 변경 없음) ...
+// ... (MessageGroup 정의는 변경 없음) ...
 struct MessageGroup: Identifiable {
     let id: String
     let date: String
     let messages: [ChatMessage]
 }
+
+// ✅ (수정) SenderInfo에 profileImage 추가
 struct SenderInfo {
     let name: String
     let avatarURL: String?
+    let profileImage: String? // 로컬 Asset 이름
 }
 struct DateHeaderView: View {
     let date: String
@@ -216,7 +226,11 @@ struct MessageRow: View {
                 Spacer(minLength: 60)
             } else {
                 VStack(spacing: 0) {
-                    ProfileImage(avatarURL: senderInfo.avatarURL)
+                    // ✅ (수정) 공용 뷰 사용
+                    ProfileAvatarView(
+                        profileImage: senderInfo.profileImage,
+                        avatarURL: senderInfo.avatarURL
+                    )
                     Spacer()
                 }
             }
@@ -238,11 +252,9 @@ struct MessageRow: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .padding(.bottom, 2)
-                                // ❌ (제거) .layoutPriority(1)
                         }
                         
                         UnifiedCardView(card: card, style: .chat)
-                            // ❌ (제거) .frame(width: 200)
                             .onTapGesture {
                                 print("Tapped card: \(card.title)")
                             }
@@ -252,7 +264,6 @@ struct MessageRow: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .padding(.bottom, 2)
-                                // ❌ (제거) .layoutPriority(1)
                         }
                     }
                     
@@ -288,40 +299,5 @@ struct MessageRow: View {
             }
         }
         .padding(.horizontal, 16)
-    }
-}
-
-// ... (ProfileImage 정의는 변경 없음) ...
-private struct ProfileImage: View {
-    let avatarURL: String?
-    var body: some View {
-        Group {
-            if let avatarURL = avatarURL, !avatarURL.isEmpty, let url = URL(string: avatarURL) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .failure(_), .empty:
-                        defaultAvatar
-                    @unknown default:
-                        defaultAvatar
-                    }
-                }
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-            } else {
-                defaultAvatar
-            }
-        }
-    }
-    private var defaultAvatar: some View {
-        Circle()
-            .fill(Color.gray.opacity(0.3))
-            .frame(width: 40, height: 40)
-            .overlay(
-                Image(systemName: "person.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 20))
-            )
     }
 }

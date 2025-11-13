@@ -22,12 +22,16 @@ struct CardDetailView: View {
     var body: some View {
         ZStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    // 썸네일 이미지
+                VStack(spacing: 0) {
+                    // 상단 여백 (네비게이션 바 높이만큼)
+                    Spacer()
+                        .frame(height: 60)
+                    
+                    // 썸네일 이미지 (유동적 높이)
                     Image(card.thumbnailName)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(height: 200)
+                        .frame(height: calculateImageHeight())
                         .frame(maxWidth: .infinity)
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -35,6 +39,10 @@ struct CardDetailView: View {
                         .onTapGesture {
                             selectedImage = card.thumbnailName
                         }
+                    
+                    // 이미지와 콘텐츠 사이 여백
+                    Spacer()
+                        .frame(height: 24)
                     
                     // 기본 정보
                     VStack(alignment: .leading, spacing: 12) {
@@ -108,7 +116,7 @@ struct CardDetailView: View {
                                     .foregroundStyle(Color.brandAccent)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color.brandAccent.opacity(0.15))
+                                    .background(Color.brandAccent.opacity(0.08))
                                     .clipShape(Capsule())
                                 }
                             } else {
@@ -117,7 +125,7 @@ struct CardDetailView: View {
                                     // 기존 태그들 (X 버튼 포함)
                                     ForEach(editableTags, id: \.self) { tag in
                                         HStack(spacing: 6) {
-                                            Text("#\(tag)")
+                                            Text("#\(tag)").fontWeight(.medium)
                                                 .font(.system(size: 13))
                                             
                                             Button(action: {
@@ -126,12 +134,12 @@ struct CardDetailView: View {
                                             }) {
                                                 Image(systemName: "xmark.circle.fill")
                                                     .font(.system(size: 16))
-                                                    .foregroundStyle(Color.brandAccent.opacity(0.7))
+                                                    .foregroundStyle(Color.brandAccent.opacity(0.6))
                                             }
                                         }
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(Color.brandAccent.opacity(0.15))
+                                        .background(Color.brandAccent.opacity(0.08))
                                         .foregroundStyle(Color.brandAccent)
                                         .clipShape(Capsule())
                                     }
@@ -154,7 +162,7 @@ struct CardDetailView: View {
                 .padding(.top, 20)
             }
             
-            // ✅ Toolbar 대신 overlay로 커스텀 버튼 구현
+            // ✅ 커스텀 네비게이션 바
             VStack {
                 HStack {
                     // 뒤로가기 버튼 영역
@@ -194,6 +202,7 @@ struct CardDetailView: View {
                     .padding(.trailing, 16)
                 }
                 .frame(height: 44)
+                .padding(.top, 8)
                 .background(Color(.systemBackground))
                 
                 Spacer()
@@ -253,6 +262,37 @@ struct CardDetailView: View {
         .onAppear {
             CardManager.shared.markCardAsViewed(card)
         }
+    }
+    
+    // 이미지 높이를 콘텐츠 길이에 따라 동적으로 계산
+    private func calculateImageHeight() -> CGFloat {
+        // 기본 높이
+        let baseHeight: CGFloat = 220
+        
+        // 각 요소별 필요 높이 계산
+        var contentHeight: CGFloat = 0
+        
+        // 1. 카테고리 + 제목 + 요약 (고정)
+        contentHeight += 100
+        
+        // 2. 요약 길이에 따른 추가
+        if card.summary.count > 50 {
+            contentHeight += 30
+        }
+        
+        // 3. 커스텀 필드
+        contentHeight += CGFloat(card.fields.count) * 30
+        
+        // 4. 태그 (한 줄에 약 3개씩)
+        let tagLines = ceil(Double(editableTags.count) / 3.0)
+        contentHeight += CGFloat(tagLines) * 40
+        
+        // 콘텐츠가 많을수록 이미지 높이 감소
+        let reduction = min(80, contentHeight / 8)
+        let adjustedHeight = baseHeight - reduction
+        
+        // 최소 160, 최대 220
+        return max(160, min(220, adjustedHeight))
     }
     
     private func saveTagChanges() {

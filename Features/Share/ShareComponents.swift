@@ -30,10 +30,11 @@ struct SelectableFriendRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 프로필 이미지 (목업)
-            Circle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 40, height: 40)
+            // ✅ (수정) 공용 뷰 사용
+            ProfileAvatarView(
+                profileImage: friend.profileImage,
+                avatarURL: friend.avatarURL?.absoluteString
+            )
             
             // 이름
             Text(friend.name)
@@ -101,7 +102,7 @@ struct ChatThreadRow: View {
 
 // (ShareChatListView에 있던 헬퍼 뷰를 여기로 이동)
 /// 채팅 목록의 썸네일을 담당 (1:1 프로필, 그룹 인원 수)
-private struct ChatListAvatarView: View {
+struct ChatListAvatarView: View {
     let vm: ShareViewModel
     let thread: ChatThread
 
@@ -109,10 +110,10 @@ private struct ChatListAvatarView: View {
         if thread.participantIds.count > 2 {
             // --- 3인 이상 그룹 채팅: 인원 수 ---
             ZStack {
-                Circle().fill(Color.gray.opacity(0.2))
+                Circle().fill(Color.brandAccent.opacity(0.15))
                 Text("\(thread.participantIds.count)")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.brandAccent)
             }
             .frame(width: 40, height: 40)
         } else {
@@ -120,39 +121,70 @@ private struct ChatListAvatarView: View {
             let otherParticipantID = thread.participantIds.first(where: { $0 != "me" })
             let friend = vm.friends.first(where: { $0.id == otherParticipantID })
             
-            ChatListProfileImage(friend: friend)
+            // ✅ (수정) 공용 뷰 사용
+            ProfileAvatarView(
+                profileImage: friend?.profileImage,
+                avatarURL: friend?.avatarURL?.absoluteString
+            )
         }
     }
 }
 
-/// 1:1 채팅 프로필 이미지 (Asset 이름 사용)
-private struct ChatListProfileImage: View {
-    let friend: Friend?
-    
+// MARK: - 🅾️ (수정) 공용 아바타 뷰로 통합
+
+/// 기본 프로필 아이콘 (회색 배경 + 사람)
+private struct DefaultAvatarView: View {
     var body: some View {
-        let shareFriend = FriendManager.mockFriends.first(where: { $0.id == friend?.id })
-        
-        Group {
-            if let avatarName = shareFriend?.avatar, avatarName != "avatar_default" {
-                Image(avatarName)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                defaultAvatar
-            }
+        ZStack {
+            Circle()
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 40, height: 40)
+            
+            Image(systemName: "person.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Color.gray.opacity(0.6))
         }
-        .frame(width: 40, height: 40)
-        .clipShape(Circle())
-    }
-    
-    private var defaultAvatar: some View {
-        Circle()
-            .fill(Color.gray.opacity(0.3))
-            .frame(width: 40, height: 40)
-            .overlay(
-                Image(systemName: "person.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 20))
-            )
     }
 }
+
+/// 1:1 채팅 프로필 이미지 (로직 통합)
+struct ProfileAvatarView: View {
+    let profileImage: String?
+    let avatarURL: String?
+    
+    var body: some View {
+        Group {
+            // 1순위: Friend.profileImage (로컬 Asset)
+            if let profileImage = profileImage, !profileImage.isEmpty {
+                Image(profileImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+            }
+            // 2순위: Friend.avatarURL (서버 URL)
+            else if let avatarURL = avatarURL, !avatarURL.isEmpty, let url = URL(string: avatarURL) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                    default:
+                        DefaultAvatarView() // 실패 시 기본값
+                    }
+                }
+            }
+            // 3순위: 기본 아이콘
+            else {
+                DefaultAvatarView()
+            }
+        }
+    }
+}
+
+
+// ❗️ (제거) 아래 뷰는 ProfileAvatarView로 대체되었으므로 삭제합니다.
+// private struct ChatListProfileImage: View { ... }

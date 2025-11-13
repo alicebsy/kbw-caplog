@@ -139,7 +139,7 @@ final class MockShareRepository: ShareRepository {
         self.messageStore = [
             "t1": t1Messages, "t2": t2Messages, "t3": t3Messages, "t4": t4Messages,
             "t5": t5Messages, "t6": t6Messages, "t7": t7Messages, "t8": t8Messages,
-            "t9": t9Messages, "t1J0": t10Messages
+            "t9": t9Messages, "t10": t10Messages
         ]
         
         // --- 2. 채팅방(_threads) 정의 ---
@@ -160,159 +160,117 @@ final class MockShareRepository: ShareRepository {
                   unreadCount: 0, lastMessageCardTitle: nil),
             .init(id: "t4", title: "", participantIds: ["me", Self.yiwhaID],
                   lastMessageText: t4Messages.last?.text, lastMessageAt: t4Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: nil),
-            .init(id: "t5", title: "", participantIds: ["me", Self.dahyeID, Self.seoyeonID, Self.yiwhaID, Self.minhaID],
+                  unreadCount: 0, lastMessageCardTitle: t4Messages.last?.cardID != nil ? "낭만식탁" : nil),
+            .init(id: "t5", title: "", participantIds: ["me", Self.dahyeID, Self.seoyeonID, Self.minhaID, Self.yiwhaID],
                   lastMessageText: t5Messages.last?.text, lastMessageAt: t5Messages.last?.createdAt,
                   unreadCount: getUnreadCount("t5"),
-                  lastMessageCardTitle: t5Messages.last?.cardID != nil ? "10,000원 할인권" : nil),
-            .init(id: "t6", title: "", participantIds: ["me", Self.minhaID, Self.actorID, Self.junghoonID],
+                  lastMessageCardTitle: t5Messages.last?.cardID != nil ? "올리브영 10% 할인" : nil),
+            .init(id: "t6", title: "", participantIds: ["me", Self.actorID, Self.junghoonID, Self.minhaID],
                   lastMessageText: t6Messages.last?.text, lastMessageAt: t6Messages.last?.createdAt,
-                  unreadCount: getUnreadCount("t6"),
-                  lastMessageCardTitle: nil),
+                  unreadCount: getUnreadCount("t6"), lastMessageCardTitle: nil),
             .init(id: "t7", title: "", participantIds: ["me", Self.dahyeID, Self.jiaID],
                   lastMessageText: t7Messages.last?.text, lastMessageAt: t7Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: nil),
+                  unreadCount: 0, lastMessageCardTitle: t7Messages.last?.cardID != nil ? "AI와 미래 전시회" : nil),
             .init(id: "t8", title: "", participantIds: ["me", Self.seoyeonID, Self.sujinID],
                   lastMessageText: t8Messages.last?.text, lastMessageAt: t8Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: nil),
-            .init(id: "t9", title: "", participantIds: ["me", Self.minhaID, Self.chaewonID, Self.hayoonID, Self.jiwooID],
+                  unreadCount: 0, lastMessageCardTitle: t8Messages.last?.cardID != nil ? "낭만식탁" : nil),
+            .init(id: "t9", title: "", participantIds: ["me", Self.minhaID, Self.chaewonID, Self.hayoonID],
                   lastMessageText: t9Messages.last?.text, lastMessageAt: t9Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: nil),
-            .init(id: "t10", title: "", participantIds: ["me", Self.dahyeID, Self.junyoungID, Self.jiwooID, Self.actorID, Self.sujinID, Self.jiaID, Self.yurimID, Self.junghoonID, Self.chaewonID, Self.hongjieunID],
+                  unreadCount: 0, lastMessageCardTitle: t9Messages.last?.cardID != nil ? "BBQ 황금올리브 치킨 할인" : nil),
+            .init(id: "t10", title: "", participantIds: ["me", Self.dahyeID, Self.junyoungID, Self.jiwooID],
                   lastMessageText: t10Messages.last?.text, lastMessageAt: t10Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: nil)
+                  unreadCount: 0, lastMessageCardTitle: t10Messages.last?.cardID != nil ? "속초 막국수 맛집" : nil)
         ]
     }
-
-    func fetchFriends() async throws -> [Friend] { [] }
     
-    func fetchChatThreads() async throws -> [ChatThread] { self._threads }
+    // ✅ (수정) FriendManager.toFriend()를 사용하여 profileImage 포함
+    func fetchFriends() async throws -> [Friend] {
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        return FriendManager.mockFriends.map { shareFriend in
+            FriendManager.toFriend(shareFriend)
+        }
+    }
+    
+    func fetchChatThreads() async throws -> [ChatThread] {
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        return _threads
+    }
     
     func fetchMessages(threadId: String) async throws -> [ChatMessage] {
-        try? await Task.sleep(nanoseconds: 200_000_000)
-        return self.messageStore[threadId] ?? []
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        return messageStore[threadId] ?? []
     }
     
     func sendMessage(threadId: String, text: String?, cardID: UUID?) async throws -> ChatMessage {
-        let msg = ChatMessage(senderId: "me", text: text, cardID: cardID)
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let newMsg = ChatMessage(senderId: "me", text: text, cardID: cardID, createdAt: Date())
+        var arr = messageStore[threadId] ?? []
+        arr.append(newMsg)
+        messageStore[threadId] = arr
         
-        var arr = self.messageStore[threadId] ?? []
-        arr.append(msg)
-        self.messageStore[threadId] = arr
-        
-        if let idx = self._threads.firstIndex(where: { $0.id == threadId }) {
-            self._threads[idx].lastMessageAt = msg.createdAt
-            if let text = text {
-                self._threads[idx].lastMessageText = text
-                self._threads[idx].lastMessageCardTitle = nil
-            } else if let cardID = cardID, let card = Card.sampleCards.first(where: { $0.id == cardID }) {
-                self._threads[idx].lastMessageText = nil
-                self._threads[idx].lastMessageCardTitle = card.title
-            }
+        if let idx = _threads.firstIndex(where: { $0.id == threadId }) {
+            _threads[idx].lastMessageText = text
+            _threads[idx].lastMessageAt = newMsg.createdAt
         }
-        return msg
+        return newMsg
     }
     
     func markRead(threadId: String) async throws {
-        if let idx = self._threads.firstIndex(where: { $0.id == threadId }) {
-            self._threads[idx].unreadCount = 0
+        if let idx = _threads.firstIndex(where: { $0.id == threadId }) {
+            _threads[idx].unreadCount = 0
         }
     }
     
     func leaveChat(threadId: String) async throws {
         _threads.removeAll { $0.id == threadId }
         messageStore.removeValue(forKey: threadId)
-        print("Mock: \(threadId) 채팅방 삭제")
     }
 }
 
-// MARK: - Live Repository
-// ... (LiveShareRepository 코드는 변경 없음) ...
-struct LiveShareRepository: ShareRepository {
-    private let api = ShareAPI()
-    func fetchFriends() async throws -> [Friend] { try await api.fetchFriends() }
-    func fetchChatThreads() async throws -> [ChatThread] {
-        let summaries = try await api.fetchChats()
-        return summaries.map { s in
-            ChatThread(
-                id: s.id,
-                title: s.title,
-                participantIds: [],
-                lastMessageText: s.lastMessage,
-                lastMessageAt: s.updatedAt,
-                unreadCount: s.unreadCount,
-                lastMessageCardTitle: nil
-            )
-        }
-    }
-    func fetchMessages(threadId: String) async throws -> [ChatMessage] {
-        let items = try await api.fetchMessages(chatId: threadId)
-        return items.map { m in
-            ChatMessage(id: m.id, senderId: m.senderId, text: m.text, cardID: nil, createdAt: m.createdAt)
-        }
-    }
-    func sendMessage(threadId: String, text: String?, cardID: UUID?) async throws -> ChatMessage {
-        let m = try await api.sendMessage(chatId: threadId, text: text ?? "(카드)")
-        return ChatMessage(id: m.id, senderId: m.senderId, text: m.text, cardID: cardID, createdAt: m.createdAt)
-    }
-    func markRead(threadId: String) async throws {
-        try await api.markRead(chatId: threadId)
-    }
-    func leaveChat(threadId: String) async throws {
-        // TODO: 실제 API 호출
-        // try await api.leaveChat(chatId: threadId)
-        print("Live: \(threadId) 채팅방 나가기 API 호출 (TODO)")
-    }
-}
+// MARK: - ShareViewModel (전역 싱글톤)
 
-
-// MARK: - ViewModel
 @MainActor
 final class ShareViewModel: ObservableObject {
     
-    // ✅ (추가) ViewModel 싱글톤 인스턴스
-    static let shared = ShareViewModel(repo: MockShareRepository.shared)
+    nonisolated static let shared = ShareViewModel()
     
-    private let friendManager = FriendManager.shared
-    private let cardManager = CardManager.shared
+    @Published var friends: [Friend] = []
+    @Published var threads: [ChatThread] = []
+    @Published var messagesByThread: [String: [ChatMessage]] = [:]
     
-    var friends: [Friend] {
-        friendManager.friends.map { shareFriend in
-            Friend(
-                id: shareFriend.id,
-                name: shareFriend.name,
-                avatarURL: URL(string: shareFriend.avatar)
-            )
-        }
-        .sorted(by: { $0.name < $1.name }) // ✅ 가나다순 정렬 (요청사항)
-    }
+    @Published var isLoading: Bool = false
     
-    @Published private(set) var threads: [ChatThread] = []
-    @Published private(set) var messagesByThread: [String: [ChatMessage]] = [:]
-
-    @Published var searchKeyword: String = ""
-    @Published var isLoading = false
     @Published var errorMessage: String?
-
-    private let repo: ShareRepository
+    @Published var searchKeyword: String = ""
     
-    // ✅ (수정) init을 private으로 변경
-    private init(repo: ShareRepository) {
+    // ❗️ [수정] nonisolated init에서 초기화되므로 이 속성들도 nonisolated로 변경
+    private nonisolated let repo: ShareRepository
+    private nonisolated let cardManager = CardManager.shared
+    
+    private nonisolated init(repo: ShareRepository = MockShareRepository.shared) {
         self.repo = repo
-        print("✅ ShareViewModel.shared initialized")
-    }
-    
-    func getCard(byId id: UUID) -> Card? {
-        return cardManager.card(withId: id)
     }
 
     func loadAll() async {
-        isLoading = true
-        defer { isLoading = false }
+        await loadFriends()
+        await loadThreads()
+    }
+    
+    private func loadFriends() async {
         do {
-            await cardManager.loadAllCards()
-            await friendManager.loadFriends()
+            self.friends = try await repo.fetchFriends()
             
+            // ✅ (수정) 가나다순 정렬
+            self.friends.sort { $0.name.localizedCompare($1.name) == .orderedAscending }
+            
+            print("✅ ShareViewModel: \(friends.count)명 친구 로드 완료 (가나다순 정렬)")
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadThreads() async {
+        do {
             var fetchedThreads = try await repo.fetchChatThreads()
             
             for i in 0..<fetchedThreads.count {
@@ -474,5 +432,10 @@ final class ShareViewModel: ObservableObject {
             f.dateFormat = "yy/M/d"
             return f.string(from: date)
         }
+    }
+    
+    // ✅ (추가) Card를 ID로 검색하는 헬퍼
+    func getCard(byId id: UUID) -> Card? {
+        return cardManager.allCards.first(where: { $0.id == id })
     }
 }

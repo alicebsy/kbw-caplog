@@ -100,6 +100,7 @@ struct UnifiedCardView: View {
         HStack(alignment: .top, spacing: 12) {
             // ... (VStack: 텍스트 블록) ...
             VStack(alignment: .leading, spacing: 10) {
+                // --- 제목/카테고리 ---
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.category.rawValue + " - " + card.subcategory)
                         .font(.system(size: 13))
@@ -112,6 +113,9 @@ struct UnifiedCardView: View {
                         .lineLimit(1)
                 }
                 
+                // ✅ (삭제) 이모지 블록이 여기서 삭제됨
+                
+                // --- 요약 ---
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 14))
@@ -119,18 +123,29 @@ struct UnifiedCardView: View {
                         .lineLimit(2)
                 }
                 
-                if !card.location.isEmpty {
-                    HStack(spacing: 8) {
+                // ✅ (수정) 이모지+텍스트 블록을 여기(summary 아래)로 이동
+                //    (이모지는 항상 표시하고, 텍스트만 비어있게 됨)
+                HStack(spacing: 8) {
+                    ZStack {
                         Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 28, height: 28)
-                        Text(card.location)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.brandTextSub)
-                            .lineLimit(1)
+                            .fill(Color.white) // 흰색 원
+                            .overlay(
+                                Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
+                        
+                        Text(card.subcategoryEmoji) // 이모지
+                            .font(.system(size: 14))
                     }
+                    .frame(width: 28, height: 28)
+                    
+                    // ✅ (수정) 새 변수명 사용
+                    Text(card.contextualInfoText) // 유효기간 또는 위치
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.brandTextSub)
+                        .lineLimit(1)
                 }
                 
+                // --- 태그 ---
                 if !card.tagsString.isEmpty {
                     Text(card.tagsString)
                         .font(.system(size: 13))
@@ -156,7 +171,6 @@ struct UnifiedCardView: View {
                 Spacer().frame(height: 12)
                 
                 HStack(spacing: 14) {
-                    // ✅ (수정) onShare -> isShareSheetPresented = true
                     Button(action: { isShareSheetPresented = true }) {
                         Image(systemName: "square.and.arrow.up")
                     }
