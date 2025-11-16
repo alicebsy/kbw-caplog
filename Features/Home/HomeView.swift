@@ -33,9 +33,9 @@ struct HomeView: View {
                 )
                 Spacer().frame(height: S) // 24pt
 
-                // ── 섹션 1: Today's Summary (쿠폰 캐러셀) ──
+                // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) ──
                 if !vm.coupons.isEmpty {
-                    HomeSection(title: "🗓️ Today's Summary") {
+                    HomeSection(title: "⏳ Expiring Soon") {
                         TabView {
                             ForEach(vm.coupons) { card in
                                 UnifiedCardView(

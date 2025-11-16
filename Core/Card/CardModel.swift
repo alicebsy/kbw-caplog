@@ -4,13 +4,19 @@ import SwiftUI
 // MARK: - (추가) 목업 카드용 고정 UUID
 struct MockCardIDs {
     static let starbucksCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000001")!
-    static let oliveYoungCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000002")!
-    static let chickenCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000003")!
-    static let makguksu = UUID(uuidString: "10000000-0000-0000-0000-000000000004")!
-    static let nangman = UUID(uuidString: "10000000-0000-0000-0000-000000000005")!
-    static let sentence = UUID(uuidString: "10000000-0000-0000-0000-000000000006")!
-    static let cafeEround = UUID(uuidString: "10000000-0000-0000-0000-000000000007")!
-    static let exhibition = UUID(uuidString: "10000000-0000-0000-0000-000000000008")!
+    static let megacoffeeCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000002")!
+    static let emart24Coupon = UUID(uuidString: "10000000-0000-0000-0000-000000000003")!
+    static let kakaopayCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000004")!
+    static let pepperoCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000005")!
+    static let makguksu = UUID(uuidString: "10000000-0000-0000-0000-000000000006")!
+    static let nangman = UUID(uuidString: "10000000-0000-0000-0000-000000000007")!
+    static let sentence = UUID(uuidString: "10000000-0000-0000-0000-000000000008")!
+    static let cafeEround = UUID(uuidString: "10000000-0000-0000-0000-000000000009")!
+    static let exhibition = UUID(uuidString: "10000000-0000-0000-0000-000000000010")!
+    // ✅ 새 맛집 추가
+    static let mokwhabanjeom = UUID(uuidString: "10000000-0000-0000-0000-000000000011")!
+    static let donkatsu = UUID(uuidString: "10000000-0000-0000-0000-000000000012")!
+    static let acornstol = UUID(uuidString: "10000000-0000-0000-0000-000000000013")!
 }
 
 // MARK: - 통합 Card 모델
@@ -195,38 +201,48 @@ struct FolderSubcategory: Identifiable, Hashable {
 extension Card {
     // ✅ (수정) 고정 UUID를 사용하도록 수정
     static let sampleCards: [Card] = [
+        // ✅ 쿠폰 5개
         Card(
             id: MockCardIDs.starbucksCoupon,
             title: "무료 음료 쿠폰",
             summary: "스타벅스 무료 음료 1잔",
             category: .info, subcategory: "쿠폰", tags: ["스타벅스", "무료음료"],
-            fields: ["브랜드": "Starbucks", "만료일": "2025. 11. 20."],
-            thumbnailURL: "shot_coupon", screenshotURLs: ["shot_coupon"]
+            fields: ["브랜드": "Starbucks", "만료일": "2025. 11. 19."],
+            thumbnailURL: "스타벅스", screenshotURLs: ["스타벅스"]
         ),
         Card(
-            id: MockCardIDs.oliveYoungCoupon,
-            title: "10,000원 할인권",
-            summary: "올리브영 1만원 할인",
-            category: .info, subcategory: "쿠폰", tags: ["올리브영", "할인"],
-            fields: ["브랜드": "Olive Young", "만료일": "2025. 11. 22."],
-            thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+            id: MockCardIDs.megacoffeeCoupon,
+            title: "(ICE)아메리카노",
+            summary: "메가MGC커피 아이스 아메리카노",
+            category: .info, subcategory: "쿠폰", tags: ["메가커피", "아메리카노", "무료음료"],
+            fields: ["브랜드": "메가MGC커피", "만료일": "2025. 11. 30.", "바코드": "2639 3823"],
+            thumbnailURL: "메가커피", screenshotURLs: ["메가커피"]
         ),
         Card(
-            id: MockCardIDs.chickenCoupon,
-            title: "치킨 5,000원 할인",
-            summary: "배달의민족 치킨 할인 쿠폰",
-            category: .info, subcategory: "쿠폰", tags: ["배달", "치킨"],
-            fields: ["브랜드": "배달의민족", "만료일": "2025. 11. 25."],
-            thumbnailURL: "placeholder", screenshotURLs: ["placeholder"]
+            id: MockCardIDs.emart24Coupon,
+            title: "이마트24 5천원권",
+            summary: "이마트24 모바일 금액권 5,000원",
+            category: .info, subcategory: "쿠폰", tags: ["이마트24", "편의점", "금액권"],
+            fields: ["브랜드": "이마트24", "금액": "5,000원", "만료일": "2025. 11. 20.", "바코드": "3300 0414 5162 0790 51"],
+            thumbnailURL: "이마트24", screenshotURLs: ["이마트24"]
         ),
         Card(
-            id: MockCardIDs.makguksu,
-            title: "이목리 막국수",
-            summary: "동치미막국수, 명태회막국수",
-            category: .info, subcategory: "맛집", tags: ["맛집", "속초", "막국수"],
-            fields: ["장소명": "이목리 막국수", "주소": "강원 속초시 이목로 104-43", "대표메뉴": "동치미막국수"],
-            thumbnailURL: "이목리막국수", screenshotURLs: ["이목리막국수"]
+            id: MockCardIDs.kakaopayCoupon,
+            title: "카카오페이 포인트 30,000P",
+            summary: "카카오페이 포인트 3만원",
+            category: .info, subcategory: "쿠폰", tags: ["카카오페이", "포인트", "GS25"],
+            fields: ["브랜드": "카카오페이", "금액": "30,000P", "만료일": "2025. 11. 26.", "사용처": "카카오페이포인트", "바코드": "GS01-0986-2109-6770"],
+            thumbnailURL: "카카오페이", screenshotURLs: ["카카오페이"]
         ),
+        Card(
+            id: MockCardIDs.pepperoCoupon,
+            title: "롯데 크런키 빼빼로(지함)",
+            summary: "GS25 롯데 크런키 빼빼로",
+            category: .info, subcategory: "쿠폰", tags: ["빼빼로", "편의점", "GS25"],
+            fields: ["브랜드": "GS25", "상품": "롯데)크런키|빼빼로(지함)", "만료일": "2025. 12. 11.", "바코드": "1324 3704 9093 8908"],
+            thumbnailURL: "빼빼로", screenshotURLs: ["빼빼로"]
+        ),
+        // ✅ 맛집 카드들
         Card(
             id: MockCardIDs.nangman,
             title: "낭만식탁",
@@ -234,6 +250,38 @@ extension Card {
             category: .info, subcategory: "맛집", tags: ["데이트", "분위기좋음", "서대문"],
             fields: ["장소명": "낭만식탁", "주소": "서울 서대문구 이화여대5길 6", "대표메뉴": "간장새우"],
             thumbnailURL: "낭만식탁", screenshotURLs: ["낭만식탁"]
+        ),
+        Card(
+            id: MockCardIDs.mokwhabanjeom,
+            title: "목화반점",
+            summary: "옛날탕수육, 간짜장",
+            category: .info, subcategory: "맛집", tags: ["중식", "탕수육", "간짜장"],
+            fields: ["장소명": "목화반점", "주소": "충남 아산시 읍내동 151-3", "영업시간": "11:00~18:00 (월요일 휴무)", "대표메뉴": "옛날탕수육"],
+            thumbnailURL: "목화반점", screenshotURLs: ["목화반점"]
+        ),
+        Card(
+            id: MockCardIDs.donkatsu,
+            title: "사장님돈까스",
+            summary: "고구마치즈돈까스, 정식돈까스",
+            category: .info, subcategory: "맛집", tags: ["돈까스", "이대맛집", "대현동"],
+            fields: ["장소명": "사장님돈까스", "주소": "서울 서대문구 이화여대7길 11", "대표메뉴": "고구마치즈돈까스"],
+            thumbnailURL: "사장님돈까스", screenshotURLs: ["사장님돈까스"]
+        ),
+        Card(
+            id: MockCardIDs.acornstol,
+            title: "아콘스톨",
+            summary: "김밥, 떡볶이 맛집",
+            category: .info, subcategory: "맛집", tags: ["김밥", "떡볶이", "이대맛집", "신촌"],
+            fields: ["장소명": "아콘스톨", "주소": "서울 서대문구 신촌역로 17 1층 110호", "대표메뉴": "김밥"],
+            thumbnailURL: "아콘스톨", screenshotURLs: ["아콘스톨"]
+        ),
+        Card(
+            id: MockCardIDs.makguksu,
+            title: "이목리막국수",
+            summary: "감자전의 바삭함과 쫄쫄함의 조화",
+            category: .info, subcategory: "맛집", tags: ["막국수", "맛집", "속초", "감자전"],
+            fields: ["장소명": "이목리막국수", "주소": "강원 속초시", "리뷰": "1,928개", "대표메뉴": "막국수"],
+            thumbnailURL: "이목리막국수", screenshotURLs: ["이목리막국수"]
         ),
         Card(
             id: MockCardIDs.sentence,

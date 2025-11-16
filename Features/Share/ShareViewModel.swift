@@ -52,7 +52,7 @@ final class MockShareRepository: ShareRepository {
     private static let minhaID = FriendManager.mockFriends.first(where: { $0.name == "우민하" })!.id
     private static let dahyeID = FriendManager.mockFriends.first(where: { $0.name == "강다혜" })!.id
     private static let seoyeonID = FriendManager.mockFriends.first(where: { $0.name == "배서연" })!.id
-    private static let yiwhaID = FriendManager.mockFriends.first(where: { $0.name == "김이화" })!.id
+    private static let ewhaID = FriendManager.mockFriends.first(where: { $0.name == "김이화" })!.id
     private static let actorID = FriendManager.mockFriends.first(where: { $0.name == "김배우" })!.id
     private static let junghoonID = FriendManager.mockFriends.first(where: { $0.name == "이정훈" })!.id
     private static let jiaID = FriendManager.mockFriends.first(where: { $0.name == "송지아" })!.id
@@ -92,14 +92,17 @@ final class MockShareRepository: ShareRepository {
         let t4Messages: [ChatMessage] = [
             .init(senderId: "me", text: "저번에 말한 낭만식탁", cardID: MockCardIDs.nangman, createdAt: Date().addingTimeInterval(-60*40)),
             .init(senderId: "me", text: "여기 진짜 맛있더라", cardID: nil, createdAt: Date().addingTimeInterval(-60*39)),
-            .init(senderId: Self.yiwhaID, text: "아 여기! 나도 가봤어. 사케동 인정", cardID: nil, createdAt: Date().addingTimeInterval(-60*38))
+            .init(senderId: Self.ewhaID, text: "아 여기! 나도 가봤어. 사케동 인정", cardID: nil, createdAt: Date().addingTimeInterval(-60*38))
         ]
         let t5Messages: [ChatMessage] = [
-            .init(senderId: Self.dahyeID, text: "얘들아 올영 세일한대", cardID: MockCardIDs.oliveYoungCoupon, createdAt: Date().addingTimeInterval(-60*9)),
-            .init(senderId: Self.seoyeonID, text: "오 대박", cardID: nil, createdAt: Date().addingTimeInterval(-60*8)),
-            .init(senderId: Self.minhaID, text: "이거 사야겠다", cardID: nil, createdAt: Date().addingTimeInterval(-60*7)),
-            .init(senderId: Self.yiwhaID, text: "나도!!", cardID: nil, createdAt: Date().addingTimeInterval(-60*6)),
-            .init(senderId: Self.dahyeID, text: "빨리 사", cardID: nil, createdAt: Date().addingTimeInterval(-60*5))
+            .init(senderId: Self.minhaID, text: nil, cardID: MockCardIDs.nangman, createdAt: Date().addingTimeInterval(-60*15)),
+            .init(senderId: Self.minhaID, text: "여기서 밥 먹자!", cardID: nil, createdAt: Date().addingTimeInterval(-60*14)),
+            .init(senderId: Self.seoyeonID, text: "오 대박 여기 맛있어", cardID: nil, createdAt: Date().addingTimeInterval(-60*13)),
+            .init(senderId: Self.dahyeID, text: "좋아! 맛있겠다", cardID: nil, createdAt: Date().addingTimeInterval(-60*12)),
+            .init(senderId: "me", text: nil, cardID: MockCardIDs.starbucksCoupon, createdAt: Date().addingTimeInterval(-60*11)),
+            .init(senderId: "me", text: "나 무료 쿠폰 있으니까 스타벅스 가서 커피도 마시자", cardID: nil, createdAt: Date().addingTimeInterval(-60*10)),
+            .init(senderId: Self.ewhaID, text: "스타벅스 좋아", cardID: nil, createdAt: Date().addingTimeInterval(-60*9)),
+            .init(senderId: Self.minhaID, text: "완벽한 계획이다 ㅋㅋ", cardID: nil, createdAt: Date().addingTimeInterval(-60*8))
         ]
         let t6Messages: [ChatMessage] = {
             var messages: [ChatMessage] = []
@@ -123,11 +126,11 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.sujinID, text: "결정? 7시 ㄱㄱ", cardID: nil, createdAt: Date().addingTimeInterval(-60*33))
         ]
         let t9Messages: [ChatMessage] = [
-            .init(senderId: "me", text: "오늘 치킨 ㄱ?", cardID: MockCardIDs.chickenCoupon, createdAt: Date().addingTimeInterval(-60*46)),
+            .init(senderId: "me", text: "메가커피 쿠폰 있는데 커피 마시러 갈까?", cardID: MockCardIDs.megacoffeeCoupon, createdAt: Date().addingTimeInterval(-60*46)),
             .init(senderId: Self.minhaID, text: "와 미쳤다", cardID: nil, createdAt: Date().addingTimeInterval(-60*45)),
             .init(senderId: Self.chaewonID, text: "콜콜콜", cardID: nil, createdAt: Date().addingTimeInterval(-60*44)),
             .init(senderId: Self.hayoonID, text: "저 지금 집 가요", cardID: nil, createdAt: Date().addingTimeInterval(-60*43)),
-            .init(senderId: "me", text: "오케이 8시 주문?", cardID: nil, createdAt: Date().addingTimeInterval(-60*42))
+            .init(senderId: "me", text: "오케이 3시에 메가커피 앞에서 보자", cardID: nil, createdAt: Date().addingTimeInterval(-60*42))
         ]
         let t10Messages: [ChatMessage] = [
             .init(senderId: Self.dahyeID, text: nil, cardID: MockCardIDs.makguksu, createdAt: Date().addingTimeInterval(-60*56)),
@@ -158,13 +161,13 @@ final class MockShareRepository: ShareRepository {
             .init(id: "t3", title: "", participantIds: ["me", Self.seoyeonID],
                   lastMessageText: t3Messages.last?.text, lastMessageAt: t3Messages.last?.createdAt,
                   unreadCount: 0, lastMessageCardTitle: nil),
-            .init(id: "t4", title: "", participantIds: ["me", Self.yiwhaID],
+            .init(id: "t4", title: "", participantIds: ["me", Self.ewhaID],
                   lastMessageText: t4Messages.last?.text, lastMessageAt: t4Messages.last?.createdAt,
                   unreadCount: 0, lastMessageCardTitle: t4Messages.last?.cardID != nil ? "낭만식탁" : nil),
-            .init(id: "t5", title: "", participantIds: ["me", Self.dahyeID, Self.seoyeonID, Self.minhaID, Self.yiwhaID],
+            .init(id: "t5", title: "", participantIds: ["me", Self.dahyeID, Self.seoyeonID, Self.minhaID, Self.ewhaID],
                   lastMessageText: t5Messages.last?.text, lastMessageAt: t5Messages.last?.createdAt,
                   unreadCount: getUnreadCount("t5"),
-                  lastMessageCardTitle: t5Messages.last?.cardID != nil ? "올리브영 10% 할인" : nil),
+                  lastMessageCardTitle: nil),
             .init(id: "t6", title: "", participantIds: ["me", Self.actorID, Self.junghoonID, Self.minhaID],
                   lastMessageText: t6Messages.last?.text, lastMessageAt: t6Messages.last?.createdAt,
                   unreadCount: getUnreadCount("t6"), lastMessageCardTitle: nil),
@@ -176,7 +179,7 @@ final class MockShareRepository: ShareRepository {
                   unreadCount: 0, lastMessageCardTitle: t8Messages.last?.cardID != nil ? "낭만식탁" : nil),
             .init(id: "t9", title: "", participantIds: ["me", Self.minhaID, Self.chaewonID, Self.hayoonID],
                   lastMessageText: t9Messages.last?.text, lastMessageAt: t9Messages.last?.createdAt,
-                  unreadCount: 0, lastMessageCardTitle: t9Messages.last?.cardID != nil ? "BBQ 황금올리브 치킨 할인" : nil),
+                  unreadCount: 0, lastMessageCardTitle: t9Messages.last?.cardID != nil ? "(ICE)아메리카노" : nil),
             .init(id: "t10", title: "", participantIds: ["me", Self.dahyeID, Self.junyoungID, Self.jiwooID],
                   lastMessageText: t10Messages.last?.text, lastMessageAt: t10Messages.last?.createdAt,
                   unreadCount: 0, lastMessageCardTitle: t10Messages.last?.cardID != nil ? "속초 막국수 맛집" : nil)
