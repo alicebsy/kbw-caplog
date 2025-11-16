@@ -21,7 +21,7 @@ struct MyPageUsageCard: View {
                             .font(.system(size: 14))
                         Text("\(savedCount)")
                             .font(.system(size: 15, weight: .bold))
-                        Text("건 저장")
+                        Text("건 정보 저장")
                             .font(.system(size: 14))
                         
                         Text("|")
@@ -33,7 +33,7 @@ struct MyPageUsageCard: View {
                             .font(.system(size: 14))
                         Text("\(recommendedCount)")
                             .font(.system(size: 15, weight: .bold))
-                        Text("건 추천")
+                        Text("건 추천 받음")
                             .font(.system(size: 14))
                     }
                     .frame(maxWidth: .infinity)
