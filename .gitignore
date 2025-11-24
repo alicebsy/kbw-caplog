@@ -47,3 +47,5 @@ Thumbs.db**/*.xcuserstate
 **/xcuserdata/
 DerivedData/
 caplog/Info.plist
+Config.xcconfig
+*.xcconfig
