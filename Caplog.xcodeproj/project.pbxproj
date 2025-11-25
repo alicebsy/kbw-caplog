@@ -12,10 +12,12 @@
 		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
 		CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108622E9CFECD00181F2D /* KakaoSDKCommon */; };
 		CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108652E9D009E00181F2D /* KakaoSDKUser */; };
+		CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = CEA428962ED529D2003457FC /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
+		CEA428962ED529D2003457FC /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		CEB027E72E9FE78B007EE2D8 /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -87,6 +89,7 @@
 				CE8108642E9D009E00181F2D /* Frameworks */,
 				CE81079B2E9CF74300181F2D /* caplog.entitlements */,
 				CEB027E72E9FE78B007EE2D8 /* Caplog.app */,
+				CEA428962ED529D2003457FC /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -168,6 +171,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,6 +190,7 @@
 /* Begin XCBuildConfiguration section */
 		CEFCA1252E8D8F620014AA05 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEA428962ED529D2003457FC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -250,6 +255,7 @@
 		};
 		CEFCA1262E8D8F620014AA05 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEA428962ED529D2003457FC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

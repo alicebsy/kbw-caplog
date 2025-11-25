@@ -7,9 +7,9 @@ struct Register1View: View {
     // ✅ OCR + GPT 상태 관리
     @State private var selectedImage: UIImage?
     @State private var recognizedText: [String] = []
+    @State private var googleVisionLabels: [VisionLabel] = []
     @State private var preprocessedImage: UIImage?
     @State private var gptResult: String?
-    @State private var apiUsage: String?
     @State private var showPhotoPicker = false
     @State private var navigateToResult = false
 
@@ -53,7 +53,7 @@ struct Register1View: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                // ✅ 임시 버튼 섹션 (기존 그대로 유지)
+                // ✅ 임시 버튼 섹션
                 VStack(spacing: 12) {
                     NavigationLink(destination: Register4_1View()) {
                         Text("임시 레지스터4-1")
@@ -113,30 +113,54 @@ struct Register1View: View {
                     image: selectedImage,
                     recognizedText: recognizedText,
                     gptResult: gptResult ?? "GPT 결과 없음 ❌",
-                    apiUsage: apiUsage
+                    googleVisionLabels: googleVisionLabels.isEmpty ? nil : googleVisionLabels
                 )
             }
         }
         
-        // ✅ PhotoPicker 연결
+        // ✅ PhotoPicker 연결 (새 버전)
         .fullScreenCover(isPresented: $showPhotoPicker) {
-            PhotoPicker(
+            PhotoPickerWrapperView(
+                isPresented: $showPhotoPicker,
                 selectedImage: $selectedImage,
                 recognizedText: $recognizedText,
-                preprocessedImage: $preprocessedImage,
+                googleVisionLabels: $googleVisionLabels,
                 gptResult: $gptResult,
-                apiUsage: $apiUsage
+                navigateToResult: $navigateToResult
             )
         }
-        
-        // ✅ OCR 결과가 생기면 자동 이동 (GPT 결과 없어도)
-        .onChange(of: recognizedText) {
-            if !recognizedText.isEmpty {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    showPhotoPicker = false
-                    navigateToResult = true
-                }
-            }
+    }
+}
+
+// ✅ PhotoPicker를 감싸는 헬퍼 뷰
+struct PhotoPickerWrapperView: View {
+    @Binding var isPresented: Bool
+    @Binding var selectedImage: UIImage?
+    @Binding var recognizedText: [String]
+    @Binding var googleVisionLabels: [VisionLabel]
+    @Binding var gptResult: String?
+    @Binding var navigateToResult: Bool
+    
+    @State private var isProcessing = false
+    @State private var resultCard: Card?
+    @State private var processingResult: ProcessingResult?
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        PhotoPicker(
+            isProcessing: $isProcessing,
+            resultCard: $resultCard,
+            processingResult: $processingResult,
+            errorMessage: $errorMessage
+        ) { result in
+            // ✅ ProcessingResult에서 모든 데이터 추출
+            selectedImage = result.preprocessedImage
+            recognizedText = result.ocrText
+            googleVisionLabels = result.googleVisionLabels
+            gptResult = "카테고리: \(result.card.category.rawValue) - \(result.card.subcategory)\n제목: \(result.card.title)\n요약: \(result.card.summary)"
+            
+            navigateToResult = true
+            isPresented = false
         }
     }
 }
