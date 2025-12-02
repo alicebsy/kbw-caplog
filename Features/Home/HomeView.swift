@@ -128,9 +128,14 @@ struct HomeView: View {
             }
         }
 
-        // ✅ 편집 시트 (파라미터 제거)
+        // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card)
+            CardEditSheet(card: card) {
+                // 카드 저장 후 홈 화면 데이터 갱신
+                Task {
+                    await vm.reloadHomeContent()
+                }
+            }
         }
 
         // 전체 이미지 보기

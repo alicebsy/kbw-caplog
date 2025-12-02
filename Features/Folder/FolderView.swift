@@ -197,7 +197,12 @@ struct FolderItemListView: View {
         .navigationBarTitleDisplayMode(.inline)
         
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card)
+            CardEditSheet(card: card) {
+                // 카드 저장 후 폴더 뷰 갱신
+                Task {
+                    await manager.loadAllCards()
+                }
+            }
         }
         
         .fullScreenCover(isPresented: Binding(

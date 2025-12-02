@@ -279,9 +279,7 @@ final class MockShareRepository: ShareRepository {
     func fetchFriends() async throws -> [Friend] {
         try? await Task.sleep(nanoseconds: 100_000_000)
 
-        return FriendManager.mockFriends.map {
-            FriendManager.toFriend($0)
-        }
+        return FriendManager.mockFriends
     }
 
     func fetchChatThreads() async throws -> [ChatThread] {
@@ -319,9 +317,7 @@ final class MockShareRepository: ShareRepository {
         messageStore.removeValue(forKey: threadId)
     }
 }
-import Foundation
-import SwiftUI
-import Combine
+
 
 // MARK: - ShareViewModel (전역 싱글톤)
 
@@ -607,7 +603,8 @@ final class ShareViewModel: ObservableObject {
                 return Friend(
                     id: f.id,
                     name: name ?? f.name,
-                    profileImageName: imageName ?? f.profileImageName
+                    avatarURL: f.avatarURL,
+                    profileImage: imageName ?? f.profileImage
                 )
             }
             return f

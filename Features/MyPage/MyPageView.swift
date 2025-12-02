@@ -1,112 +1,99 @@
-//
-//  MyPageView.swift
-//  Caplog
-//
-//  Created by Caplog Team.
-//
-
 import SwiftUI
 
 struct MyPageView: View {
+    var onSelectTab: ((CaplogTab) -> Void)? = nil
+    
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = MyPageViewModel()
-    
+    @State private var showingError = false
     @State private var showPasswordSheet = false
-    @State private var showProfileImageSheet = false   // ✅ 추가
-    
+
+    @State private var goHome = false
+    @State private var goFolder = false
+    @State private var goSearch = false
+    @State private var goShare  = false
+
     var body: some View {
-        VStack(spacing: 0) {
-            
-            // MARK: - 헤더
-            MyPageProfileHeader(
-                displayName: vm.name,
-                email: vm.email,
-                profileImageName: vm.profileImageName   // ✅ 추가
-            )
-            .padding(.top, 8)
-            
-            ScrollView {
-                VStack(spacing: 24) {
-                    
-                    // MARK: - 계정 정보 변경 섹션
-                    MyPageAccountSection(
-                        name: $vm.name,
-                        userId: vm.userId,
-                        email: vm.email,
-                        
-                        onChangePassword: { 
-                            showPasswordSheet = true 
-                        },
-                        
-                        // 🔥 프로필 사진 변경 버튼
-                        onChangeProfileImage: { 
-                            showProfileImageSheet = true 
-                        },
-                        
-                        onSave: {
-                            Task { await vm.saveProfile() }
-                        },
-                        isSaveEnabled: vm.canSaveProfile
-                    )
-                    
-                    // MARK: - 기타 설정 영역 (기존 그대로)
-                    MyPageSettingsSection()
-                    
-                    Spacer().frame(height: 20)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-            }
-        }
-        .navigationBarHidden(true)
-        
-        
-        // MARK: - 비밀번호 변경 시트
-        .sheet(isPresented: $showPasswordSheet) {
-            PasswordChangeView()
-                .presentationDetents([.height(420)])
-        }
-        
-        
-        // MARK: - 프로필 사진 변경 시트
-        .sheet(isPresented: $showProfileImageSheet) {
-            VStack(spacing: 20) {
-                Text("프로필 이미지 선택")
-                    .font(.headline)
-                    .padding(.top, 16)
-                
-                // 원하는 아바타 이름을 네 Asset과 맞게 조정 가능
-                let avatarOptions = ["avatar_default", "avatar1", "avatar2", "avatar3"]
-                
-                HStack(spacing: 20) {
-                    ForEach(avatarOptions, id: \.self) { name in
-                        Image(name)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 70, height: 70)
-                            .clipShape(Circle())
-                            .onTapGesture {
-                                vm.profileImageName = name
-                                Task { await vm.saveProfile() }
-                                showProfileImageSheet = false
-                            }
+        ScrollView(showsIndicators: false) { content }
+            .onAppear { vm.onAppear() }
+            .modifier(MyPageModifier(vm: vm, showingError: $showingError))
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
                 }
-                .padding(.top, 12)
-                
-                Button("닫기") {
-                    showProfileImageSheet = false
-                }
-                .font(.system(size: 16, weight: .semibold))
-                .padding(.top, 8)
-                
-                Spacer()
             }
-            .padding(.horizontal, 20)
-            .presentationDetents([.height(300)])
-        }
+            .safeAreaInset(edge: .bottom) {
+                CaplogTabBar(selected: .myPage) { tab in
+                    onSelectTab?(tab)
+                    switch tab {
+                    case .home:   goHome   = true
+                    case .folder: goFolder = true
+                    case .search: goSearch = true
+                    case .share:  goShare  = true
+                    case .myPage: break
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $goHome)   { HomeView() }
+            .navigationDestination(isPresented: $goFolder) { FolderView() }
+            .navigationDestination(isPresented: $goSearch) { SearchView() }
+            .navigationDestination(isPresented: $goShare)  { ShareView() }
+            .sheet(isPresented: $showPasswordSheet) { MyPagePasswordChangeView() }
     }
-}
 
-#Preview {
-    MyPageView()
+    private var content: some View {
+        VStack(spacing: 16) {
+            MyPageProfileHeader(displayName: vm.displayName, email: vm.email)
+
+            MyPageAccountSection(
+                name: $vm.name,
+                userId: vm.userId,
+                email: vm.email,
+                onChangePassword: { showPasswordSheet = true },
+                // ✅ Task 내부에서 await 호출
+                onSave: {
+                    print("🔥 MyPageView: onSave 호출됨")
+                    Task {
+                        print("🔥 Task 시작")
+                        await vm.saveProfile()
+                        print("🔥 Task 완료")
+                    }
+                },
+                isSaveEnabled: true
+            )
+
+            MyPageUsageCard(
+                savedCount: CardManager.shared.allCards.count,
+                recommendedCount: CardManager.shared.recommendedCards().count
+            )
+
+            MyPageProfileSection(
+                gender: $vm.gender,
+                birthday: $vm.birthday,
+                // ✅ Task 내부에서 await 호출
+                onSave: {
+                    print("🔥 MyPageView: 프로필 onSave 호출됨")
+                    Task {
+                        print("🔥 프로필 Task 시작")
+                        await vm.saveProfile()
+                        print("🔥 프로필 Task 완료")
+                    }
+                },
+                isSaveEnabled: true
+            )
+
+            MyPageSettingsSection(
+                allowLocationRecommend: $vm.allowLocationRecommend,
+                allowNotification: $vm.allowNotification,
+                onLocationToggle: vm.toggleLocationPermission,
+                onNotificationToggle: vm.toggleNotificationPermission
+            )
+        }
+        .padding(.vertical, 8)
+    }
 }

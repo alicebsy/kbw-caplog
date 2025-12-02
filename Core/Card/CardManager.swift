@@ -29,12 +29,13 @@ final class CardManager: ObservableObject {
     // ✅ 3. init을 private으로 변경 (외부 생성 방지)
     private nonisolated init() {
         // ✅ 4. 앱 실행 시 UserDefaults에서 "최근 본" 목록 로드
-        let savedIDs = UserDefaults.standard.array(forKey: viewedCardsKey) as? [String] ?? []
+        let savedIDs = UserDefaults.standard.array(forKey: "recentlyViewedCardIDs") as? [String] ?? []
         let uuids = savedIDs.compactMap { UUID(uuidString: $0) }
         
-        // MainActor에서 published 프로퍼티 업데이트
-        DispatchQueue.main.async {
+        // MainActor에서 안전하게 published 프로퍼티 업데이트
+        Task { @MainActor in
             self.viewedCardIDs = uuids
+            print("✅ CardManager: 최근 본 카드 \(uuids.count)개 로드 완료")
         }
     }
     

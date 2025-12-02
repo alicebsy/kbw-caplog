@@ -153,9 +153,14 @@ struct SearchView: View {
             }
         }
         
-        // ✅ 편집 시트 (파라미터 제거)
+        // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card)
+            CardEditSheet(card: card) {
+                // 카드 저장 후 검색 결과 갱신
+                Task {
+                    vm.resetAndSearch()
+                }
+            }
         }
         
         // 전체 이미지 팝업

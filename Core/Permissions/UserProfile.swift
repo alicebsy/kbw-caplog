@@ -7,9 +7,11 @@ struct UserProfile: Codable {
     var email: String
     var gender: String?      // "M" or "F"
     var birthday: Date?      // ISO-8601 (스프링 @JsonFormat 권장)
+    var avatarURL: String?   // 프로필 이미지 URL
 
     enum CodingKeys: String, CodingKey {
         case userId, nickname, email, gender, birthday
+        case avatarURL = "avatar_url"
     }
 }
 
@@ -17,4 +19,10 @@ struct UpdateUserProfileRequest: Encodable {
     let nickname: String
     let gender: String?
     let birthday: String? // yyyy-MM-dd
+    let avatarURL: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case nickname, gender, birthday
+        case avatarURL = "avatar_url"
+    }
 }

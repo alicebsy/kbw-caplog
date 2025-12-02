@@ -1,9 +1,164 @@
 import SwiftUI
 
+// MARK: - FlowLayout (자동 줄바꿈 레이아웃)
+
+/// 자동 줄바꿈 레이아웃 (태그용)
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowLayoutResult(
+            in: proposal.replacingUnspecifiedDimensions().width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        return result.size
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowLayoutResult(
+            in: bounds.width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        
+        for (index, subview) in subviews.enumerated() {
+            subview.place(
+                at: CGPoint(
+                    x: bounds.minX + result.positions[index].x,
+                    y: bounds.minY + result.positions[index].y
+                ),
+                proposal: .unspecified
+            )
+        }
+    }
+    
+    struct FlowLayoutResult {
+        var size: CGSize = .zero
+        var positions: [CGPoint] = []
+        
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var lineHeight: CGFloat = 0
+            
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                
+                if currentX + size.width > maxWidth && currentX > 0 {
+                    // 다음 줄로 이동
+                    currentX = 0
+                    currentY += lineHeight + spacing
+                    lineHeight = 0
+                }
+                
+                positions.append(CGPoint(x: currentX, y: currentY))
+                
+                currentX += size.width + spacing
+                lineHeight = max(lineHeight, size.height)
+            }
+            
+            // 전체 크기 계산
+            self.size = CGSize(
+                width: maxWidth,
+                height: currentY + lineHeight
+            )
+        }
+    }
+}
+
+// MARK: - FullScreenImageView (전체 화면 이미지 뷰어)
+
+/// 전체 화면 이미지 뷰어
+struct FullScreenImageView: View {
+    let imageName: String
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            Image(imageName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            scale = lastScale * value
+                        }
+                        .onEnded { _ in
+                            // 최소/최대 배율 제한
+                            scale = min(max(scale, 1.0), 4.0)
+                            lastScale = scale
+                            
+                            // 배율이 1이면 오프셋 초기화
+                            if scale == 1.0 {
+                                offset = .zero
+                                lastOffset = .zero
+                            }
+                        }
+                )
+                .simultaneousGesture(
+                    DragGesture()
+                        .onChanged { value in
+                            if scale > 1.0 {
+                                offset = CGSize(
+                                    width: lastOffset.width + value.translation.width,
+                                    height: lastOffset.height + value.translation.height
+                                )
+                            }
+                        }
+                        .onEnded { _ in
+                            lastOffset = offset
+                        }
+                )
+                .onTapGesture(count: 2) {
+                    // 더블 탭으로 줌 인/아웃
+                    withAnimation(.spring(response: 0.3)) {
+                        if scale > 1.0 {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                            lastOffset = .zero
+                        } else {
+                            scale = 2.0
+                            lastScale = 2.0
+                        }
+                    }
+                }
+            
+            // 닫기 버튼
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.white.opacity(0.8))
+                            .padding()
+                    }
+                }
+                Spacer()
+            }
+        }
+    }
+}
+
+// MARK: - CardDetailView (카드 상세 화면)
+
 /// 카드 상세 화면
 struct CardDetailView: View {
 
-    // ★ card를 로컬에서 관리 — 변경 즉시 반영 + 화면 재입장 시 유지
+    // ☆ card를 로컬에서 관리 – 변경 즉시 반영 + 화면 재입장 시 유지
     @State private var localCard: Card
     @State private var editableTags: [String]
 
@@ -130,8 +285,8 @@ struct CardDetailView: View {
                                                 .fontWeight(.medium)
 
                                             Button {
-            tagToDelete = tag
-            showDeleteConfirm = true
+                                                tagToDelete = tag
+                                                showDeleteConfirm = true
                                             } label: {
                                                 Image(systemName: "xmark.circle.fill")
                                                     .font(.system(size: 16))

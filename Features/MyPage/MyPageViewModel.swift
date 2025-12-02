@@ -78,6 +78,7 @@ final class MyPageViewModel: ObservableObject {
     }
 
     func onAppear() {
+        print("🚀🚀🚀 MyPageViewModel onAppear 시작!")
         Task { await refreshAll() }
     }
 
@@ -89,14 +90,33 @@ final class MyPageViewModel: ObservableObject {
     }
 
     func loadProfile() async {
+        print("🔵🔵🔵 loadProfile 시작!")
+        
+        // 먼저 UserDefaults에서 즉시 로드하여 UI 업데이트 (깜빡임 방지)
+        let defaults = UserDefaults.standard
+        if let savedNickname = defaults.string(forKey: "userProfile_nickname") {
+            name = savedNickname
+            print("⚡️ UserDefaults에서 즉시 로드: \(savedNickname)")
+        }
+        if let savedGender = defaults.string(forKey: "userProfile_gender") {
+            gender = savedGender == "M" ? .male : .female
+        }
+        let birthdayTimestamp = defaults.double(forKey: "userProfile_birthday")
+        if birthdayTimestamp > 0 {
+            birthday = Date(timeIntervalSince1970: birthdayTimestamp)
+        }
+        
+        // 그 다음 서버에서 동기화
         do {
+            print("🔵 userService.fetchMe() 호출 중...")
             let me = try await userService.fetchMe()
+            print("🔵 fetchMe 성공! userId: \(me.userId), nickname: \(me.nickname)")
             userId = me.userId
             name = me.nickname
             email = me.email
             gender = me.gender.map { $0 == "M" ? .male : .female }
             birthday = me.birthday
-            print("✅ 프로필 로드 완료: \(userId), \(name), \(gender?.rawValue ?? "미선택")")
+            print("✅ 프로필 로드 완료: \(userId), \(name), \(gender?.rawValue ?? "미선택"), birthday: \(birthday?.description ?? "nil")")
             
             NotificationCenter.default.post(
                 name: .userProfileUpdated,
@@ -104,12 +124,12 @@ final class MyPageViewModel: ObservableObject {
                 userInfo: ["nickname": name]
             )
         } catch {
-            print("⚠️ 프로필 로드 실패 (Mock 모드): \(error)")
-            userId = "ewhakbw"
-            name = "강배우"
-            email = "ewhakbw@gmail.com"
-            gender = nil
-            birthday = nil
+            print("❌❌❌ 프로필 로드 실패: \(error)")
+            // 이미 UserDefaults에서 로드했으므로 기본값으로 덮어쓰지 않음
+            if userId.isEmpty {
+                userId = "ewhakbw"
+                email = "ewhakbw@gmail.com"
+            }
             
             NotificationCenter.default.post(
                 name: .userProfileUpdated,
@@ -120,7 +140,7 @@ final class MyPageViewModel: ObservableObject {
     }
 
     func saveProfile() async {
-        print("🔥 saveProfile() 시작")
+        print("🟢🟢🟢 saveProfile() 시작!")
         print("   - name: \(name)")
         print("   - gender: \(gender?.rawValue ?? "미선택")")
         print("   - birthday: \(birthday?.description ?? "nil")")
@@ -144,6 +164,7 @@ final class MyPageViewModel: ObservableObject {
         print("⏳ 저장 시작...")
         
         do {
+            print("🟢 userService.updateMe 호출 중...")
             let updated = try await userService.updateMe(
                 nickname: name,
                 gender: gender,
@@ -158,7 +179,7 @@ final class MyPageViewModel: ObservableObject {
             userId = updated.userId
             name = updated.nickname
             email = updated.email
-            gender = updated.gender.map { $0 == "M" ? .male : .female }
+            gender = updated.gender.map { $0 == "M" ? MyPageViewModel.Gender.male : MyPageViewModel.Gender.female }
             birthday = updated.birthday
             
             print("✅ 상태 업데이트 완료")

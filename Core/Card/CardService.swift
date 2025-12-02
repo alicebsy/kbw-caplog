@@ -4,8 +4,14 @@ import Foundation
 struct CardService {
     private let client = APIClient()
     
-    // Mock 모드 스위치 (개발 중에는 true)
-    private let useMockData = true
+    // Mock 모드 스위치 (개발 중에는 true, 프로덕션에서는 false)
+    private var useMockData: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
     
     // MARK: - Card CRUD
     

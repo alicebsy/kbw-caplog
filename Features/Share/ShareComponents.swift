@@ -1,11 +1,5 @@
 import SwiftUI
 
-struct ShareFriend: Identifiable, Hashable {
-    let id: String
-    var name: String
-    var avatar: String
-}
-
 // 친구 한 줄(이름만) 공용 컴포넌트
 struct FriendRow: View {
     let name: String

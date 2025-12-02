@@ -1,3 +1,5 @@
+// HomeViewModel.swift
+
 import SwiftUI
 import Combine
 
@@ -10,13 +12,16 @@ final class HomeViewModel: ObservableObject {
     @Published var showMyPageView: Bool = false
     
     // MARK: - Data
-    @Published var userName: String = "강배우"
+    @Published var userName: String = {
+        let defaults = UserDefaults.standard
+        return defaults.string(forKey: "userProfile_nickname") ?? "강배우"
+    }()
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
     
     private let friendManager = FriendManager.shared
-    var friends: [ShareFriend] { friendManager.friends }
+    var friends: [Friend] { friendManager.friends }
     
     private let cardManager: CardManager
     private let userService = UserService()
@@ -71,13 +76,24 @@ final class HomeViewModel: ObservableObject {
     // MARK: - 초기 로드
     // ===================================================================
     func load() async {
-        // 1) 사용자 정보
+        // 0) UserDefaults 기반 즉시 로드 (깜빡임 방지)
+        let defaults = UserDefaults.standard
+        if let savedNickname = defaults.string(forKey: "userProfile_nickname") {
+            userName = savedNickname
+        }
+        
+        // 1) 사용자 정보 (서버 동기화)
         do {
             let userProfile = try await userService.fetchMe()
             userName = userProfile.nickname
+            // 서버에서 최신 값 받아오면 UserDefaults도 업데이트
+            defaults.set(userProfile.nickname, forKey: "userProfile_nickname")
         } catch {
-            userName = "강배우"
-            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 → Mock 사용")
+            // 이미 UserDefaults에서 로드했으므로, 값이 비어 있을 때만 기본값 사용
+            if userName.isEmpty {
+                userName = "강배우"
+            }
+            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 → UserDefaults/기본값 사용")
         }
         
         // 2) 카드 전체 로드

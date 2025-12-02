@@ -53,7 +53,8 @@ struct Register1View: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                // ✅ 임시 버튼 섹션
+                #if DEBUG
+                // ✅ 개발용 테스트 버튼 섹션
                 VStack(spacing: 12) {
                     NavigationLink(destination: Register4_1View()) {
                         Text("임시 레지스터4-1")
@@ -93,6 +94,7 @@ struct Register1View: View {
                     }
                 }
                 .padding(.top, 10)
+                #endif
                 
                 Spacer()
             }

@@ -83,7 +83,7 @@ struct MyPageProfileSection: View {
                 Spacer(minLength: 8)
 
                 CapsuleButton(
-                    title: "날짜 선택하기",
+                    title: "날짜 선택",
                     action: {
                         tempBirthday = birthday ?? Date()
                         showPicker = true
@@ -108,6 +108,9 @@ struct MyPageProfileSection: View {
                 onConfirm: {
                     birthday = tempBirthday
                     showPicker = false
+                    print("🎂 생년월일 변경됨: \(tempBirthday)")
+                    // 생년월일 변경 후 자동 저장
+                    onSave()
                 },
                 onCancel: {
                     showPicker = false

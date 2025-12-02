@@ -7,26 +7,26 @@ import Combine
 @MainActor
 final class FriendManager: ObservableObject {
     
-    // ✅ Mock 데이터 (개발용 - ShareFriend는 유지)
-    static let mockFriends: [ShareFriend] = [
-        ShareFriend(id: "2276003", name: "강다혜", avatar: "avatar1"),
-        ShareFriend(id: "alicebsy", name: "배서연", avatar: "avatar3"),
-        ShareFriend(id: "minha2469", name: "우민하", avatar: "avatar2"),
-        ShareFriend(id: "kimewha1886", name: "김이화", avatar: "avatar_default"),
-        ShareFriend(id: "actor_kim", name: "김배우", avatar: "avatar_default"),
-        ShareFriend(id: "sujin_park", name: "박수진", avatar: "avatar_default"),
-        ShareFriend(id: "jia_song", name: "송지아", avatar: "avatar_default"),
-        ShareFriend(id: "yurim_shin", name: "신유림", avatar: "avatar_default"),
-        ShareFriend(id: "jieunhong", name: "홍지은", avatar: "avatar_default"),
-        ShareFriend(id: "junghoon_lee", name: "이정훈", avatar: "avatar_default"),
-        ShareFriend(id: "chaewon_lim", name: "임채원", avatar: "avatar_default"),
-        ShareFriend(id: "hayoon_jung", name: "정하윤", avatar: "avatar_default"),
-        ShareFriend(id: "junyoung_choi", name: "최준영", avatar: "avatar_default"),
-        ShareFriend(id: "jiwoo_han", name: "한지우", avatar: "avatar_default"),
-        ShareFriend(id: "inseong_hwang", name: "황인성", avatar: "avatar_default")
+    // ✅ Mock 데이터 (개발용 - Friend로 통일)
+    static let mockFriends: [Friend] = [
+        Friend(id: "2276003", name: "강다혜", avatarURL: nil, profileImage: "avatar1"),
+        Friend(id: "alicebsy", name: "배서연", avatarURL: nil, profileImage: "avatar3"),
+        Friend(id: "minha2469", name: "우민하", avatarURL: nil, profileImage: "avatar2"),
+        Friend(id: "kimewha1886", name: "김이화", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "actor_kim", name: "김배우", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "sujin_park", name: "박수진", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "jia_song", name: "송지아", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "yurim_shin", name: "신유림", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "jieunhong", name: "홍지은", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "junghoon_lee", name: "이정훈", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "chaewon_lim", name: "임채원", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "hayoon_jung", name: "정하윤", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "junyoung_choi", name: "최준영", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "jiwoo_han", name: "한지우", avatarURL: nil, profileImage: "avatar_default"),
+        Friend(id: "inseong_hwang", name: "황인성", avatarURL: nil, profileImage: "avatar_default")
     ]
     
-    @Published private(set) var friends: [ShareFriend] = []
+    @Published private(set) var friends: [Friend] = []
     
     private let shareAPI = ShareAPI()
     private let useMockData = true  // 개발 중에는 true
@@ -48,13 +48,7 @@ final class FriendManager: ObservableObject {
             // 실제 API 호출
             do {
                 let serverFriends = try await shareAPI.fetchFriends()
-                friends = serverFriends.map { friend in
-                    ShareFriend(
-                        id: friend.id,
-                        name: friend.name,
-                        avatar: friend.avatarURL?.absoluteString ?? "avatar_default"
-                    )
-                }
+                friends = serverFriends  // 이미 Friend 타입이므로 그대로 사용
                 print("✅ FriendManager: 서버에서 \(friends.count)명 친구 로드")
             } catch {
                 print("⚠️ FriendManager: 친구 로드 실패 - \(error)")
@@ -63,24 +57,9 @@ final class FriendManager: ObservableObject {
         }
     }
     
-    /// ✅ ShareFriend → Friend 변환 헬퍼 (profileImage 포함)
-    static func toFriend(_ shareFriend: ShareFriend) -> Friend {
-        
-        // ❗️ [수정] "avatar_default"거나 비어있으면 nil을, 아니면 실제 이미지 이름을 전달
-        let isDefaultOrEmpty = shareFriend.avatar == "avatar_default" || shareFriend.avatar.isEmpty
-        let profileImage: String? = isDefaultOrEmpty ? nil : shareFriend.avatar
-        
-        return Friend(
-            id: shareFriend.id,
-            name: shareFriend.name,
-            avatarURL: nil, // avatarURL은 이 앱에서 사용하지 않음 (로컬 Asset만 사용)
-            profileImage: profileImage
-        )
-    }
-    
     /// 친구 추가
-    func addFriend(name: String, avatar: String = "avatar_default") {
-        let newFriend = ShareFriend(id: "temp_\(name)", name: name, avatar: avatar)
+    func addFriend(name: String, profileImage: String = "avatar_default") {
+        let newFriend = Friend(id: "temp_\(name)", name: name, avatarURL: nil, profileImage: profileImage)
         friends.append(newFriend)
         print("✅ FriendManager: 친구 추가됨 - \(name)")
     }
