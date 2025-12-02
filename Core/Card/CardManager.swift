@@ -40,8 +40,15 @@ final class CardManager: ObservableObject {
     
     /// 모든 카드 로드
     func loadAllCards() async {
-        guard allCards.isEmpty || isLoading == false else {
-            print("ℹ️ CardManager: 이미 카드를 로드 중이거나 로드했습니다.")
+        // 이미 카드가 로드되어 있으면 다시 로드하지 않음
+        guard allCards.isEmpty else {
+            print("ℹ️ CardManager: 이미 \(allCards.count)개 카드가 로드되어 있습니다. 재로드 생략.")
+            return
+        }
+        
+        // 이미 로딩 중이면 중복 호출 방지
+        guard !isLoading else {
+            print("ℹ️ CardManager: 이미 카드를 로드 중입니다.")
             return
         }
         
@@ -137,14 +144,58 @@ final class CardManager: ObservableObject {
     
     /// 카드 수정
     func updateCard(_ card: Card) async {
+        print("================================================================================")
+        print("🔧 CardManager.updateCard 호출됨")
+        print("🔧 수정하려는 카드:")
+        print("   - ID: \(card.id)")
+        print("   - Title: \(card.title)")
+        print("   - Category: \(card.category.rawValue)")
+        print("   - Subcategory: \(card.subcategory)")
+        print("================================================================================")
+        
+        print("🔧 현재 allCards 배열 상태:")
+        for (idx, c) in allCards.enumerated() {
+            print("   [\(idx)] id=\(c.id), title=\(c.title)")
+        }
+        
         do {
             let updated = try await service.updateCard(card)
+            print("✅ service.updateCard() 완료")
+            
             if let index = allCards.firstIndex(where: { $0.id == card.id }) {
-                allCards[index] = updated
-                print("✅ CardManager: 카드 수정 완료 - \(updated.title)")
+                print("✅ allCards에서 인덱스 발견: \(index)")
+                print("🔧 업데이트 전:")
+                print("   allCards[\(index)].title = '\(allCards[index].title)'")
+                print("   allCards[\(index)].category = '\(allCards[index].category.rawValue)'")
+                print("   allCards[\(index)].subcategory = '\(allCards[index].subcategory)'")
+                
+                // 배열 전체를 새로 생성하여 재할당
+                var updatedCards = allCards
+                updatedCards[index] = updated
+                allCards = updatedCards
+                
+                print("✅ allCards 배열 업데이트 완료!")
+                print("🔧 업데이트 후:")
+                print("   allCards[\(index)].title = '\(allCards[index].title)'")
+                print("   allCards[\(index)].category = '\(allCards[index].category.rawValue)'")
+                print("   allCards[\(index)].subcategory = '\(allCards[index].subcategory)'")
+                
+                print("================================================================================")
+                print("🔧 최종 allCards 배열 상태:")
+                for (idx, c) in allCards.enumerated() {
+                    print("   [\(idx)] id=\(c.id), title=\(c.title)")
+                }
+                print("================================================================================")
                 
                 // 홈 화면 갱신을 위한 알림
                 NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            } else {
+                print("❌ 오류: allCards에서 카드를 찾을 수 없음!")
+                print("   찾으려던 ID: \(card.id)")
+                print("   현재 allCards의 모든 ID들:")
+                for (idx, c) in allCards.enumerated() {
+                    print("   [\(idx)]: \(c.id)")
+                }
             }
         } catch {
             errorMessage = "카드 수정 실패: \(error.localizedDescription)"
@@ -170,7 +221,15 @@ final class CardManager: ObservableObject {
     
     /// 특정 카드 찾기
     func card(withId id: UUID) -> Card? {
-        allCards.first { $0.id == id }
+        let found = allCards.first { $0.id == id }
+        if let card = found {
+            print("🔍 card(withId:) 호출 - ID: \(id)")
+            print("   ✅ 찾음: '\(card.title)' (category: \(card.category.rawValue), subcategory: \(card.subcategory))")
+        } else {
+            print("🔍 card(withId:) 호출 - ID: \(id)")
+            print("   ❌ 찾지 못함!")
+        }
+        return found
     }
     
     // MARK: - Utility

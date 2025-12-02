@@ -52,6 +52,7 @@ struct HomeView: View {
                                 )
                                 .frame(height: couponH)
                                 .padding(.horizontal, 20)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
                         .frame(height: couponH)
@@ -76,6 +77,7 @@ struct HomeView: View {
                                 )
                                 .frame(minHeight: rowH)
                                 .padding(.horizontal, 20)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
                         .frame(height: rowH)
@@ -99,6 +101,7 @@ struct HomeView: View {
                                     }
                                 )
                                 .frame(minHeight: rowH)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
                         .padding(.horizontal, 20)
@@ -124,6 +127,19 @@ struct HomeView: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
+                }
+            }
+            
+            // 디버그: 강제 새로고침 버튼
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task {
+                        await vm.reloadHomeContent()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.blue)
                 }
             }
         }

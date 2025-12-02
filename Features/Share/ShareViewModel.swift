@@ -160,7 +160,7 @@ final class MockShareRepository: ShareRepository {
 
         let t9Messages: [ChatMessage] = [
             .init(senderId: "me", text: "메가커피 쿠폰 있는데 커피 마시러 갈까?", cardID: MockCardIDs.megacoffeeCoupon, createdAt: Date().addingTimeInterval(-60*46)),
-            .init(senderId: Self.minhaID, text: "와 미쳤다", cardID: nil, createdAt: Date().addingTimeInterval(-60*45)),
+            .init(senderId: Self.minhaID, text: "와 좋다", cardID: nil, createdAt: Date().addingTimeInterval(-60*45)),
             .init(senderId: Self.chaewonID, text: "콜콜콜", cardID: nil, createdAt: Date().addingTimeInterval(-60*44)),
             .init(senderId: Self.hayoonID, text: "저 지금 집 가요", cardID: nil, createdAt: Date().addingTimeInterval(-60*43)),
             .init(senderId: "me", text: "오케이 3시에 메가커피 앞에서 보자", cardID: nil, createdAt: Date().addingTimeInterval(-60*42))

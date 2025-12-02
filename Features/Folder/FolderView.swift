@@ -189,6 +189,7 @@ struct FolderItemListView: View {
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .background(Color.clear)
+                        .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
                 }
             }
         }

@@ -120,6 +120,7 @@ struct SearchView: View {
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                     .listRowBackground(Color.clear)
+                                    .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
                                     .onAppear {
                                         if item.id == vm.results.last?.id {
                                             vm.loadMoreIfPossible()

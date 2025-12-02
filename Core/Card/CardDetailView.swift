@@ -155,12 +155,13 @@ struct FullScreenImageView: View {
 
 // MARK: - CardDetailView (카드 상세 화면)
 
-/// 카드 상세 화면
+/// 카드 상세 화면 - 항상 CardManager에서 최신 데이터를 가져옴
 struct CardDetailView: View {
 
-    // ☆ card를 로컬에서 관리 – 변경 즉시 반영 + 화면 재입장 시 유지
-    @State private var localCard: Card
-    @State private var editableTags: [String]
+    let cardID: UUID
+    
+    // CardManager를 관찰하여 실시간 업데이트
+    @ObservedObject private var cardManager = CardManager.shared
 
     @Environment(\.dismiss) private var dismiss
 
@@ -172,11 +173,45 @@ struct CardDetailView: View {
     @State private var showCardDeleteConfirm = false
 
     init(card: Card) {
-        self._localCard = State(initialValue: card)
-        self._editableTags = State(initialValue: card.tags)
+        self.cardID = card.id
+    }
+    
+    // 항상 최신 카드 데이터를 가져오는 계산 속성
+    private var card: Card? {
+        cardManager.card(withId: cardID)
     }
 
     var body: some View {
+        Group {
+            if let card = card {
+                cardContentView(card)
+            } else {
+                // 카드를 찾을 수 없는 경우
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                    Text("카드를 찾을 수 없습니다")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Button("돌아가기") {
+                        dismiss()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .background(Color(.systemBackground))
+        .onAppear {
+            if let card = card {
+                CardManager.shared.markCardAsViewed(card)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func cardContentView(_ card: Card) -> some View {
         ZStack {
             ScrollView {
                 VStack(spacing: 0) {
@@ -184,16 +219,16 @@ struct CardDetailView: View {
                     Spacer().frame(height: 60)
 
                     // 썸네일 이미지
-                    Image(localCard.thumbnailName)
+                    Image(card.thumbnailName)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(height: calculateImageHeight())
+                        .frame(height: calculateImageHeight(card))
                         .frame(maxWidth: .infinity)
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .padding(.horizontal, 20)
                         .onTapGesture {
-                            selectedImage = localCard.thumbnailName
+                            selectedImage = card.thumbnailName
                         }
 
                     Spacer().frame(height: 24)
@@ -203,39 +238,46 @@ struct CardDetailView: View {
 
                         // 카테고리
                         HStack {
-                            Text(localCard.category.emoji)
+                            Text(card.category.emoji)
                                 .font(.system(size: 20))
-                            Text(localCard.category.rawValue)
+                            Text(card.category.rawValue)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             Text("•")
                                 .foregroundStyle(.secondary)
-                            Text(localCard.subcategory)
+                            Text(card.subcategory)
                                 .font(.system(size: 14))
                                 .foregroundStyle(.secondary)
                         }
 
                         // 제목
-                        Text(localCard.title)
+                        Text(card.title)
                             .font(.system(size: 24, weight: .bold))
 
                         // 요약
-                        if !localCard.summary.isEmpty {
-                            Text(localCard.summary)
-                                .font(.system(size: 16))
+                        if !card.summary.isEmpty {
+                            Text(card.summary)
+                                .font(.system(size: 15))
                                 .foregroundStyle(.secondary)
                         }
 
                         Divider()
 
-                        // 상세 필드
-                        if !localCard.fields.isEmpty {
+                        // 상세 정보
+                        if !card.fields.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                ForEach(Array(localCard.fields.keys.sorted()), id: \.self) { key in
-                                    if let value = localCard.fields[key], !value.isEmpty {
-                                        HStack(alignment: .top) {
+                                HStack {
+                                    Text("상세 정보")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                }
+
+                                ForEach(Array(card.fields.keys.sorted()), id: \.self) { key in
+                                    if let value = card.fields[key], !value.isEmpty {
+                                        HStack(alignment: .top, spacing: 8) {
                                             Text(key)
-                                                .font(.system(size: 14, weight: .semibold))
+                                                .font(.system(size: 13, weight: .medium))
                                                 .foregroundStyle(.secondary)
                                                 .frame(width: 80, alignment: .leading)
                                             Text(value)
@@ -257,7 +299,7 @@ struct CardDetailView: View {
                                 Spacer()
                             }
 
-                            if editableTags.isEmpty {
+                            if card.tags.isEmpty {
                                 Button {
                                     showAddTagSheet = true
                                 } label: {
@@ -278,7 +320,7 @@ struct CardDetailView: View {
 
                                 FlowLayout(spacing: 8) {
 
-                                    ForEach(editableTags, id: \.self) { tag in
+                                    ForEach(card.tags, id: \.self) { tag in
                                         HStack(spacing: 6) {
                                             Text("#\(tag)")
                                                 .font(.system(size: 13))
@@ -356,9 +398,6 @@ struct CardDetailView: View {
             }
         }
 
-        .navigationBarHidden(true)
-        .background(Color(.systemBackground))
-
         // 전체 이미지 보기
         .fullScreenCover(isPresented: Binding(
             get: { selectedImage != nil },
@@ -370,19 +409,30 @@ struct CardDetailView: View {
         }
 
         // 태그 추가
-        .sheet(isPresented: $showAddTagSheet) {
-            AddTagSheet(currentTags: editableTags) { newTag in
-                if !editableTags.contains(newTag) {
-                    editableTags.append(newTag)
-                    saveTagChanges()
+        .sheet(isPresented: $showAddTagSheet, onDismiss: {
+            // 태그 추가 후 자동으로 최신 데이터 반영됨
+        }) {
+            if let currentCard = self.card {
+                AddTagSheet(currentTags: currentCard.tags) { newTag in
+                    if !currentCard.tags.contains(newTag) {
+                        var updatedCard = currentCard
+                        updatedCard.tags.append(newTag)
+                        Task {
+                            await CardManager.shared.updateCard(updatedCard)
+                        }
+                    }
                 }
             }
         }
 
         // 카드 수정 화면
-        .sheet(isPresented: $showEditSheet) {
-            CardEditSheet(card: localCard) {
-                refreshLocalCard()
+        .sheet(isPresented: $showEditSheet, onDismiss: {
+            // sheet 닫힐 때 자동으로 최신 데이터 반영됨
+        }) {
+            if let currentCard = self.card {
+                CardEditSheet(card: currentCard) {
+                    // onSave - 아무것도 안 해도 됨 (자동 갱신)
+                }
             }
         }
 
@@ -390,9 +440,12 @@ struct CardDetailView: View {
         .alert("태그 삭제", isPresented: $showDeleteConfirm) {
             Button("취소", role: .cancel) { tagToDelete = nil }
             Button("삭제", role: .destructive) {
-                if let tag = tagToDelete {
-                    editableTags.removeAll { $0 == tag }
-                    saveTagChanges()
+                if let tag = tagToDelete, let currentCard = self.card {
+                    var updatedCard = currentCard
+                    updatedCard.tags.removeAll { $0 == tag }
+                    Task {
+                        await CardManager.shared.updateCard(updatedCard)
+                    }
                 }
                 tagToDelete = nil
             }
@@ -406,56 +459,30 @@ struct CardDetailView: View {
         .alert("카드 삭제", isPresented: $showCardDeleteConfirm) {
             Button("취소", role: .cancel) { }
             Button("삭제", role: .destructive) {
-                deleteCard()
+                if let currentCard = self.card {
+                    Task {
+                        await CardManager.shared.deleteCard(id: currentCard.id)
+                        dismiss()
+                    }
+                }
             }
         } message: {
-            Text("'\(localCard.title)' 카드를 삭제하시겠습니까?\n삭제된 카드는 복구할 수 없습니다.")
-        }
-
-        .onAppear {
-            CardManager.shared.markCardAsViewed(localCard)
+            if let currentCard = self.card {
+                Text("'\(currentCard.title)' 카드를 삭제하시겠습니까?\n삭제된 카드는 복구할 수 없습니다.")
+            }
         }
     }
 
     // MARK: - 이미지 높이
-    private func calculateImageHeight() -> CGFloat {
+    private func calculateImageHeight(_ card: Card) -> CGFloat {
         let baseHeight: CGFloat = 220
         var contentHeight: CGFloat = 0
         contentHeight += 100
-        if localCard.summary.count > 50 { contentHeight += 30 }
-        contentHeight += CGFloat(localCard.fields.count) * 30
-        let tagLines = ceil(Double(editableTags.count) / 3.0)
+        if card.summary.count > 50 { contentHeight += 30 }
+        contentHeight += CGFloat(card.fields.count) * 30
+        let tagLines = ceil(Double(card.tags.count) / 3.0)
         contentHeight += CGFloat(tagLines) * 40
         let reduction = min(80, contentHeight / 8)
         return max(160, min(220, baseHeight - reduction))
-    }
-
-    // MARK: - 태그 저장
-    private func saveTagChanges() {
-        var updated = localCard
-        updated.tags = editableTags
-
-        Task {
-            await CardManager.shared.updateCard(updated)
-
-            if let newVersion = CardManager.shared.card(withId: updated.id) {
-                await MainActor.run { localCard = newVersion }
-            }
-        }
-    }
-
-    // MARK: - 카드 수정 후 로컬 갱신
-    private func refreshLocalCard() {
-        if let newVersion = CardManager.shared.card(withId: localCard.id) {
-            localCard = newVersion
-        }
-    }
-
-    // MARK: - 카드 삭제
-    private func deleteCard() {
-        Task {
-            await CardManager.shared.deleteCard(id: localCard.id)
-            dismiss()
-        }
     }
 }
