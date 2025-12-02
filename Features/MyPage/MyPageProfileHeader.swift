@@ -57,7 +57,7 @@ struct MyPageProfileHeader: View {
                         .foregroundColor(.black)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: 0) // ✅ 8 → 0으로 변경 (버튼을 왼쪽으로)
 
                 CapsuleButton(
                     title: "비밀번호 변경",
@@ -69,6 +69,7 @@ struct MyPageProfileHeader: View {
                     verticalPadding: 6,
                     fontSize: 13
                 )
+                .padding(.trailing, 4) // ✅ 오른쪽 여백 추가로 더 왼쪽으로
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

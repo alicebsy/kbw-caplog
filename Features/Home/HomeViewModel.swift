@@ -1,5 +1,3 @@
-// HomeViewModel.swift
-
 import SwiftUI
 import Combine
 
@@ -97,9 +95,24 @@ final class HomeViewModel: ObservableObject {
         // Recommended
         recommended = cardManager.recommendedCards(limit: 5)
         
-        // Coupons
+        // Coupons (만료일이 지나지 않은 것만 표시)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy. MM. dd."
+        let now = Date()
+        
         coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
+            .filter { card in
+                // 만료일 필드가 있는 경우에만 필터링
+                guard let expiryString = card.fields["만료일"],
+                      let expiryDate = dateFormatter.date(from: expiryString) else {
+                    return false // 만료일이 없으면 표시하지 않음
+                }
+                // 만료일이 현재 날짜보다 이후인 것만 표시
+                return expiryDate >= now
+            }
             .sorted(by: { $0.fields["만료일", default: "" ] < $1.fields["만료일", default: "" ] })
+            .prefix(3) // 가장 가까운 3개만
+            .map { $0 }
         
         // Recently viewed  → 항상 CardManager 상태 기반으로 직접 계산
         recent = cardManager.recentlyViewedCards(limit: 3)

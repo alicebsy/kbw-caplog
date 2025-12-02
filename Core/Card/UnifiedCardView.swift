@@ -86,7 +86,7 @@ struct UnifiedCardView: View {
     private var rowStyle: some View {
         HStack(alignment: .top, spacing: 12) {
             
-            // LEFT: 텍스트
+            // LEFT: 텍스트 (카드 상세 보기)
             VStack(alignment: .leading, spacing: 10) {
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -134,7 +134,11 @@ struct UnifiedCardView: View {
                         .lineLimit(1)
                 }
             }
-            .onTapGesture { onTap() }
+            .contentShape(Rectangle()) // 탭 영역 명확하게 지정
+            .onTapGesture {
+                print("🔵 UnifiedCardView rowStyle: 텍스트 영역 탭 -> onTap() 호출 (CardDetailView 열림)")
+                onTap()
+            }
             
             Spacer(minLength: 10)
             
@@ -143,18 +147,28 @@ struct UnifiedCardView: View {
                 Image(card.thumbnailName)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 80, height: 90)   // ← ★ Recommended/Recently 이미지 사이즈 축소
+                    .frame(width: 80, height: 90)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        print("🟡 UnifiedCardView rowStyle: 이미지 탭 -> onTapImage() 호출 (전체화면)")
+                        onTapImage()
+                    }
                 
                 Spacer().frame(height: 12)
                 
                 HStack(spacing: 14) {
-                    Button(action: { isShareSheetPresented = true }) {
+                    Button(action: {
+                        print("🟢 UnifiedCardView rowStyle: 공유 버튼 탭")
+                        isShareSheetPresented = true
+                    }) {
                         Image(systemName: "square.and.arrow.up")
                     }
-                    Button(action: onMore) {
+                    Button(action: {
+                        print("🔴 UnifiedCardView rowStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
+                        onMore()
+                    }) {
                         Image(systemName: "ellipsis")
                     }
                 }
@@ -317,6 +331,7 @@ struct UnifiedCardView: View {
     private var couponStyle: some View {
         HStack(alignment: .top, spacing: 12) {
             
+            // LEFT: 텍스트 (카드 상세 보기)
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.category.rawValue + " - " + card.subcategory)
@@ -343,9 +358,15 @@ struct UnifiedCardView: View {
                         .foregroundStyle(.primary)
                 }
             }
+            .contentShape(Rectangle()) // 탭 영역 명확하게 지정
+            .onTapGesture {
+                print("🔵 UnifiedCardView couponStyle: 텍스트 영역 탭 -> onTap() 호출 (CardDetailView 열림)")
+                onTap()
+            }
             
             Spacer(minLength: 10)
             
+            // RIGHT: 이미지 + 버튼
             VStack(spacing: 8) {
                 Image(card.thumbnailName)
                     .resizable()
@@ -353,13 +374,23 @@ struct UnifiedCardView: View {
                     .frame(width: 80, height: 80)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        print("🟡 UnifiedCardView couponStyle: 이미지 탭 -> onTapImage() 호출 (전체화면)")
+                        onTapImage()
+                    }
                 
                 HStack(spacing: 14) {
-                    Button(action: { isShareSheetPresented = true }) {
+                    Button(action: {
+                        print("🟢 UnifiedCardView couponStyle: 공유 버튼 탭")
+                        isShareSheetPresented = true
+                    }) {
                         Image(systemName: "square.and.arrow.up")
                     }
-                    Button(action: onMore) {
+                    Button(action: {
+                        print("🔴 UnifiedCardView couponStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
+                        onMore()
+                    }) {
                         Image(systemName: "ellipsis")
                     }
                 }
@@ -369,7 +400,6 @@ struct UnifiedCardView: View {
             }
         }
         .padding(16)
-        .onTapGesture { onTap() }
         .background(Color.homeGreenLight.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }

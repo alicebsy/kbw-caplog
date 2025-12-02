@@ -107,44 +107,93 @@ struct AppNotification: Identifiable {
     // MARK: - Mock Data
     static var mockNotifications: [AppNotification] {
         let now = Date()
+        let calendar = Calendar.current
         
-        return [
-            // 쿠폰 만료 알림
-            AppNotification(
+        // 기프티콘 실제 만료일 (CardModel.swift 참조)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy. MM. dd."
+        
+        let starbucksExpiry = dateFormatter.date(from: "2025. 12. 10.") ?? now // 스타벅스
+        let megacoffeeExpiry = dateFormatter.date(from: "2025. 12. 31.") ?? now // 메가커피
+        let emart24Expiry = dateFormatter.date(from: "2025. 12. 05.") ?? now // 이마트24
+        
+        // 현재 날짜 기준으로 남은 일수 계산
+        let daysUntilStarbucks = calendar.dateComponents([.day], from: now, to: starbucksExpiry).day ?? 0
+        let daysUntilMegacoffee = calendar.dateComponents([.day], from: now, to: megacoffeeExpiry).day ?? 0
+        let daysUntilEmart24 = calendar.dateComponents([.day], from: now, to: emart24Expiry).day ?? 0
+        
+        var notifications: [AppNotification] = []
+        
+        // 쿠폰 만료 알림 (만료일이 7일 이내인 경우에만 표시)
+        if daysUntilStarbucks > 0 && daysUntilStarbucks <= 7 {
+            let message = daysUntilStarbucks == 1
+                ? "스타벅스 사랑은 딸기를 타고 쿠폰이 내일 만료됩니다."
+                : "스타벅스 사랑은 딸기를 타고 쿠폰이 \(daysUntilStarbucks)일 후 만료됩니다."
+            
+            notifications.append(AppNotification(
                 type: .couponExpiring,
-                message: "스타벅스 사랑은 딸기를 타고 쿠폰이 3일 후 만료됩니다.",
+                message: message,
                 timestamp: now.addingTimeInterval(-60 * 5),
                 cardID: MockCardIDs.starbucksCoupon
-            ),
-            AppNotification(
+            ))
+        }
+        
+        if daysUntilEmart24 > 0 && daysUntilEmart24 <= 7 {
+            let message = daysUntilEmart24 == 1
+                ? "이마트24 5천원권이 내일 만료됩니다."
+                : "이마트24 5천원권이 \(daysUntilEmart24)일 후 만료됩니다."
+            
+            notifications.append(AppNotification(
                 type: .couponExpiring,
-                message: "메가커피 아메리카노 쿠폰이 일주일 후 만료됩니다.",
+                message: message,
+                timestamp: now.addingTimeInterval(-60 * 10),
+                cardID: MockCardIDs.emart24Coupon
+            ))
+        }
+        
+        if daysUntilMegacoffee > 0 && daysUntilMegacoffee <= 14 {
+            let message: String
+            if daysUntilMegacoffee == 1 {
+                message = "메가커피 아메리카노 쿠폰이 내일 만료됩니다."
+            } else if daysUntilMegacoffee <= 7 {
+                message = "메가커피 아메리카노 쿠폰이 \(daysUntilMegacoffee)일 후 만료됩니다."
+            } else {
+                let weeks = daysUntilMegacoffee / 7
+                message = "메가커피 아메리카노 쿠폰이 \(weeks)주일 후 만료됩니다."
+            }
+            
+            notifications.append(AppNotification(
+                type: .couponExpiring,
+                message: message,
                 timestamp: now.addingTimeInterval(-60 * 30),
                 cardID: MockCardIDs.megacoffeeCoupon
-            ),
-            
-            // 위치 기반 추천
-            AppNotification(
-                type: .locationBased,
-                message: "서대문구 근처에 계시네요! 근처 낭만식탁을 추천해드려요.",
-                timestamp: now.addingTimeInterval(-60 * 60),
-                cardID: MockCardIDs.nangman
-            ),
-            AppNotification(
-                type: .locationBased,
-                message: "신촌역 근처입니다. 저장해둔 아콘스톨 김밥은 어떠세요?",
-                timestamp: now.addingTimeInterval(-60 * 90),
-                cardID: MockCardIDs.acornstol
-            ),
-            
-            // 일정/이벤트 알림
-            AppNotification(
-                type: .systemUpdate,
-                message: "오늘 오후 3~5시 일정이 비어 있어요. 가까운 카페를 추천드려요!",
-                timestamp: now.addingTimeInterval(-60 * 120),
-                cardID: MockCardIDs.cafeEround  // 카페 이라운드 추가
-            )
-        ]
+            ))
+        }
+        
+        // 위치 기반 추천
+        notifications.append(AppNotification(
+            type: .locationBased,
+            message: "서대문구 근처에 계시네요! 근처 낭만식탁을 추천해드려요.",
+            timestamp: now.addingTimeInterval(-60 * 60),
+            cardID: MockCardIDs.nangman
+        ))
+        
+        notifications.append(AppNotification(
+            type: .locationBased,
+            message: "신촌역 근처입니다. 저장해둔 아콘스톨 김밥은 어떠세요?",
+            timestamp: now.addingTimeInterval(-60 * 90),
+            cardID: MockCardIDs.acornstol
+        ))
+        
+        // 일정/이벤트 알림
+        notifications.append(AppNotification(
+            type: .systemUpdate,
+            message: "오늘 오후 3~5시 일정이 비어 있어요. 가까운 카페를 추천드려요!",
+            timestamp: now.addingTimeInterval(-60 * 120),
+            cardID: MockCardIDs.cafeEround
+        ))
+        
+        return notifications
     }
 }
 

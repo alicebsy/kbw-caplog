@@ -16,6 +16,9 @@ struct ShareFriendListView: View {
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
                             
+                            // 왼쪽 여백 추가 (프로필 오른쪽으로 이동)
+                            Spacer().frame(width: 4)
+                            
                             // ✅ (수정) 공용 뷰 사용으로 로직 통일
                             ProfileAvatarView(
                                 profileImage: friend.profileImage,
@@ -28,7 +31,7 @@ struct ShareFriendListView: View {
                             
                             Spacer()
                             
-                            HStack(spacing: 16) { // ✅ 간격 8 → 16으로 증가
+                            HStack(spacing: 26) {
                                 // 채팅 버튼 (심플한 아이콘)
                                 Button {
                                     Task {
@@ -52,7 +55,9 @@ struct ShareFriendListView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.trailing, 4) // ✅ trailing 8 → 4로 감소 (더 왼쪽으로)
+                            
+                            // 오른쪽 여백 추가 (버튼 왼쪽으로 이동)
+                            Spacer().frame(width: 4)
                         }
                         .padding(.vertical, 16)
                         .padding(.horizontal, 16)
