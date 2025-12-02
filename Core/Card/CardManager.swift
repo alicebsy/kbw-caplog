@@ -98,12 +98,11 @@ final class CardManager: ObservableObject {
         }
     }
     
-    // ✅ "카드를 봤음"이라고 등록하는 함수 (수정됨)
+    // ✅ "카드를 봤음"이라고 등록하는 함수
     func markCardAsViewed(_ card: Card) {
         let id = card.id
         
-        // ✅ 수정: HomeViewModel이 갱신을 감지하도록 수동으로 '변경 알림'을 보냅니다.
-        // 이것이 1위 항목을 다시 눌러도 갱신되게 하는 핵심입니다.
+        // HomeViewModel 등이 이 변경을 감지할 수 있도록 수동으로 알림
         objectWillChange.send()
 
         var currentIDs = self.viewedCardIDs
@@ -129,6 +128,10 @@ final class CardManager: ObservableObject {
             let newCard = try await service.createCard(card)
             allCards.append(newCard)
             print("✅ CardManager: 카드 생성 완료 - \(newCard.title)")
+            
+            // 🔔 카드 목록 변경 알림 (생성)
+            NotificationCenter.default.post(name: .cardUpdated, object: newCard)
+            
         } catch {
             errorMessage = "카드 생성 실패: \(error.localizedDescription)"
             print("❌ CardManager 생성 에러: \(error)")
@@ -142,6 +145,9 @@ final class CardManager: ObservableObject {
             if let index = allCards.firstIndex(where: { $0.id == card.id }) {
                 allCards[index] = updated
                 print("✅ CardManager: 카드 수정 완료 - \(updated.title)")
+                
+                // 🔔 카드 수정 알림
+                NotificationCenter.default.post(name: .cardUpdated, object: updated)
             }
         } catch {
             errorMessage = "카드 수정 실패: \(error.localizedDescription)"
@@ -156,6 +162,10 @@ final class CardManager: ObservableObject {
             allCards.removeAll { $0.id == id }
             viewedCardIDs.removeAll { $0 == id }
             print("✅ CardManager: 카드 삭제 완료")
+            
+            // 🔔 카드 목록 변경 알림 (삭제)
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            
         } catch {
             errorMessage = "카드 삭제 실패: \(error.localizedDescription)"
             print("❌ CardManager 삭제 에러: \(error)")
@@ -173,4 +183,11 @@ final class CardManager: ObservableObject {
     func clearError() {
         errorMessage = nil
     }
+}
+
+// MARK: - Notification 정의
+
+extension Notification.Name {
+    /// 카드가 생성/수정/삭제되어 카드 목록이 변경되었음을 알리는 이벤트
+    static let cardUpdated = Notification.Name("cardUpdated")
 }

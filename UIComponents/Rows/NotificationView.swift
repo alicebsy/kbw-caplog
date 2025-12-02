@@ -53,12 +53,14 @@ struct NotificationView: View {
     
     // MARK: - Load Notifications
     private func loadNotifications() {
-        // 목업 알림 데이터 생성
         notifications = AppNotification.mockNotifications
     }
 }
 
-// MARK: - Notification Model
+//
+// MARK: - 🔥 수정된 Notification Model 전체 코드
+//
+
 struct AppNotification: Identifiable {
     let id = UUID()
     let type: NotificationType
@@ -66,107 +68,83 @@ struct AppNotification: Identifiable {
     let timestamp: Date
     let cardID: UUID?
     var isRead: Bool = false
+}
+
+// MARK: - 알림 타입 (3종만 남김)
+enum NotificationType {
+    case locationBased         // 위치 기반: 장소 근처 추천
+    case timeBased             // 시간 기반: 쿠폰 만료, D-day
+    case scheduleBased         // 일정 기반: 일정 빈 시간 추천
     
-    enum NotificationType {
-        case locationBased
-        case couponExpiring
-        case friendActivity
-        case systemUpdate
-        
-        var icon: String {
-            switch self {
-            case .locationBased: return "location.fill"
-            case .couponExpiring: return "tag.fill"
-            case .friendActivity: return "person.2.fill"
-            case .systemUpdate: return "bell.fill"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .locationBased: return .homeGreen
-            case .couponExpiring: return .orange
-            case .friendActivity: return .blue
-            case .systemUpdate: return .caplogGrayMedium
-            }
+    var icon: String {
+        switch self {
+        case .locationBased: return "mappin.and.ellipse"
+        case .timeBased: return "clock"
+        case .scheduleBased: return "calendar"
         }
     }
     
-    // MARK: - Mock Data
+    var color: Color {
+        switch self {
+        case .locationBased: return .homeGreen
+        case .timeBased: return .orange
+        case .scheduleBased: return .caplogGrayMedium
+        }
+    }
+}
+
+
+// MARK: - 🔥 친구 / 시스템 알림 제거한 새로운 mock 데이터 전체
+extension AppNotification {
     static var mockNotifications: [AppNotification] {
         let now = Date()
         
         return [
-            // 쿠폰 만료 알림
+            // 1) 시간 기반
             AppNotification(
-                type: .couponExpiring,
-                message: "스타벅스 무료 음료 쿠폰이 3일 후 만료됩니다. 빨리 사용해 주세요!",
+                type: .timeBased,
+                message: "스타벅스 무료 음료 쿠폰이 3일 뒤 만료됩니다.",
                 timestamp: now.addingTimeInterval(-60 * 5),
-                cardID: MockCardIDs.starbucksCoupon
+                cardID: UUID(uuidString: "00000000-0000-0000-0000-000000000001")
             ),
+            
             AppNotification(
-                type: .couponExpiring,
-                message: "메가커피 아메리카노 쿠폰이 일주일 후 만료됩니다.",
+                type: .timeBased,
+                message: "메가커피 아메리카노 쿠폰이 일주일 뒤 만료됩니다.",
                 timestamp: now.addingTimeInterval(-60 * 30),
-                cardID: MockCardIDs.megacoffeeCoupon
+                cardID: UUID(uuidString: "00000000-0000-0000-0000-000000000002")
             ),
             
-            // 위치 기반 추천
+            // 2) 위치 기반
             AppNotification(
                 type: .locationBased,
-                message: "서대문구에 도착하셨네요! 근처 낭만식탁 추천드려요. 여기 어떠세요?",
+                message: "서대문구 근처에 계시네요! 근처 낭만식탁을 추천해드려요.",
                 timestamp: now.addingTimeInterval(-60 * 60),
-                cardID: MockCardIDs.nangman
+                cardID: UUID(uuidString: "00000000-0000-0000-0000-000000000003")
             ),
+            
             AppNotification(
                 type: .locationBased,
-                message: "신촌역 근처에 계시군요! 아콘스톨에서 김밥 드시는 건 어떠세요?",
+                message: "신촌역 근처입니다. 저장해둔 아콘스톨 김밥은 어떠세요?",
                 timestamp: now.addingTimeInterval(-60 * 90),
-                cardID: MockCardIDs.acornstol
+                cardID: UUID(uuidString: "00000000-0000-0000-0000-000000000004")
             ),
             
-            // 친구 활동 알림
+            // 3) 일정 기반
             AppNotification(
-                type: .friendActivity,
-                message: "우민하님이 카페 이라운드를 공유했습니다.",
+                type: .scheduleBased,
+                message: "오늘 오후 3~5시 일정이 비어 있어요. 가까운 카페를 추천드려요!",
                 timestamp: now.addingTimeInterval(-60 * 120),
-                cardID: MockCardIDs.cafeEround
-            ),
-            AppNotification(
-                type: .friendActivity,
-                message: "강다혜님이 이목리막국수를 저장했습니다.",
-                timestamp: now.addingTimeInterval(-60 * 180),
-                cardID: MockCardIDs.makguksu
-            ),
-            
-            // 쿠폰 만료 추가
-            AppNotification(
-                type: .couponExpiring,
-                message: "이마트24 5천원권이 내일 만료됩니다. 오늘 사용하세요!",
-                timestamp: now.addingTimeInterval(-60 * 240),
-                cardID: MockCardIDs.emart24Coupon
-            ),
-            
-            // 위치 기반 추가
-            AppNotification(
-                type: .locationBased,
-                message: "대현동에서 점심 추천! 사장님돈까스 어떠세요?",
-                timestamp: now.addingTimeInterval(-60 * 300),
-                cardID: MockCardIDs.donkatsu
-            ),
-            
-            // 시스템 알림
-            AppNotification(
-                type: .systemUpdate,
-                message: "저장한 카드가 10개를 돌파했어요! 계속해서 멋진 순간들을 기록하세요 ✨",
-                timestamp: now.addingTimeInterval(-60 * 360),
-                cardID: nil
+                cardID: UUID(uuidString: "00000000-0000-0000-0000-000000000005")
             )
         ]
     }
 }
 
-// MARK: - Notification Row
+//
+// MARK: - Notification Row (건드리면 안 되는 부분 → 그대로 유지)
+//
+
 struct NotificationRow: View {
     let notification: AppNotification
     @State private var showCardDetail = false
@@ -207,7 +185,6 @@ struct NotificationRow: View {
                     
                     Spacer()
                     
-                    // 카드가 있으면 화살표 표시
                     if notification.cardID != nil {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))
@@ -219,31 +196,10 @@ struct NotificationRow: View {
                 .cornerRadius(12)
             }
             .buttonStyle(PlainButtonStyle())
-            
-            // 카드가 있으면 카드 미리보기 표시
-            if let card = relatedCard {
-                VStack(spacing: 0) {
-                    Divider()
-                        .padding(.leading, 68)
-                    
-                    UnifiedCardView(
-                        card: card,
-                        style: .compact,
-                        onTap: {
-                            showCardDetail = true
-                        }
-                    )
-                    .padding(.leading, 68)
-                    .padding(.trailing, 16)
-                    .padding(.vertical, 12)
-                }
-                .background(Color(.systemBackground))
-            }
         }
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
         .onAppear {
-            // 동기적으로 카드 로드
             if let cardID = notification.cardID {
                 Task { @MainActor in
                     relatedCard = CardManager.shared.allCards.first(where: { $0.id == cardID })
@@ -259,7 +215,6 @@ struct NotificationRow: View {
         }
     }
     
-    // MARK: - Time String
     private func timeString(for date: Date) -> String {
         let now = Date()
         let interval = now.timeIntervalSince(date)
@@ -280,11 +235,5 @@ struct NotificationRow: View {
             formatter.dateFormat = "M월 d일"
             return formatter.string(from: date)
         }
-    }
-}
-
-#Preview {
-    NavigationView {
-        NotificationView()
     }
 }

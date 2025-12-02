@@ -4,73 +4,110 @@ import Combine
 // MARK: - ViewModel
 @MainActor
 final class HomeViewModel: ObservableObject {
-    // 화면 상태
+    
+    // MARK: - UI State
     @Published var showNotificationView: Bool = false
     @Published var showMyPageView: Bool = false
-
-    // 데이터
+    
+    // MARK: - Data
     @Published var userName: String = "강배우"
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
-
-    // FriendManager 사용
+    
     private let friendManager = FriendManager.shared
     var friends: [ShareFriend] { friendManager.friends }
     
-    // CardManager 사용
     private let cardManager: CardManager
     private let userService = UserService()
     private var cancellables = Set<AnyCancellable>()
-
+    
+    // MARK: - Init
     init() {
         self.cardManager = CardManager.shared
         
-        // MyPage에서 프로필 업데이트 알림 수신
+        // ---------------------------------------------------
+        // ① MyPage → 이름 변경 반영
+        // ---------------------------------------------------
         NotificationCenter.default.publisher(for: .userProfileUpdated)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 if let nickname = notification.userInfo?["nickname"] as? String {
-                    print("✅ HomeViewModel: 사용자 이름 업데이트됨 - \(nickname)")
                     self?.userName = nickname
+                    print("🔄 HomeViewModel: 이름 업데이트 → \(nickname)")
                 }
             }
             .store(in: &cancellables)
         
-        // ✅ 개선: CardManager의 "최근 본" ID 목록과 allCards를 함께 구독
+        
+        // ---------------------------------------------------
+        // ② CardManager에서 최근 본 카드 리로드
+        // ---------------------------------------------------
         Publishers.CombineLatest(
             cardManager.$viewedCardIDs,
             cardManager.$allCards
         )
-        .map { [weak self] (viewedIDs, allCards) -> [Card] in
-            guard let self = self else { return [] }
+        .map { [weak self] (_, _) -> [Card] in
+            guard let self else { return [] }
             return self.cardManager.recentlyViewedCards(limit: 3)
         }
         .receive(on: DispatchQueue.main)
         .assign(to: &$recent)
+        
+        
+        // ---------------------------------------------------
+        // ③ 카드가 수정/삭제될 때마다 HomeView 전체 자동 리로드
+        // ---------------------------------------------------
+        NotificationCenter.default.publisher(for: .cardUpdated)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { await self?.reloadHomeContent() }
+            }
+            .store(in: &cancellables)
     }
-
+    
+    
+    // ===================================================================
+    // MARK: - 초기 로드
+    // ===================================================================
     func load() async {
-        // 사용자 정보 로드
+        // 1) 사용자 정보
         do {
             let userProfile = try await userService.fetchMe()
             userName = userProfile.nickname
-            print("✅ HomeViewModel: 사용자 이름 로드됨 - \(userName)")
         } catch {
-            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 (Mock 사용): \(error)")
             userName = "강배우"
+            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 → Mock 사용")
         }
         
-        // 카드 데이터 로드
+        // 2) 카드 전체 로드
         await cardManager.loadAllCards()
         
-        // 추천 카드 가져오기
+        // 3) 홈 화면 내용 채우기
+        await reloadHomeContent()
+        
+        print("🏠 HomeViewModel: 홈 초기 로드 완료")
+    }
+    
+    
+    // ===================================================================
+    // MARK: - 갱신 로직 (카드 수정/삭제/태그 변경 시 자동 호출)
+    // ===================================================================
+    func reloadHomeContent() async {
+        // Recommended
         recommended = cardManager.recommendedCards(limit: 5)
         
-        // ✅ 쿠폰 데이터를 CardManager에서 가져옴
-        self.coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
+        // Coupons
+        coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
             .sorted(by: { $0.fields["만료일", default: ""] < $1.fields["만료일", default: ""] })
         
-        print("✅ HomeViewModel: 쿠폰 \(coupons.count)개, 추천 \(recommended.count)개, 최근 \(recent.count)개 카드 로드 완료")
+        // Recently viewed  → CombineLatest로 자동 반영됨 (recent는 자동 관리)
+        
+        print("""
+        🔄 HomeViewModel: 홈 데이터 갱신됨
+        - 쿠폰: \(coupons.count)
+        - 추천: \(recommended.count)
+        - 최근:  \(recent.count)
+        """)
     }
 }
