@@ -23,6 +23,7 @@ final class MyPageViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var gender: Gender? = nil  // nil = 선택 안 함
     @Published var birthday: Date? = nil
+    @Published var profileImage: UIImage? = nil  // 프로필 이미지
 
     @Published var allowLocationRecommend = true
     @Published var allowNotification = true
@@ -104,6 +105,12 @@ final class MyPageViewModel: ObservableObject {
         let birthdayTimestamp = defaults.double(forKey: "userProfile_birthday")
         if birthdayTimestamp > 0 {
             birthday = Date(timeIntervalSince1970: birthdayTimestamp)
+        }
+        // 프로필 이미지 로드
+        if let imageData = defaults.data(forKey: "userProfile_imageData"),
+           let image = UIImage(data: imageData) {
+            profileImage = image
+            print("⚡️ 프로필 이미지 로드 성공")
         }
         
         // 그 다음 서버에서 동기화
@@ -265,6 +272,20 @@ final class MyPageViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+    
+    // MARK: - 프로필 이미지 저장
+    func saveProfileImage(_ image: UIImage?) {
+        let defaults = UserDefaults.standard
+        if let image = image,
+           let imageData = image.jpegData(compressionQuality: 0.8) {
+            defaults.set(imageData, forKey: "userProfile_imageData")
+            print("💾 프로필 이미지 저장 성공")
+        } else {
+            defaults.removeObject(forKey: "userProfile_imageData")
+            print("💾 프로필 이미지 삭제 (기본 이미지로)")
+        }
+        defaults.synchronize()
     }
 }
 

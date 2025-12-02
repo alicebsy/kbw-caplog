@@ -14,6 +14,9 @@ struct UnifiedCardView: View {
     // ✅ (추가) 공유 시트를 띄우기 위한 내부 상태
     @State private var isShareSheetPresented = false
     
+    // ✅ 알림 화면용 넓은 폭 환경 변수
+    @Environment(\.notificationCardWidth) private var isNotificationCard
+    
     enum CardStyle {
         case row
         case horizontal
@@ -163,7 +166,7 @@ struct UnifiedCardView: View {
                 Image(card.thumbnailName)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 80, height: 80)
+                    .frame(width: 100, height: 80)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .onTapGesture { onTapImage() }
@@ -264,11 +267,12 @@ struct UnifiedCardView: View {
             Image(card.thumbnailName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 64, height: 64)
+                .frame(width: isNotificationCard ? 80 : 64, height: isNotificationCard ? 80 : 64)  // 알림: 80x80, 기본: 64x64
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .padding(16)
+        .padding(isNotificationCard ? 14 : 16)  // 알림: 약간 작은 패딩
+        .frame(maxWidth: isNotificationCard ? .infinity : nil)  // 알림: 전체 폭 사용
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
@@ -416,5 +420,17 @@ struct UnifiedCardView: View {
                 .frame(maxWidth: 200)
         }
         .padding()
+    }
+}
+
+// MARK: - 알림용 환경 변수
+private struct NotificationCardWidthKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var notificationCardWidth: Bool {
+        get { self[NotificationCardWidthKey.self] }
+        set { self[NotificationCardWidthKey.self] = newValue }
     }
 }

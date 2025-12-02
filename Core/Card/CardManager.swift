@@ -27,16 +27,13 @@ final class CardManager: ObservableObject {
     // MARK: - Initialization
     
     // ✅ 3. init을 private으로 변경 (외부 생성 방지)
-    private nonisolated init() {
+    @MainActor
+    private init() {
         // ✅ 4. 앱 실행 시 UserDefaults에서 "최근 본" 목록 로드
-        let savedIDs = UserDefaults.standard.array(forKey: "recentlyViewedCardIDs") as? [String] ?? []
+        let savedIDs = UserDefaults.standard.array(forKey: viewedCardsKey) as? [String] ?? []
         let uuids = savedIDs.compactMap { UUID(uuidString: $0) }
-        
-        // MainActor에서 안전하게 published 프로퍼티 업데이트
-        Task { @MainActor in
-            self.viewedCardIDs = uuids
-            print("✅ CardManager: 최근 본 카드 \(uuids.count)개 로드 완료")
-        }
+        self.viewedCardIDs = uuids
+        print("🔧 CardManager init: 최근 본 카드 \(uuids.count)개 로드됨")
     }
     
     // MARK: - Load Methods
@@ -103,7 +100,7 @@ final class CardManager: ObservableObject {
     func markCardAsViewed(_ card: Card) {
         let id = card.id
         
-        // HomeViewModel 등이 이 변경을 감지할 수 있도록 수동으로 알림
+        // HomeViewModel 등에서 변경을 감지할 수 있도록
         objectWillChange.send()
 
         var currentIDs = self.viewedCardIDs
@@ -119,6 +116,9 @@ final class CardManager: ObservableObject {
         let stringIDs = currentIDs.map { $0.uuidString }
         UserDefaults.standard.set(stringIDs, forKey: viewedCardsKey)
         print("✅ CardManager: \(card.title)을(를) 최근 본 카드로 등록. 총 \(currentIDs.count)개")
+        
+        // ✅ 홈(및 다른 탭)에서 reloadHomeContent()를 트리거
+        NotificationCenter.default.post(name: .cardUpdated, object: nil)
     }
 
     // MARK: - CRUD Methods
@@ -129,10 +129,6 @@ final class CardManager: ObservableObject {
             let newCard = try await service.createCard(card)
             allCards.append(newCard)
             print("✅ CardManager: 카드 생성 완료 - \(newCard.title)")
-            
-            // 🔔 카드 목록 변경 알림 (생성)
-            NotificationCenter.default.post(name: .cardUpdated, object: newCard)
-            
         } catch {
             errorMessage = "카드 생성 실패: \(error.localizedDescription)"
             print("❌ CardManager 생성 에러: \(error)")
@@ -147,8 +143,8 @@ final class CardManager: ObservableObject {
                 allCards[index] = updated
                 print("✅ CardManager: 카드 수정 완료 - \(updated.title)")
                 
-                // 🔔 카드 수정 알림
-                NotificationCenter.default.post(name: .cardUpdated, object: updated)
+                // 홈 화면 갱신을 위한 알림
+                NotificationCenter.default.post(name: .cardUpdated, object: nil)
             }
         } catch {
             errorMessage = "카드 수정 실패: \(error.localizedDescription)"
@@ -164,9 +160,8 @@ final class CardManager: ObservableObject {
             viewedCardIDs.removeAll { $0 == id }
             print("✅ CardManager: 카드 삭제 완료")
             
-            // 🔔 카드 목록 변경 알림 (삭제)
+            // 홈 화면 갱신을 위한 알림
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
-            
         } catch {
             errorMessage = "카드 삭제 실패: \(error.localizedDescription)"
             print("❌ CardManager 삭제 에러: \(error)")
@@ -186,9 +181,7 @@ final class CardManager: ObservableObject {
     }
 }
 
-// MARK: - Notification 정의
-
+// MARK: - Notification Names
 extension Notification.Name {
-    /// 카드가 생성/수정/삭제되어 카드 목록이 변경되었음을 알리는 이벤트
     static let cardUpdated = Notification.Name("cardUpdated")
 }

@@ -20,9 +20,9 @@ struct MyPageUsageCard: View {
                         Text("📸")
                             .font(.system(size: 14))
                         Text("\(savedCount)")
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                         Text("건 정보 저장")
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                         
                         Text("|")
                             .font(.system(size: 14))
@@ -32,9 +32,9 @@ struct MyPageUsageCard: View {
                         Text("💡")
                             .font(.system(size: 14))
                         Text("\(recommendedCount)")
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                         Text("건 추천 받음")
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                     }
                     .frame(maxWidth: .infinity)
                 )

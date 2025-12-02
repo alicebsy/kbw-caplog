@@ -44,24 +44,8 @@ final class HomeViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        
         // ---------------------------------------------------
-        // ② CardManager에서 최근 본 카드 리로드
-        // ---------------------------------------------------
-        Publishers.CombineLatest(
-            cardManager.$viewedCardIDs,
-            cardManager.$allCards
-        )
-        .map { [weak self] (_, _) -> [Card] in
-            guard let self else { return [] }
-            return self.cardManager.recentlyViewedCards(limit: 3)
-        }
-        .receive(on: DispatchQueue.main)
-        .assign(to: &$recent)
-        
-        
-        // ---------------------------------------------------
-        // ③ 카드가 수정/삭제될 때마다 HomeView 전체 자동 리로드
+        // ② 카드가 수정/삭제/최근본 변경될 때마다 HomeView 전체 자동 리로드
         // ---------------------------------------------------
         NotificationCenter.default.publisher(for: .cardUpdated)
             .receive(on: DispatchQueue.main)
@@ -99,7 +83,7 @@ final class HomeViewModel: ObservableObject {
         // 2) 카드 전체 로드
         await cardManager.loadAllCards()
         
-        // 3) 홈 화면 내용 채우기
+        // 3) 홈 화면 내용 채우기 (최근 본 카드까지 포함)
         await reloadHomeContent()
         
         print("🏠 HomeViewModel: 홈 초기 로드 완료")
@@ -107,7 +91,7 @@ final class HomeViewModel: ObservableObject {
     
     
     // ===================================================================
-    // MARK: - 갱신 로직 (카드 수정/삭제/태그 변경 시 자동 호출)
+    // MARK: - 갱신 로직 (카드 수정/삭제/태그/최근본 변경 시 자동 호출)
     // ===================================================================
     func reloadHomeContent() async {
         // Recommended
@@ -115,9 +99,10 @@ final class HomeViewModel: ObservableObject {
         
         // Coupons
         coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
-            .sorted(by: { $0.fields["만료일", default: ""] < $1.fields["만료일", default: ""] })
+            .sorted(by: { $0.fields["만료일", default: "" ] < $1.fields["만료일", default: "" ] })
         
-        // Recently viewed  → CombineLatest로 자동 반영됨 (recent는 자동 관리)
+        // Recently viewed  → 항상 CardManager 상태 기반으로 직접 계산
+        recent = cardManager.recentlyViewedCards(limit: 3)
         
         print("""
         🔄 HomeViewModel: 홈 데이터 갱신됨
