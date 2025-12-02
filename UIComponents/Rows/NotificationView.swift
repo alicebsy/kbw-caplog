@@ -112,7 +112,7 @@ struct AppNotification: Identifiable {
             // 쿠폰 만료 알림
             AppNotification(
                 type: .couponExpiring,
-                message: "스타벅스 무료 음료 쿠폰이 3일 후 만료됩니다.",
+                message: "스타벅스 사랑은 딸기를 타고 쿠폰이 3일 후 만료됩니다.",
                 timestamp: now.addingTimeInterval(-60 * 5),
                 cardID: MockCardIDs.starbucksCoupon
             ),

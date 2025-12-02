@@ -69,89 +69,101 @@ struct FlowLayout: Layout {
 
 // MARK: - FullScreenImageView (전체 화면 이미지 뷰어)
 
-/// 전체 화면 이미지 뷰어
 struct FullScreenImageView: View {
     let imageName: String
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
-    
+
     var body: some View {
         ZStack {
+
             Color.black.ignoresSafeArea()
-            
-            Image(imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .scaleEffect(scale)
-                .offset(offset)
-                .gesture(
-                    MagnificationGesture()
-                        .onChanged { value in
-                            scale = lastScale * value
-                        }
-                        .onEnded { _ in
-                            // 최소/최대 배율 제한
-                            scale = min(max(scale, 1.0), 4.0)
-                            lastScale = scale
-                            
-                            // 배율이 1이면 오프셋 초기화
-                            if scale == 1.0 {
+
+            // 이미지 중앙 정렬
+            VStack {
+                Spacer()
+
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        MagnificationGesture()
+                            .onChanged { value in
+                                scale = lastScale * value
+                            }
+                            .onEnded { _ in
+                                scale = min(max(scale, 1.0), 4.0)
+                                lastScale = scale
+                                if scale == 1.0 {
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
+                            }
+                    )
+                    .simultaneousGesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if scale > 1.0 {
+                                    offset = CGSize(
+                                        width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height
+                                    )
+                                }
+                            }
+                            .onEnded { _ in
+                                lastOffset = offset
+                            }
+                    )
+                    .onTapGesture(count: 2) {
+                        withAnimation(.spring(response: 0.3)) {
+                            if scale > 1.0 {
+                                scale = 1.0
+                                lastScale = 1.0
                                 offset = .zero
                                 lastOffset = .zero
+                            } else {
+                                scale = 2.0
+                                lastScale = 2.0
                             }
-                        }
-                )
-                .simultaneousGesture(
-                    DragGesture()
-                        .onChanged { value in
-                            if scale > 1.0 {
-                                offset = CGSize(
-                                    width: lastOffset.width + value.translation.width,
-                                    height: lastOffset.height + value.translation.height
-                                )
-                            }
-                        }
-                        .onEnded { _ in
-                            lastOffset = offset
-                        }
-                )
-                .onTapGesture(count: 2) {
-                    // 더블 탭으로 줌 인/아웃
-                    withAnimation(.spring(response: 0.3)) {
-                        if scale > 1.0 {
-                            scale = 1.0
-                            lastScale = 1.0
-                            offset = .zero
-                            lastOffset = .zero
-                        } else {
-                            scale = 2.0
-                            lastScale = 2.0
                         }
                     }
-                }
-            
-            // 닫기 버튼
+
+                Spacer()
+            }
+            .zIndex(0)
+
+            // 뒤로가기 버튼 - 화면 맨 위 고정
             VStack {
                 HStack {
-                    Spacer()
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(.white.opacity(0.8))
-                            .padding()
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Color.black.opacity(0.6))
+                            .clipShape(Circle())
                     }
+                    .padding(.leading, 20)
+
+                    Spacer()
                 }
+                .padding(.top, 50)
+
                 Spacer()
             }
+            .zIndex(100)
         }
     }
 }
+
 
 // MARK: - CardDetailView (카드 상세 화면)
 

@@ -75,12 +75,11 @@ struct HomeView: View {
                                         CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
-                                .frame(minHeight: rowH)
-                                .padding(.horizontal, 20)
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
+                                .padding(.horizontal, 20)
                             }
                         }
-                        .frame(height: rowH)
+                        .frame(height: 180)
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
                     Spacer().frame(height: S) // 24pt
@@ -127,19 +126,6 @@ struct HomeView: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
-                }
-            }
-            
-            // 디버그: 강제 새로고침 버튼
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    Task {
-                        await vm.reloadHomeContent()
-                    }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.blue)
                 }
             }
         }

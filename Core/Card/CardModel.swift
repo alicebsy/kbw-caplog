@@ -204,10 +204,10 @@ extension Card {
         // ✅ 쿠폰 5개
         Card(
             id: MockCardIDs.starbucksCoupon,
-            title: "무료 음료 쿠폰",
-            summary: "스타벅스 무료 음료 1잔",
-            category: .info, subcategory: "쿠폰", tags: ["스타벅스", "무료음료"],
-            fields: ["브랜드": "Starbucks", "만료일": "2025. 11. 19."],
+            title: "사랑은 딸기를 타고",
+            summary: "스타벅스 사랑은 딸기를 타고 기프티콘",
+            category: .info, subcategory: "쿠폰", tags: ["스타벅스", "29600원"],
+            fields: ["브랜드": "Starbucks", "만료일": "2025. 12. 10.", "바코드": "2726 3726 3008 7234"],
             thumbnailURL: "스타벅스", screenshotURLs: ["스타벅스"]
         ),
         Card(
@@ -215,7 +215,7 @@ extension Card {
             title: "(ICE)아메리카노",
             summary: "메가MGC커피 아이스 아메리카노",
             category: .info, subcategory: "쿠폰", tags: ["메가커피", "아메리카노", "무료음료"],
-            fields: ["브랜드": "메가MGC커피", "만료일": "2025. 11. 30.", "바코드": "2639 3823"],
+            fields: ["브랜드": "메가MGC커피", "만료일": "2025. 12. 31.", "바코드": "2639 3823"],
             thumbnailURL: "메가커피", screenshotURLs: ["메가커피"]
         ),
         Card(
@@ -223,7 +223,7 @@ extension Card {
             title: "이마트24 5천원권",
             summary: "이마트24 모바일 금액권 5,000원",
             category: .info, subcategory: "쿠폰", tags: ["이마트24", "편의점", "금액권"],
-            fields: ["브랜드": "이마트24", "금액": "5,000원", "만료일": "2025. 11. 20.", "바코드": "3300 0414 5162 0790 51"],
+            fields: ["브랜드": "이마트24", "금액": "5,000원", "만료일": "2025. 12. 05.", "바코드": "3300 0414 5162 0790 51"],
             thumbnailURL: "이마트24", screenshotURLs: ["이마트24"]
         ),
         Card(
@@ -231,7 +231,7 @@ extension Card {
             title: "카카오페이 포인트 30,000P",
             summary: "카카오페이 포인트 3만원",
             category: .info, subcategory: "쿠폰", tags: ["카카오페이", "포인트", "GS25"],
-            fields: ["브랜드": "카카오페이", "금액": "30,000P", "만료일": "2025. 11. 26.", "사용처": "카카오페이포인트", "바코드": "GS01-0986-2109-6770"],
+            fields: ["브랜드": "카카오페이", "금액": "30,000P", "만료일": "2025. 12. 15.", "사용처": "카카오페이포인트", "바코드": "GS01-0986-2109-6770"],
             thumbnailURL: "카카오페이", screenshotURLs: ["카카오페이"]
         ),
         Card(

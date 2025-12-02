@@ -120,7 +120,7 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.seoyeonID, text: "오 대박 여기 맛있어", cardID: nil, createdAt: Date().addingTimeInterval(-60*13)),
             .init(senderId: Self.dahyeID, text: "좋아! 맛있겠다", cardID: nil, createdAt: Date().addingTimeInterval(-60*12)),
             .init(senderId: "me", text: nil, cardID: MockCardIDs.starbucksCoupon, createdAt: Date().addingTimeInterval(-60*11)),
-            .init(senderId: "me", text: "나 무료 쿠폰 있으니까 스타벅스 가서 커피도 마시자", cardID: nil, createdAt: Date().addingTimeInterval(-60*10)),
+            .init(senderId: "me", text: "나 스벅 쿠폰 있으니까 스타벅스 가서 커피도 마시자", cardID: nil, createdAt: Date().addingTimeInterval(-60*10)),
             .init(senderId: Self.ewhaID, text: "스타벅스 좋아", cardID: nil, createdAt: Date().addingTimeInterval(-60*9)),
             .init(senderId: Self.minhaID, text: "완벽한 계획이다 ㅋㅋ", cardID: nil, createdAt: Date().addingTimeInterval(-60*8))
         ]
@@ -205,7 +205,7 @@ final class MockShareRepository: ShareRepository {
                   lastMessageText: t1Messages.last?.text,
                   lastMessageAt: t1Messages.last?.createdAt,
                   unreadCount: unreadCount("t1"),
-                  lastMessageCardTitle: t1Messages.last?.cardID != nil ? "무료 음료 쿠폰" : nil),
+                  lastMessageCardTitle: t1Messages.last?.cardID != nil ? "스타벅스 쿠폰" : nil),
 
             .init(id: "t2", title: "",
                   participantIds: ["me", Self.dahyeID],
