@@ -302,14 +302,6 @@ extension Card {
             thumbnailURL: "이목리막국수", screenshotURLs: ["이목리막국수"]
         ),
         Card(
-            id: MockCardIDs.sentence,
-            title: "마음에 남는 문장",
-            summary: "'너무 늦은 시도란 없다.'",
-            category: .contents, subcategory: "글", tags: ["동기부여", "긍정"],
-            fields: ["topic": "동기부여"],
-            thumbnailURL: "글귀", screenshotURLs: ["글귀"]
-        ),
-        Card(
             id: MockCardIDs.cafeEround,
             title: "카페 이라운드",
             summary: "디저트 맛집, 감성 카페",
