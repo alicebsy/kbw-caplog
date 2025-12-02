@@ -92,6 +92,7 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: "me", text: "민하야 혹시 스벅 쿠폰 필요해?", cardID: nil, createdAt: Date().addingTimeInterval(-60*12)),
             .init(senderId: "me", text: nil, cardID: MockCardIDs.starbucksCoupon, createdAt: Date().addingTimeInterval(-60*11)),
             .init(senderId: Self.minhaID, text: "오! 나 완전 필요해 고마워", cardID: nil, createdAt: Date().addingTimeInterval(-60*10))
+            // ✅ 우민하 개인톡 - 안읽음 1개 유지
         ]
 
         let t2Messages: [ChatMessage] = [
@@ -99,6 +100,7 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.dahyeID, text: "속초에 새로 생긴 곳인데 리뷰 좋아", cardID: nil, createdAt: Date().addingTimeInterval(-60*20)),
             .init(senderId: "me", text: "와 대박 ㅠㅠ 나 막국수 킬러잖아", cardID: nil, createdAt: Date().addingTimeInterval(-60*19)),
             .init(senderId: "me", text: "이번 주말에 바로 간다", cardID: nil, createdAt: Date().addingTimeInterval(-60*18))
+            // ✅ 강다혜 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t3Messages: [ChatMessage] = [
@@ -106,12 +108,15 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.seoyeonID, text: nil, cardID: MockCardIDs.sentence, createdAt: Date().addingTimeInterval(-60*30)),
             .init(senderId: "me", text: "오... '너무 늦은 시도란 없다'", cardID: nil, createdAt: Date().addingTimeInterval(-60*29)),
             .init(senderId: "me", text: "좋은 글귀다 저장할게!", cardID: nil, createdAt: Date().addingTimeInterval(-60*28))
+            // ✅ 배서연 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t4Messages: [ChatMessage] = [
             .init(senderId: "me", text: "저번에 말한 낭만식탁", cardID: MockCardIDs.nangman, createdAt: Date().addingTimeInterval(-60*40)),
             .init(senderId: "me", text: "여기 진짜 맛있더라", cardID: nil, createdAt: Date().addingTimeInterval(-60*39)),
-            .init(senderId: Self.ewhaID, text: "아 여기! 나도 가봤어. 사케동 인정", cardID: nil, createdAt: Date().addingTimeInterval(-60*38))
+            .init(senderId: Self.ewhaID, text: "아 여기! 나도 가봤어. 사케동 인정", cardID: nil, createdAt: Date().addingTimeInterval(-60*38)),
+            .init(senderId: "me", text: "인정!", cardID: nil, createdAt: Date().addingTimeInterval(-60*37))
+            // ✅ 김이화 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t5Messages: [ChatMessage] = [
@@ -123,25 +128,26 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: "me", text: "나 스벅 쿠폰 있으니까 스타벅스 가서 커피도 마시자", cardID: nil, createdAt: Date().addingTimeInterval(-60*10)),
             .init(senderId: Self.ewhaID, text: "스타벅스 좋아", cardID: nil, createdAt: Date().addingTimeInterval(-60*9)),
             .init(senderId: Self.minhaID, text: "완벽한 계획이다 ㅋㅋ", cardID: nil, createdAt: Date().addingTimeInterval(-60*8))
+            // ✅ 5명 방 - 안읽음 5개 유지 (우민하2, 배서연1, 강다혜1, 김이화1)
         ]
 
         let t6Messages: [ChatMessage] = {
             var msgs: [ChatMessage] = []
             msgs.append(.init(senderId: Self.actorID, text: "다음 회의 장소 정했습니다.", cardID: nil, createdAt: Date().addingTimeInterval(-60*1000)))
             msgs.append(.init(senderId: Self.actorID, text: "여기서 하죠", cardID: MockCardIDs.cafeEround, createdAt: Date().addingTimeInterval(-60*999)))
-
-            for i in 1...98 {
-                msgs.append(.init(senderId: Self.junghoonID,
-                                  text: "확인했습니다. \(i)",
-                                  cardID: nil,
-                                  createdAt: Date().addingTimeInterval(-60 * Double(900 - i))))
-            }
-
-            msgs.append(.init(senderId: Self.minhaID,
+            msgs.append(.init(senderId: "me",
+                              text: "확인했습니다.",
+                              cardID: nil,
+                              createdAt: Date().addingTimeInterval(-60 * 20)))
+            msgs.append(.init(senderId: Self.junghoonID,
                               text: "네 저도 봤습니다.",
                               cardID: nil,
-                              createdAt: Date().addingTimeInterval(-60 * 15)))
-
+                              createdAt: Date().addingTimeInterval(-60 * 19)))
+            msgs.append(.init(senderId: Self.minhaID,
+                              text: "좋습니다!",
+                              cardID: nil,
+                              createdAt: Date().addingTimeInterval(-60 * 18)))
+            // ✅ 4명 방 - 안읽음 3개 유지 (강배우1, 이정훈1, 우민하1)
             return msgs
         }()
 
@@ -149,13 +155,17 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.dahyeID, text: nil, cardID: MockCardIDs.exhibition, createdAt: Date().addingTimeInterval(-60*26)),
             .init(senderId: Self.dahyeID, text: "성수동 전시회래. 이번 주말 어때?", cardID: nil, createdAt: Date().addingTimeInterval(-60*25)),
             .init(senderId: "me", text: "오 좋아좋아", cardID: nil, createdAt: Date().addingTimeInterval(-60*24)),
-            .init(senderId: Self.jiaID, text: "저도 콜!", cardID: nil, createdAt: Date().addingTimeInterval(-60*23))
+            .init(senderId: Self.jiaID, text: "저도 콜!", cardID: nil, createdAt: Date().addingTimeInterval(-60*23)),
+            .init(senderId: "me", text: "ㅇㅋㅇㅋ", cardID: nil, createdAt: Date().addingTimeInterval(-60*22))
+            // ✅ 강다혜, 송지아 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t8Messages: [ChatMessage] = [
             .init(senderId: Self.seoyeonID, text: "여기 평점 좋아", cardID: MockCardIDs.nangman, createdAt: Date().addingTimeInterval(-60*35)),
             .init(senderId: "me", text: "오 아까 이화도 여기 말했는데", cardID: nil, createdAt: Date().addingTimeInterval(-60*34)),
-            .init(senderId: Self.sujinID, text: "결정? 7시 ㄱㄱ", cardID: nil, createdAt: Date().addingTimeInterval(-60*33))
+            .init(senderId: Self.sujinID, text: "결정? 7시 ㄱㄱ", cardID: nil, createdAt: Date().addingTimeInterval(-60*33)),
+            .init(senderId: "me", text: "ㅇㅋ 7시!", cardID: nil, createdAt: Date().addingTimeInterval(-60*32))
+            // ✅ 박수진, 배서연 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t9Messages: [ChatMessage] = [
@@ -164,6 +174,7 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.chaewonID, text: "콜콜콜", cardID: nil, createdAt: Date().addingTimeInterval(-60*44)),
             .init(senderId: Self.hayoonID, text: "저 지금 집 가요", cardID: nil, createdAt: Date().addingTimeInterval(-60*43)),
             .init(senderId: "me", text: "오케이 3시에 메가커피 앞에서 보자", cardID: nil, createdAt: Date().addingTimeInterval(-60*42))
+            // ✅ 우민하, 임채원, 정하윤 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         let t10Messages: [ChatMessage] = [
@@ -172,6 +183,7 @@ final class MockShareRepository: ShareRepository {
             .init(senderId: Self.junyoungID, text: "오 저장", cardID: nil, createdAt: Date().addingTimeInterval(-60*54)),
             .init(senderId: Self.jiwooID, text: "와 맛있겠다", cardID: nil, createdAt: Date().addingTimeInterval(-60*53)),
             .init(senderId: "me", text: "나도 여기 저장함!", cardID: nil, createdAt: Date().addingTimeInterval(-60*52))
+            // ✅ 강다혜, 최준영, 한지우 - 내가 마지막 메시지, 안읽음 0개
         ]
 
         // messageStore 저장

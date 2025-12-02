@@ -53,49 +53,6 @@ struct Register1View: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                #if DEBUG
-                // ✅ 개발용 테스트 버튼 섹션
-                VStack(spacing: 12) {
-                    NavigationLink(destination: Register4_1View()) {
-                        Text("임시 레지스터4-1")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.yellow)
-                            .cornerRadius(10)
-                    }
-                    NavigationLink(destination: HomeView()) {
-                        Text("임시 홈")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                    NavigationLink(destination: MyPageView()) {
-                        Text("임시 마이페이지")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.purple)
-                            .cornerRadius(10)
-                    }
-
-                    // ✅ 스크린샷 업로드 버튼
-                    Button {
-                        showPhotoPicker = true
-                    } label: {
-                        Text("📸 스크린샷 업로드 (OCR + GPT 테스트)")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.homeGreen)
-                            .cornerRadius(10)
-                    }
-                }
-                .padding(.top, 10)
-                #endif
-                
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
