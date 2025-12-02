@@ -7,7 +7,7 @@ public enum HomeMetrics {
     /// 섹션 타이틀 ↔ 그 아래 카드 간격
     static let headerToCard: CGFloat = 8 // ✅ 8pt
 
-    static let couponHeight: CGFloat = 130
+    static let couponHeight: CGFloat = 180 // ✅ 130 → 180으로 증가
     static let rowHeight: CGFloat = 150
     static let carouselHeight: CGFloat = 180
 }

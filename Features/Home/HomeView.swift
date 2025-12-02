@@ -48,7 +48,8 @@ struct HomeView: View {
                                             fullscreenImage = url
                                         }
                                         CardManager.shared.markCardAsViewed(card)
-                                    }
+                                    },
+                                    isHomeScreen: true // ✅ 홈 화면 쿠폰 전용 이미지 사용
                                 )
                                 .frame(height: couponH)
                                 .padding(.horizontal, 20)

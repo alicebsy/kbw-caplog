@@ -76,6 +76,24 @@ struct Card: Identifiable, Hashable, Codable {
     var thumbnailName: String {
         thumbnailURL ?? "placeholder"
     }
+    
+    // ✅ 홈 화면 전용 썸네일 (쿠폰 카드만 특별 이미지 사용)
+    var homeThumbnailName: String {
+        if subcategory == "쿠폰" {
+            switch id {
+            case MockCardIDs.starbucksCoupon:
+                return "스타벅스카드"
+            case MockCardIDs.emart24Coupon:
+                return "이마트24카드"
+            case MockCardIDs.kakaopayCoupon:
+                return "카카오페이카드"
+            default:
+                return thumbnailName
+            }
+        }
+        return thumbnailName
+    }
+    
     var firstScreenshot: String? {
         screenshotURLs.first
     }
@@ -239,7 +257,7 @@ extension Card {
             title: "롯데 크런키 빼빼로(지함)",
             summary: "GS25 롯데 크런키 빼빼로",
             category: .info, subcategory: "쿠폰", tags: ["빼빼로", "편의점", "GS25"],
-            fields: ["브랜드": "GS25", "상품": "롯데)크런키|빼빼로(지함)", "만료일": "2025. 12. 11.", "바코드": "1324 3704 9093 8908"],
+            fields: ["브랜드": "GS25", "상품": "롯데)크런키|빼빼로(지함)", "만료일": "2026. 01. 01.", "바코드": "1324 3704 9093 8908"],
             thumbnailURL: "빼빼로", screenshotURLs: ["빼빼로"]
         ),
         // ✅ 맛집 카드들

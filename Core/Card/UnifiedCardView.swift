@@ -9,6 +9,7 @@ struct UnifiedCardView: View {
     var onTap: () -> Void = {}
     var onMore: () -> Void = {}
     var onTapImage: () -> Void = {}
+    var isHomeScreen: Bool = false // ✅ 홈 화면 여부
     
     @State private var isShareSheetPresented = false
     @Environment(\.notificationCardWidth) private var isNotificationCard
@@ -327,81 +328,55 @@ struct UnifiedCardView: View {
     }
     
     
-    // MARK: - Coupon Style
+    // MARK: - Coupon Style (이미지 카드 전용)
     private var couponStyle: some View {
-        HStack(alignment: .top, spacing: 12) {
+        ZStack(alignment: .bottomTrailing) {
+            // ✅ 홈 화면에서만 특별 카드 이미지, 다른 곳에서는 일반 썸네일
+            let imageName = isHomeScreen ? card.homeThumbnailName : card.thumbnailName
             
-            // LEFT: 텍스트 (카드 상세 보기)
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(card.category.rawValue + " - " + card.subcategory)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(1)
-                    
-                    Text(card.title)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                }
-                
-                if !card.summary.isEmpty {
-                    Text(card.summary)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(2)
-                }
-                
-                if let expireDate = card.fields["만료일"] {
-                    Text(expireDate)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.primary)
-                }
-            }
-            .contentShape(Rectangle()) // 탭 영역 명확하게 지정
-            .onTapGesture {
-                print("🔵 UnifiedCardView couponStyle: 텍스트 영역 탭 -> onTap() 호출 (CardDetailView 열림)")
-                onTap()
-            }
+            // 쿠폰 이미지 전체를 보여줌
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(height: isHomeScreen ? 160 : 120) // ✅ 홈 화면에서 더 크게
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             
-            Spacer(minLength: 10)
-            
-            // RIGHT: 이미지 + 버튼
-            VStack(spacing: 8) {
-                Image(card.thumbnailName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 80, height: 80)
-                    .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        print("🟡 UnifiedCardView couponStyle: 이미지 탭 -> onTapImage() 호출 (전체화면)")
-                        onTapImage()
-                    }
-                
-                HStack(spacing: 14) {
-                    Button(action: {
-                        print("🟢 UnifiedCardView couponStyle: 공유 버튼 탭")
-                        isShareSheetPresented = true
-                    }) {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    Button(action: {
-                        print("🔴 UnifiedCardView couponStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
-                        onMore()
-                    }) {
-                        Image(systemName: "ellipsis")
-                    }
+            // 오른쪽 하단 버튼들
+            HStack(spacing: 12) {
+                Button(action: {
+                    print("🟢 UnifiedCardView couponStyle: 공유 버튼 탭")
+                    isShareSheetPresented = true
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
                 }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Color.brandTextSub)
-                .frame(width: 80)
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    print("🔴 UnifiedCardView couponStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
+                    onMore()
+                }) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
+            .padding(12)
         }
-        .padding(16)
-        .background(Color.homeGreenLight.opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            print("🔵 UnifiedCardView couponStyle: 카드 탭 -> onTap() 호출 (CardDetailView 열림)")
+            onTap()
+        }
     }
 }
 
