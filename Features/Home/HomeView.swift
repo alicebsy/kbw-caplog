@@ -129,6 +129,7 @@ struct HomeView: View {
                         .foregroundColor(.primary)
                 }
             }
+            // ✅ trailing toolbar item 제거 (새로고침 버튼 없음)
         }
 
         // ✅ 편집 시트

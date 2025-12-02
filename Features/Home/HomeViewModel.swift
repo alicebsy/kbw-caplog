@@ -121,7 +121,7 @@ final class HomeViewModel: ObservableObject {
         🔄 HomeViewModel: 홈 데이터 갱신됨
         - 쿠폰: \(coupons.count)
         - 추천: \(recommended.count)
-        - 최근:  \(recent.count)
+        - 최근: \(recent.count)
         """)
     }
 }
