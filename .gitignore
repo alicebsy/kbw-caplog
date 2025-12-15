@@ -39,11 +39,18 @@ logs/
 
 ### OS 별 불필요 파일 ###
 .DS_Store
-Thumbs.db**/*.xcuserstate
-**/xcuserdata/
-**/*.xcuserstate
-.DS_Store
+Thumbs.db
+
+### Xcode ###
 **/*.xcuserstate
 **/xcuserdata/
 DerivedData/
+
+### iOS secrets / local ###
 caplog/Info.plist
+
+### local env files ###
+.env.db
+
+### Spring local config ###
+src/main/resources/application.yml

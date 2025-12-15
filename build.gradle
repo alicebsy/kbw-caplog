@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+group = 'com.kbw'
+version = '0.0.1-SNAPSHOT'
+java { sourceCompatibility = JavaVersion.VERSION_17 }  // 팀에서 17 or 21
+repositories {
+    mavenCentral() }
+dependencies {
+
+    // springboot
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // 웹 MVC (컨트롤러 만드는 데 필요)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // 요청 값 검증(@NotBlank, @Email 등)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // JPA (엔티티/리포지토리 사용)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // MySQL 드라이버 (DB 접속)
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // 비밀번호 암호화 (BCrypt)
+    implementation 'org.springframework.security:spring-security-crypto:6.3.3'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Lombok (게터/세터/생성자 자동 생성)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // JWT (jjwt 0.11.x)
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// (선택) 컴파일 인코딩 고정
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
