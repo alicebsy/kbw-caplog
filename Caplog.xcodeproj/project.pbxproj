@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C6871E42EC1C48600292CA8 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3CE26BE42EBEFFAA009654F1 /* Info.plist */; };
 		CE8108562E9CFE3700181F2D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108552E9CFE3700181F2D /* GoogleSignIn */; };
 		CE8108582E9CFE3700181F2D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108572E9CFE3700181F2D /* GoogleSignInSwift */; };
 		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
@@ -183,6 +184,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C6871E42EC1C48600292CA8 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
