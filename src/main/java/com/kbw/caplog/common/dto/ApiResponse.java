@@ -31,9 +31,19 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
-    // 성공 응답
+    // 성공 응답 (data + message 둘 다 있는 경우)
     public static <T> ApiResponse<T> success(T data, String message) {
         return new ApiResponse<>(true, message, data);
+    }
+
+    // 성공 응답 (data만 있는 경우)
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(true, null, data);
+    }
+
+   // 성공 응답 (message만 있는 경우)
+    public static <T> ApiResponse<T> success(String message) {
+        return new ApiResponse<>(true, message, null);
     }
 
     // 실패 응답
