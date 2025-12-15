@@ -39,4 +39,11 @@ logs/
 
 ### OS 별 불필요 파일 ###
 .DS_Store
-Thumbs.db
+Thumbs.db**/*.xcuserstate
+**/xcuserdata/
+**/*.xcuserstate
+.DS_Store
+**/*.xcuserstate
+**/xcuserdata/
+DerivedData/
+caplog/Info.plist
