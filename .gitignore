@@ -54,3 +54,6 @@ caplog/Info.plist
 
 ### Spring local config ###
 src/main/resources/application.yml
+# local backups
+Caplog.xcodeproj/project.pbxproj.bak
+_plist_backup/
