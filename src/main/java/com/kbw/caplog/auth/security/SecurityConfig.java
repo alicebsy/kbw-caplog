@@ -29,13 +29,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // 세션/폼로그인 안 쓰므로 CSFR 비활성
                 .cors(Customizer.withDefaults())    // 필요시 별도 CORS Bean으로 허용 출처 지정 가능
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                                                         // 세션을 생성/사용하지 않겠다는 Stateless
+                // 세션을 생성/사용하지 않겠다는 Stateless
                 .httpBasic(basic -> basic.disable()) // 브라우저 기본 인증 팝업 비활성
                 .formLogin(login -> login.disable()) // 폼 로그인(스프링 제공 로그인 페이지) 비활성
 
                 // 인가 규칙 (어떤 URL을 누구에게 열어줄지 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // 로그인/회원가입은 모두에게 공개
+
+                        // ✅ 추가된 부분
+                        // Swift 테스트용: 스크린샷 업로드 API는 인증 없이 접근 허용 (JWT 없이 테스트 가능)
+                        .requestMatchers("/api/screenshots/upload").permitAll()
+
                         .anyRequest().authenticated()   // 그 외는 인증 필요
                 )
 

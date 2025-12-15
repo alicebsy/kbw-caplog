@@ -6,7 +6,8 @@ plugins {
 group = 'com.kbw'
 version = '0.0.1-SNAPSHOT'
 java { sourceCompatibility = JavaVersion.VERSION_17 }  // 팀에서 17 or 21
-repositories { mavenCentral() }
+repositories {
+    mavenCentral() }
 dependencies {
 
     // springboot
@@ -27,6 +28,7 @@ dependencies {
 
     // 비밀번호 암호화 (BCrypt)
     implementation 'org.springframework.security:spring-security-crypto:6.3.3'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // Lombok (게터/세터/생성자 자동 생성)
     compileOnly 'org.projectlombok:lombok'
@@ -38,7 +40,6 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
 
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
