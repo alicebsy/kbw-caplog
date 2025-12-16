@@ -12,7 +12,7 @@ struct ShareFriendSearchSheet: View {
         NavigationStack {
             VStack {
                 HStack(spacing: 8) {
-                    TextField("친구 이름 검색", text: $keyword)
+                    TextField("친구 ID 검색", text: $keyword)
                         .textFieldStyle(.roundedBorder)
                         // ✅ (수정) 검색어가 바뀔 때마다 바로 search() 호출
                         .onChange(of: keyword) { _, newValue in
@@ -47,15 +47,23 @@ struct ShareFriendSearchSheet: View {
         }
     }
 
-    // ✅ (수정) 검색 로직이 vm.friends를 사용하도록 변경
+    // ✅ (수정) 검색 로직: 기존 친구를 제외한 전체 사용자 중에서 검색
     private func search(_ k: String) {
         let trimmed = k.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // 기존 친구 ID 목록
+        let existingFriendIDs = Set(vm.friends.map { $0.id })
+        
+        // FriendManager의 전체 mock 친구 중에서 기존 친구 제외
+        let allUsers = FriendManager.mockFriends.filter { !existingFriendIDs.contains($0.id) }
+        
         if trimmed.isEmpty {
-            // 키워드가 없으면 vm.friends (전체) 목록을 그대로 사용
-            results = vm.friends
+            // 키워드가 없으면 기존 친구를 제외한 전체 목록 표시
+            results = allUsers
         } else {
-            // 키워드가 있으면 vm.friends (정렬된) 목록에서 필터링
-            results = vm.friends.filter {
+            // 키워드가 있으면 ID나 이름으로 필터링
+            results = allUsers.filter {
+                $0.id.localizedCaseInsensitiveContains(trimmed) ||
                 $0.name.localizedCaseInsensitiveContains(trimmed)
             }
         }

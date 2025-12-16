@@ -564,6 +564,17 @@ final class ShareViewModel: ObservableObject {
 
 
     // --------------------------------------------------
+    // MARK: - 친구 삭제
+    // --------------------------------------------------
+    
+    func removeFriend(id: String) {
+        friends.removeAll { $0.id == id }
+        FriendManager.shared.removeFriend(id: id)  // FriendManager도 동기화
+        print("🗑️ 친구 삭제 완료: \(id)")
+    }
+    
+    
+    // --------------------------------------------------
     // MARK: - 기타
     // --------------------------------------------------
 
