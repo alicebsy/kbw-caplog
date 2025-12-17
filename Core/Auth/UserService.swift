@@ -9,16 +9,32 @@ struct UserService {
     // MARK: - Profile
 
     func fetchMe() async throws -> UserProfile {
-        // ✅ Mock 모드일 때 더미 데이터 반환
+        // ✅ Mock 모드일 때 UserDefaults에서 저장된 데이터 로드
         if useMockData {
-            print("🔧 Mock: fetchMe() - 더미 데이터 반환")
+            print("🔧 Mock: fetchMe() - UserDefaults에서 데이터 로드")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
+            
+            let defaults = UserDefaults.standard
+            let userId = defaults.string(forKey: "userProfile_userId") ?? "ewhakbw"
+            let nickname = defaults.string(forKey: "userProfile_nickname") ?? "강배우"
+            let email = defaults.string(forKey: "userProfile_email") ?? "ewhakbw@gmail.com"
+            let genderString = defaults.string(forKey: "userProfile_gender")
+            let birthdayTimestamp = defaults.double(forKey: "userProfile_birthday")
+            let birthday = birthdayTimestamp > 0 ? Date(timeIntervalSince1970: birthdayTimestamp) : nil
+            
+            print("📦 로드된 데이터:")
+            print("   - nickname: \(nickname)")
+            print("   - gender: \(genderString ?? "nil")")
+            print("   - birthday timestamp: \(birthdayTimestamp)")
+            print("   - birthday date: \(birthday?.description ?? "nil")")
+            
             return UserProfile(
-                userId: "ewhakbw",
-                nickname: "강배우",
-                email: "ewhakbw@gmail.com",
-                gender: nil,  // 미설정
-                birthday: nil
+                userId: userId,
+                nickname: nickname,
+                email: email,
+                gender: genderString,
+                birthday: birthday,
+                avatarURL: nil
             )
         }
         
@@ -26,13 +42,27 @@ struct UserService {
     }
 
     func updateMe(nickname: String, gender: MyPageViewModel.Gender?, birthday: Date?) async throws -> UserProfile {
-        // ✅ Mock 모드일 때 입력값 그대로 반환
+        // ✅ Mock 모드일 때 UserDefaults에 저장
         if useMockData {
             print("🔧 Mock: updateMe() - 프로필 업데이트 성공")
             print("   - nickname: \(nickname)")
             print("   - gender: \(gender?.rawValue ?? "nil")")
             print("   - birthday: \(birthday?.description ?? "nil")")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
+            
+            // UserDefaults에 저장
+            let defaults = UserDefaults.standard
+            defaults.set(nickname, forKey: "userProfile_nickname")
+            defaults.set(gender?.apiCode, forKey: "userProfile_gender")
+            if let birthday = birthday {
+                let timestamp = birthday.timeIntervalSince1970
+                defaults.set(timestamp, forKey: "userProfile_birthday")
+                print("💾 생년월일 저장: \(birthday) → timestamp: \(timestamp)")
+            } else {
+                defaults.removeObject(forKey: "userProfile_birthday")
+                print("💾 생년월일 삭제")
+            }
+            defaults.synchronize() // 즉시 저장
             
             let df = DateFormatter()
             df.dateFormat = "yyyy-MM-dd"
@@ -42,7 +72,8 @@ struct UserService {
                 nickname: nickname,
                 email: "ewhakbw@gmail.com",
                 gender: gender?.apiCode,
-                birthday: birthday
+                birthday: birthday,
+                avatarURL: nil
             )
         }
         
@@ -55,7 +86,8 @@ struct UserService {
         let body = UpdateUserProfileRequest(
             nickname: nickname,
             gender: gender?.apiCode,
-            birthday: birthday.map { df.string(from: $0) }
+            birthday: birthday.map { df.string(from: $0) },
+            avatarURL: nil
         )
         return try await client.request("PUT", path: Endpoints.updateMe, body: body)
     }

@@ -4,9 +4,8 @@ import Combine
 /// 채팅 목록 화면 (상단의 "채팅" 탭 컨텐츠)
 @MainActor
 struct ShareChatListView: View {
-    @ObservedObject var vm: ShareViewModel   // 🔹 주입받기
+    @ObservedObject var vm: ShareViewModel
     @State private var selectedThread: ChatThread?
-    
     @State private var showFriendSelection = false
 
     var body: some View {
@@ -17,6 +16,7 @@ struct ShareChatListView: View {
                         HStack(spacing: 12) {
                             
                             // 1:1 또는 그룹 아바타
+                            // ✅ (수정) ShareComponents.swift의 뷰를 사용
                             ChatListAvatarView(vm: vm, thread: t)
                             
                             VStack(alignment: .leading, spacing: 4) {
@@ -24,17 +24,16 @@ struct ShareChatListView: View {
                                 HStack(spacing: 0) {
                                     Text(t.title)
                                         .font(.system(size: 16, weight: .semibold))
-                                        .lineLimit(1) // ✅ 제목 잘림 방지 (Ellipsis)
+                                        .lineLimit(1)
                                     Spacer()
                                     Text(vm.timeString(for: t.lastMessageAt))
                                         .font(.footnote)
                                         .foregroundStyle(.secondary)
                                 }
                                 
-                                // 둘째 줄: 메시지 + 안읽음표시(오른쪽 정렬)
+                                // 둘째 줄: 메시지 + 안읽음표시
                                 HStack(spacing: 0) {
                                     if let cardTitle = t.lastMessageCardTitle {
-                                        // ✅ (수정) 아이콘 변경
                                         Image(systemName: "doc.text.fill")
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
@@ -52,7 +51,7 @@ struct ShareChatListView: View {
                                     
                                     Spacer()
                                     
-                                    // 99+ 안 읽음 배지 UI
+                                    // 안 읽음 배지
                                     if t.unreadCount > 0 {
                                         Text(t.unreadCount > 99 ? "99+" : "\(t.unreadCount)")
                                             .font(.system(size: 12, weight: .semibold))
@@ -150,7 +149,7 @@ struct ShareChatListView: View {
             
             let newThread = ChatThread(
                 id: "new_group_\(UUID().uuidString)",
-                title: title, // ❗️ 이 제목은 loadAll()에서 잘림 처리될 수 있습니다.
+                title: title,
                 participantIds: participantIds,
                 lastMessageText: nil,
                 lastMessageAt: Date(),
@@ -160,64 +159,5 @@ struct ShareChatListView: View {
             await vm.addNewThread(newThread)
             selectedThread = newThread
         }
-    }
-}
-
-// MARK: - 채팅 목록 아바타 뷰
-
-/// 채팅 목록의 썸네일을 담당 (1:1 프로필, 그룹 인원 수)
-private struct ChatListAvatarView: View {
-    let vm: ShareViewModel
-    let thread: ChatThread
-
-    var body: some View {
-        if thread.participantIds.count > 2 {
-            // --- 3인 이상 그룹 채팅: 인원 수 ---
-            ZStack {
-                Circle().fill(Color.gray.opacity(0.2))
-                Text("\(thread.participantIds.count)")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 40, height: 40)
-        } else {
-            // --- 1:1 채팅: 상대방 프로필 ---
-            let otherParticipantID = thread.participantIds.first(where: { $0 != "me" })
-            let friend = vm.friends.first(where: { $0.id == otherParticipantID })
-            
-            ChatListProfileImage(friend: friend)
-        }
-    }
-}
-
-/// 1:1 채팅 프로필 이미지 (Asset 이름 사용)
-private struct ChatListProfileImage: View {
-    let friend: Friend?
-    
-    var body: some View {
-        // ✅ (수정) FriendManager.mockFriends에서 아바타 "이름"을 직접 찾음
-        let shareFriend = FriendManager.mockFriends.first(where: { $0.id == friend?.id })
-        
-        Group {
-            if let avatarName = shareFriend?.avatar, avatarName != "avatar_default" {
-                Image(avatarName)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                defaultAvatar
-            }
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(Circle())
-    }
-    
-    private var defaultAvatar: some View {
-        Circle()
-            .fill(Color.gray.opacity(0.3))
-            .overlay(
-                Image(systemName: "person.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 20))
-            )
     }
 }

@@ -7,8 +7,6 @@ struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
 
     @State private var selectedCard: Card? = nil
-    // ❌ (제거) shareTarget
-    // @State private var shareTarget: Card? = nil
     @State private var fullscreenImage: String? = nil
     @State private var editingCard: Card? = nil
     @State private var selectedTab: CaplogTab = .home
@@ -35,27 +33,27 @@ struct HomeView: View {
                 )
                 Spacer().frame(height: S) // 24pt
 
-                // ── 섹션 1: Today's Summary (쿠폰 캐러셀) ──
+                // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) ──
                 if !vm.coupons.isEmpty {
-                    HomeSection(title: "🗓️ Today's Summary") {
+                    HomeSection(title: "⏳ Expiring Soon") {
                         TabView {
                             ForEach(vm.coupons) { card in
                                 UnifiedCardView(
                                     card: card,
                                     style: .coupon,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         if let url = card.thumbnailURL ?? card.screenshotURLs.first {
                                             fullscreenImage = url
                                         }
                                         CardManager.shared.markCardAsViewed(card)
-                                    }
+                                    },
+                                    isHomeScreen: true // ✅ 홈 화면 쿠폰 전용 이미지 사용
                                 )
                                 .frame(height: couponH)
                                 .padding(.horizontal, 20)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
                         .frame(height: couponH)
@@ -72,19 +70,17 @@ struct HomeView: View {
                                 UnifiedCardView(
                                     card: card, style: .row,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
                                         CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
-                                .frame(minHeight: rowH)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                                 .padding(.horizontal, 20)
                             }
                         }
-                        .frame(height: rowH)
+                        .frame(height: 180)
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
                     Spacer().frame(height: S) // 24pt
@@ -98,8 +94,6 @@ struct HomeView: View {
                                 UnifiedCardView(
                                     card: card, style: .row,
                                     onTap: { selectedCard = card },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = card },
                                     onMore: { editingCard = card },
                                     onTapImage: {
                                         fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
@@ -107,6 +101,7 @@ struct HomeView: View {
                                     }
                                 )
                                 .frame(minHeight: rowH)
+                                .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
                         .padding(.horizontal, 20)
@@ -136,18 +131,14 @@ struct HomeView: View {
             }
         }
 
-        // ❌ (제거) 공유 시트
-        /*
-        .sheet(item: $shareTarget) { target in
-            ShareSheetView(target: target, friends: vm.friends) { _, _ in }
-                .presentationDetents([.height(350)])
-        }
-        */
-
-        // 편집 시트
+        // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card) { _ in }
-                .presentationDetents([.medium, .large])
+            CardEditSheet(card: card) {
+                // 카드 저장 후 홈 화면 데이터 갱신
+                Task {
+                    await vm.reloadHomeContent()
+                }
+            }
         }
 
         // 전체 이미지 보기

@@ -1,25 +1,5 @@
 import Foundation
 
-// ✅ 충돌 방지를 위해 GPTAPIError 로 이름 변경
-private struct ChatAPIResponse: Decodable {
-    struct Choice: Decodable { let message: Msg? }
-    struct Msg: Decodable { let content: String? }
-    let choices: [Choice]?
-    let usage: GPTAPIUsage?
-    let error: GPTAPIError?
-}
-
-private struct GPTAPIUsage: Decodable {
-    let total_tokens: Int?
-}
-
-// ✅ 이름 변경
-private struct GPTAPIError: Decodable {
-    let message: String?
-    let type: String?
-    let code: String?
-}
-
 // MARK: - 안정 버전 GPT 분류 함수
 func classifyTextWithGPT_stable(
     prompt: String,
@@ -69,28 +49,48 @@ func classifyTextWithGPT_stable(
             print("📦 HTTP \(status) body:\n\(rawText)")
         }
 
-        // 3️⃣ JSON 디코딩
-        if let data = data,
-           let parsed = try? JSONDecoder().decode(ChatAPIResponse.self, from: data) {
-
-            // 에러 응답 처리
-            if status >= 400 || parsed.error != nil {
-                let msg = parsed.error?.message ?? "상태코드 \(status)"
-                completion("❌ API 에러: \(msg)", "")
-                return
-            }
-
-            // 정상 응답 처리
-            let content = parsed.choices?.first?.message?.content?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let tokens = parsed.usage?.total_tokens.map { "\($0) tokens" } ?? ""
-
-            if content.isEmpty {
-                completion("❌ 빈 응답", tokens)
-            } else {
-                completion(content, tokens)
-            }
-        } else {
+        // 3️⃣ 수동 JSON 파싱 (Decodable 없이)
+        guard let data = data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             completion("❌ 파싱 실패", "")
+            return
+        }
+
+        // 에러 응답 처리
+        if status >= 400 {
+            let errorMsg = (json["error"] as? [String: Any])?["message"] as? String ?? "상태코드 \(status)"
+            completion("❌ API 에러: \(errorMsg)", "")
+            return
+        }
+        
+        if let error = json["error"] as? [String: Any],
+           let errorMsg = error["message"] as? String {
+            completion("❌ API 에러: \(errorMsg)", "")
+            return
+        }
+
+        // 정상 응답 처리
+        var content = ""
+        var tokens = ""
+        
+        // content 추출
+        if let choices = json["choices"] as? [[String: Any]],
+           let firstChoice = choices.first,
+           let message = firstChoice["message"] as? [String: Any],
+           let messageContent = message["content"] as? String {
+            content = messageContent.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // tokens 추출
+        if let usage = json["usage"] as? [String: Any],
+           let totalTokens = usage["total_tokens"] as? Int {
+            tokens = "\(totalTokens) tokens"
+        }
+
+        if content.isEmpty {
+            completion("❌ 빈 응답", tokens)
+        } else {
+            completion(content, tokens)
         }
     }.resume()
 }

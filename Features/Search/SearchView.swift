@@ -7,15 +7,10 @@ struct SearchView: View {
     
     @Environment(\.dismiss) private var dismiss
 
-    // 상세/공유/편집/이미지 팝업 상태
+    // 상세/편집/이미지 팝업 상태
     @State private var selectedCard: Card? = nil
-    // ❌ (제거) shareTarget
-    // @State private var shareTarget: Card? = nil
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
-    
-    // ❌ (제거) friendManager
-    // @StateObject private var friendManager = FriendManager.shared
 
     // 탭 라우팅을 위한 변수 추가
     var onSelectTab: ((CaplogTab) -> Void)? = nil
@@ -112,8 +107,6 @@ struct SearchView: View {
                                     card: item,
                                     style: .row,
                                     onTap: { selectedCard = item },
-                                    // ❌ (제거) onShare
-                                    // onShare: { shareTarget = item },
                                     onMore: { editingCard = item },
                                     onTapImage: {
                                         if let first = item.screenshotURLs.first {
@@ -127,6 +120,7 @@ struct SearchView: View {
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                     .listRowBackground(Color.clear)
+                                    .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
                                     .onAppear {
                                         if item.id == vm.results.last?.id {
                                             vm.loadMoreIfPossible()
@@ -160,25 +154,14 @@ struct SearchView: View {
             }
         }
         
-        // ❌ (제거) 공유 시트
-        /*
-        .sheet(item: $shareTarget) { target in
-            ShareSheetView(
-                target: target,
-                friends: friendManager.friends
-            ) { ids, msg in
-                print("Search 공유 → 대상: \(ids), 메시지: \(msg)")
-            }
-            .presentationDetents([.height(350)])
-        }
-        */
-        
-        // 편집 시트
+        // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
-            CardEditSheet(card: card) { updated in
-                print("업데이트: \(updated)")
+            CardEditSheet(card: card) {
+                // 카드 저장 후 검색 결과 갱신
+                Task {
+                    vm.resetAndSearch()
+                }
             }
-            .presentationDetents([.medium, .large])
         }
         
         // 전체 이미지 팝업

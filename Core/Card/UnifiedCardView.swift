@@ -7,12 +7,12 @@ struct UnifiedCardView: View {
     let style: CardStyle
     
     var onTap: () -> Void = {}
-    // ❌ onShare 콜백 제거
     var onMore: () -> Void = {}
     var onTapImage: () -> Void = {}
+    var isHomeScreen: Bool = false // ✅ 홈 화면 여부
     
-    // ✅ (추가) 공유 시트를 띄우기 위한 내부 상태
     @State private var isShareSheetPresented = false
+    @Environment(\.notificationCardWidth) private var isNotificationCard
     
     enum CardStyle {
         case row
@@ -37,41 +37,32 @@ struct UnifiedCardView: View {
                 chatStyle
             }
         }
-        // ✅ (수정) .sheet 수정자에 실제 전송 로직 추가
         .sheet(isPresented: $isShareSheetPresented) {
             ShareSheetView(
                 target: card
             ) { friendIDs, threadIDs, msg in
                 
-                // ✅ (추가) 싱글톤 VM을 가져와서 전송 로직 실행
                 let vm = ShareViewModel.shared
                 let cardToSend = self.card
                 
                 Task {
-                    // 1. 선택된 기존 채팅방에 전송
                     for threadId in threadIDs {
                         await vm.sendCard(to: threadId, card: cardToSend)
-                        if !msg.isEmpty {
-                            await vm.send(to: threadId, text: msg)
-                        }
+                        if !msg.isEmpty { await vm.send(to: threadId, text: msg) }
                     }
                     
-                    // 2. 선택된 친구와 1:1 채팅방을 찾아 전송
                     for friendId in friendIDs {
-                        // 친구 객체 찾기
                         guard let friend = vm.friends.first(where: { $0.id == friendId }) else { continue }
                         
-                        // 기존 1:1 채팅방 찾기
                         var targetThreadId: String
                         if let existingThread = vm.threads.first(where: {
                             $0.participantIds.count == 2 && $0.participantIds.contains(friend.id)
                         }) {
                             targetThreadId = existingThread.id
                         } else {
-                            // 새 1:1 채팅방 생성
                             let newThread = ChatThread(
                                 id: "new_\(friend.id)_\(UUID().uuidString)",
-                                title: friend.name, // (loadAll에서 어차피 다시 계산됨)
+                                title: friend.name,
                                 participantIds: ["me", friend.id],
                                 lastMessageText: nil,
                                 lastMessageAt: Date(),
@@ -82,11 +73,8 @@ struct UnifiedCardView: View {
                             targetThreadId = newThread.id
                         }
                         
-                        // 카드 및 메시지 전송
                         await vm.sendCard(to: targetThreadId, card: cardToSend)
-                        if !msg.isEmpty {
-                            await vm.send(to: targetThreadId, text: msg)
-                        }
+                        if !msg.isEmpty { await vm.send(to: targetThreadId, text: msg) }
                     }
                 }
             }
@@ -94,12 +82,14 @@ struct UnifiedCardView: View {
         }
     }
     
-    // MARK: - Row Style (좌측 정보 + 우측 썸네일)
     
+    // MARK: - Row Style (Recommended / Recently)
     private var rowStyle: some View {
         HStack(alignment: .top, spacing: 12) {
-            // ... (VStack: 텍스트 블록) ...
+            
+            // LEFT: 텍스트 (카드 상세 보기)
             VStack(alignment: .leading, spacing: 10) {
+                
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.category.rawValue + " - " + card.subcategory)
                         .font(.system(size: 13))
@@ -119,16 +109,23 @@ struct UnifiedCardView: View {
                         .lineLimit(2)
                 }
                 
-                if !card.location.isEmpty {
-                    HStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ZStack {
                         Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 28, height: 28)
-                        Text(card.location)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.brandTextSub)
-                            .lineLimit(1)
+                            .fill(Color.white)
+                            .overlay(
+                                Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
+                        
+                        Text(card.subcategoryEmoji)
+                            .font(.system(size: 14))
                     }
+                    .frame(width: 28, height: 28)
+                    
+                    Text(card.contextualInfoText)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.brandTextSub)
+                        .lineLimit(1)
                 }
                 
                 if !card.tagsString.isEmpty {
@@ -138,29 +135,41 @@ struct UnifiedCardView: View {
                         .lineLimit(1)
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { onTap() }
+            .contentShape(Rectangle()) // 탭 영역 명확하게 지정
+            .onTapGesture {
+                print("🔵 UnifiedCardView rowStyle: 텍스트 영역 탭 -> onTap() 호출 (CardDetailView 열림)")
+                onTap()
+            }
             
             Spacer(minLength: 10)
             
-            // RIGHT: 썸네일 + 버튼
+            // RIGHT: 이미지 + 버튼
             VStack(spacing: 0) {
                 Image(card.thumbnailName)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 80, height: 80)
+                    .frame(width: 80, height: 90)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        print("🟡 UnifiedCardView rowStyle: 이미지 탭 -> onTapImage() 호출 (전체화면)")
+                        onTapImage()
+                    }
                 
                 Spacer().frame(height: 12)
                 
                 HStack(spacing: 14) {
-                    // ✅ (수정) onShare -> isShareSheetPresented = true
-                    Button(action: { isShareSheetPresented = true }) {
+                    Button(action: {
+                        print("🟢 UnifiedCardView rowStyle: 공유 버튼 탭")
+                        isShareSheetPresented = true
+                    }) {
                         Image(systemName: "square.and.arrow.up")
                     }
-                    Button(action: onMore) {
+                    Button(action: {
+                        print("🔴 UnifiedCardView rowStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
+                        onMore()
+                    }) {
                         Image(systemName: "ellipsis")
                     }
                 }
@@ -174,8 +183,8 @@ struct UnifiedCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
-    // MARK: - Horizontal Style (상단 썸네일 + 하단 정보)
     
+    // MARK: - Horizontal Style
     private var horizontalStyle: some View {
         VStack(alignment: .leading, spacing: 8) {
             Image(card.thumbnailName)
@@ -211,36 +220,37 @@ struct UnifiedCardView: View {
         .onTapGesture { onTap() }
     }
     
-    // MARK: - Compact Style (검색 결과, 폴더 목록)
     
+    // MARK: - Compact Style
     private var compactStyle: some View {
         HStack(alignment: .top, spacing: 12) {
+            
             VStack(alignment: .leading, spacing: 8) {
                 Text(card.category.rawValue + " - " + card.subcategory)
-                    .font(.system(size: 12, weight: .semibold)) // 12pt
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
                 Text(card.title)
-                    .font(.system(size: 18, weight: .bold)) // 18pt
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.primary)
                 
                 if !card.summary.isEmpty {
                     Text(card.summary)
-                        .font(.system(size: 14)) // 14pt
+                        .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 
                 if !card.location.isEmpty {
                     Text(card.location)
-                        .font(.system(size: 13)) // 13pt
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 
                 if !card.dateString.isEmpty {
                     Text(card.dateString)
-                        .font(.system(size: 12)) // 12pt
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -250,11 +260,12 @@ struct UnifiedCardView: View {
             Image(card.thumbnailName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 64, height: 64)
+                .frame(width: isNotificationCard ? 80 : 64, height: isNotificationCard ? 80 : 64)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .padding(16)
+        .padding(isNotificationCard ? 14 : 16)
+        .frame(maxWidth: isNotificationCard ? .infinity : nil)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
@@ -262,10 +273,11 @@ struct UnifiedCardView: View {
         .onTapGesture { onTap() }
     }
     
-    // MARK: - Chat Style
     
+    // MARK: - Chat Style
     private var chatStyle: some View {
         HStack(alignment: .top, spacing: 10) {
+            
             VStack(alignment: .leading, spacing: 6) {
                 Text(card.category.rawValue + " - " + card.subcategory)
                     .font(.system(size: 11, weight: .semibold))
@@ -275,13 +287,12 @@ struct UnifiedCardView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
-
+                
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 if !card.location.isEmpty {
@@ -316,91 +327,69 @@ struct UnifiedCardView: View {
         .frame(maxWidth: 200)
     }
     
-    // MARK: - Coupon Style (연한 파란색 배경)
     
+    // MARK: - Coupon Style (이미지 카드 전용)
     private var couponStyle: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // LEFT: 텍스트 블록
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(card.category.rawValue + " - " + card.subcategory)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(1)
-                    
-                    Text(card.title)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                }
-                
-                if !card.summary.isEmpty {
-                    Text(card.summary)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(2)
-                }
-                
-                if let expireDate = card.fields["만료일"] {
-                    Text(expireDate)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.primary)
-                }
-            }
+        ZStack(alignment: .bottomTrailing) {
+            // ✅ 홈 화면에서만 특별 카드 이미지, 다른 곳에서는 일반 썸네일
+            let imageName = isHomeScreen ? card.homeThumbnailName : card.thumbnailName
             
-            Spacer(minLength: 10)
+            // 쿠폰 이미지 전체를 보여줌
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(height: isHomeScreen ? 160 : 120) // ✅ 홈 화면에서 더 크게
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             
-            // RIGHT: 썸네일 + 버튼
-            VStack(spacing: 8) {
-                Image(card.thumbnailName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 80, height: 80)
-                    .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .onTapGesture { onTapImage() }
-                
-                HStack(spacing: 14) {
-                    // ✅ (수정) onShare -> isShareSheetPresented = true
-                    Button(action: { isShareSheetPresented = true }) {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    Button(action: onMore) {
-                        Image(systemName: "ellipsis")
-                    }
+            // 오른쪽 하단 버튼들
+            HStack(spacing: 12) {
+                Button(action: {
+                    print("🟢 UnifiedCardView couponStyle: 공유 버튼 탭")
+                    isShareSheetPresented = true
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
                 }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Color.brandTextSub)
-                .frame(width: 80)
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    print("🔴 UnifiedCardView couponStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
+                    onMore()
+                }) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
+            .padding(12)
         }
-        .padding(16)
         .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-        .background(Color.homeGreenLight.opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture {
+            print("🔵 UnifiedCardView couponStyle: 카드 탭 -> onTap() 호출 (CardDetailView 열림)")
+            onTap()
+        }
     }
 }
 
-// MARK: - Preview
-#Preview("Card Styles") {
-    let sampleCard = Card.sampleCards[0]
-    
-    return ScrollView {
-        VStack(spacing: 20) {
-            Text("Row Style").font(.headline)
-            UnifiedCardView(card: sampleCard, style: .row)
-            
-            Text("Horizontal Style").font(.headline)
-            UnifiedCardView(card: sampleCard, style: .horizontal)
-            
-            Text("Compact Style").font(.headline)
-            UnifiedCardView(card: sampleCard, style: .compact)
-            
-            Text("Chat Style").font(.headline)
-            UnifiedCardView(card: sampleCard, style: .chat)
-                .frame(maxWidth: 200)
-        }
-        .padding()
+
+
+// MARK: - 알림용 환경 변수
+private struct NotificationCardWidthKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var notificationCardWidth: Bool {
+        get { self[NotificationCardWidthKey.self] }
+        set { self[NotificationCardWidthKey.self] = newValue }
     }
 }
