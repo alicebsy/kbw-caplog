@@ -1,5 +1,3 @@
-// StartView.swift (아래 코드로 전체를 교체해주세요)
-
 import SwiftUI
 
 struct StartView: View {

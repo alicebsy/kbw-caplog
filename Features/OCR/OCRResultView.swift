@@ -2,18 +2,15 @@ import SwiftUI
 
 struct OCRResultView: View {
     let image: UIImage?
-    let recognizedText: [String]
+    let recognizedText: [String]  // VisionKit OCR 결과
     let gptResult: String?
-    let apiUsage: String?
+    let googleVisionLabels: [VisionLabel]?  // Google Cloud Vision 레이블 탐지 결과
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 // ✅ 이미지 표시
                 if let image = image {
-                    Text("Preprocessed Image for OCR")
-                        .font(.headline)
-                        .padding(.top, 8)
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
@@ -21,64 +18,81 @@ struct OCRResultView: View {
                         .cornerRadius(12)
                 }
 
-                // ✅ GPT 분류 결과
+                // ✅ 1️⃣ GPT-4 분류 결과 (노란색)
                 if let result = gptResult {
-                    Text("📦 GPT 분류 결과")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("📦 GPT-4 분류 결과")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                        
+                        Text(result)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.yellow.opacity(0.15))
+                            .cornerRadius(10)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                // ✅ 2️⃣ VisionKit OCR 결과 (회색)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("📄 VisionKit OCR 결과")
                         .font(.headline)
-                        .foregroundColor(.blue)
-                        .padding(.top, 8)
-
-                    Text(result)
-                        .padding()
-                        .background(Color.yellow.opacity(0.15))
-                        .cornerRadius(10)
-
-                    if result.hasPrefix("[1.1]") || result.hasPrefix("[1.2]") {
-                        detailSection(title: "1. 식당 이름", key: "식당 이름")
-                        detailSection(title: "2. 지역", key: "지역")
-                        detailSection(title: "3. 주소", key: "주소")
-                        detailSection(title: "4. 위치", key: "위치")
-                        detailSection(title: "5. 메뉴", key: "메뉴")
-                    } else if result.hasPrefix("[3.3]") {
-                        detailSection(title: "1. 제품 이름", key: "이름")
-                        detailSection(title: "2. 판매자", key: "판매자")
-                        detailSection(title: "3. 가격", key: "가격")
-                        detailSection(title: "4. 원산지", key: "원산지")
-                        detailSection(title: "5. 중량", key: "중량")
-                        detailSection(title: "6. 인증", key: "인증")
-                        detailSection(title: "7. 만족도", key: "만족")
-                        detailSection(title: "8. 옵션", key: "옵션")
+                        .foregroundColor(.gray)
+                    
+                    if recognizedText.isEmpty {
+                        Text("인식된 텍스트가 없습니다.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .modifier(DetailItemStyle())
                     } else {
                         let merged = mergeNumberedLines(from: recognizedText)
-                        ForEach(Array(merged.enumerated()), id: \.offset) { _, line in
-                            Text(line)
-                                .modifier(DetailItemStyle())
-                        }
-                    }
-                } else {
-                    let merged = mergeNumberedLines(from: recognizedText)
-                    ForEach(Array(merged.enumerated()), id: \.offset) { _, line in
-                        Text(line)
+                        Text(merged.joined(separator: "\n"))
                             .modifier(DetailItemStyle())
                     }
                 }
+                .frame(maxWidth: .infinity)
 
-                if let usage = apiUsage {
-                    Text("🧾 API 사용량: \(usage)")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.bottom, 10)
+                // ✅ 3️⃣ Google Cloud Vision 결과 (회색)
+                if let labels = googleVisionLabels, !labels.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("🎯 Google Cloud Vision (객체/개념 탐지)")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(labels, id: \.description) { label in
+                                HStack {
+                                    Text(label.description)
+                                        .font(.body)
+                                    Spacer()
+                                    Text(label.confidencePercentage)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .modifier(DetailItemStyle())
+                    }
+                    .frame(maxWidth: .infinity)
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("🎯 Google Cloud Vision (객체/개념 탐지)")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        Text("탐지된 객체/개념이 없습니다.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .modifier(DetailItemStyle())
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
             .padding()
         }
-        .navigationTitle("OCR + GPT 결과")
+        .navigationTitle("스크린샷 정보")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    func detailSection(title: String, key: String) -> some View {
-        Text("\(title) \(extractDetail(from: recognizedText, key: key))")
-            .modifier(DetailItemStyle())
     }
 
     func mergeNumberedLines(from lines: [String]) -> [String] {
@@ -97,15 +111,6 @@ struct OCRResultView: View {
             }
         }
         return result
-    }
-
-    func extractDetail(from lines: [String], key: String) -> String {
-        for line in lines {
-            if line.contains(key) {
-                return line
-            }
-        }
-        return ""
     }
 }
 

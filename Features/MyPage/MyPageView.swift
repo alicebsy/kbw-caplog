@@ -48,14 +48,24 @@ struct MyPageView: View {
 
     private var content: some View {
         VStack(spacing: 16) {
-            MyPageProfileHeader(displayName: vm.displayName, email: vm.email)
+            // ✅ 헤더에 비밀번호 변경 버튼 액션 전달
+            MyPageProfileHeader(
+                displayName: vm.displayName,
+                email: vm.email,
+                profileImage: $vm.profileImage,
+                onImageSelected: { image in
+                    vm.saveProfileImage(image)
+                },
+                onChangePassword: {
+                    showPasswordSheet = true
+                }
+            )
 
+            // ✅ AccountSection에서는 onChangePassword 제거
             MyPageAccountSection(
                 name: $vm.name,
                 userId: vm.userId,
                 email: vm.email,
-                onChangePassword: { showPasswordSheet = true },
-                // ✅ Task 내부에서 await 호출
                 onSave: {
                     print("🔥 MyPageView: onSave 호출됨")
                     Task {
@@ -75,7 +85,6 @@ struct MyPageView: View {
             MyPageProfileSection(
                 gender: $vm.gender,
                 birthday: $vm.birthday,
-                // ✅ Task 내부에서 await 호출
                 onSave: {
                     print("🔥 MyPageView: 프로필 onSave 호출됨")
                     Task {

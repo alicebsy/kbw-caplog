@@ -7,11 +7,14 @@ struct Register1View: View {
     // ✅ OCR + GPT 상태 관리
     @State private var selectedImage: UIImage?
     @State private var recognizedText: [String] = []
+    @State private var googleVisionLabels: [VisionLabel] = []
     @State private var preprocessedImage: UIImage?
     @State private var gptResult: String?
-    @State private var apiUsage: String?
     @State private var showPhotoPicker = false
     @State private var navigateToResult = false
+    
+    // ✅ 디버그 뷰 상태
+    @State private var showDebugView = false
 
     var body: some View {
         NavigationStack {
@@ -53,46 +56,23 @@ struct Register1View: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                // ✅ 임시 버튼 섹션 (기존 그대로 유지)
-                VStack(spacing: 12) {
-                    NavigationLink(destination: Register4_1View()) {
-                        Text("임시 레지스터4-1")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.yellow)
-                            .cornerRadius(10)
+                #if DEBUG
+                // ✅ 디버그 버튼 (개발 모드에서만 표시)
+                Button {
+                    showDebugView = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "ladybug.fill")
+                        Text("OCR/Vision/GPT-4 결과 확인")
                     }
-                    NavigationLink(destination: HomeView()) {
-                        Text("임시 홈")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                    NavigationLink(destination: MyPageView()) {
-                        Text("임시 마이페이지")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.purple)
-                            .cornerRadius(10)
-                    }
-
-                    // ✅ 스크린샷 업로드 버튼
-                    Button {
-                        showPhotoPicker = true
-                    } label: {
-                        Text("📸 스크린샷 업로드 (OCR + GPT 테스트)")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 40)
-                            .background(Color.homeGreen)
-                            .cornerRadius(10)
-                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 343, height: 49)
+                    .background(Color.orange.opacity(0.8))
+                    .cornerRadius(16)
                 }
-                .padding(.top, 10)
+                .padding(.top, 20)
+                #endif
                 
                 Spacer()
             }
@@ -113,30 +93,59 @@ struct Register1View: View {
                     image: selectedImage,
                     recognizedText: recognizedText,
                     gptResult: gptResult ?? "GPT 결과 없음 ❌",
-                    apiUsage: apiUsage
+                    googleVisionLabels: googleVisionLabels.isEmpty ? nil : googleVisionLabels
                 )
             }
         }
         
-        // ✅ PhotoPicker 연결
+        // ✅ PhotoPicker 연결 (새 버전)
         .fullScreenCover(isPresented: $showPhotoPicker) {
-            PhotoPicker(
+            PhotoPickerWrapperView(
+                isPresented: $showPhotoPicker,
                 selectedImage: $selectedImage,
                 recognizedText: $recognizedText,
-                preprocessedImage: $preprocessedImage,
+                googleVisionLabels: $googleVisionLabels,
                 gptResult: $gptResult,
-                apiUsage: $apiUsage
+                navigateToResult: $navigateToResult
             )
         }
         
-        // ✅ OCR 결과가 생기면 자동 이동 (GPT 결과 없어도)
-        .onChange(of: recognizedText) { newText in
-            if !newText.isEmpty {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    showPhotoPicker = false
-                    navigateToResult = true
-                }
-            }
+        // ✅ 디버그 뷰 시트
+        .sheet(isPresented: $showDebugView) {
+            ScreenshotDebugView()
+        }
+    }
+}
+
+// ✅ PhotoPicker를 감싸는 헬퍼 뷰
+struct PhotoPickerWrapperView: View {
+    @Binding var isPresented: Bool
+    @Binding var selectedImage: UIImage?
+    @Binding var recognizedText: [String]
+    @Binding var googleVisionLabels: [VisionLabel]
+    @Binding var gptResult: String?
+    @Binding var navigateToResult: Bool
+    
+    @State private var isProcessing = false
+    @State private var resultCard: Card?
+    @State private var processingResult: ProcessingResult?
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        PhotoPicker(
+            isProcessing: $isProcessing,
+            resultCard: $resultCard,
+            processingResult: $processingResult,
+            errorMessage: $errorMessage
+        ) { result in
+            // ✅ ProcessingResult에서 모든 데이터 추출
+            selectedImage = result.preprocessedImage
+            recognizedText = result.ocrText
+            googleVisionLabels = result.googleVisionLabels
+            gptResult = "카테고리: \(result.card.category.rawValue) - \(result.card.subcategory)\n제목: \(result.card.title)\n요약: \(result.card.summary)"
+            
+            navigateToResult = true
+            isPresented = false
         }
     }
 }

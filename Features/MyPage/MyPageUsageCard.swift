@@ -10,21 +10,33 @@ struct MyPageUsageCard: View {
             // 제목
             MyPageSectionHeader(title: "사용정보")
 
-            // 카드 영역
+            // 카드 영역 - 1줄 레이아웃
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(uiColor: .systemGray6))
                 .frame(height: 60)
                 .padding(.horizontal, 2)
                 .overlay(
-                    HStack(spacing: 4) {
-                            Text("📸 ")
-                            Text("\(savedCount)").bold()
-                            Text("건의 정보 저장  |  💡 ")
-                            Text("\(recommendedCount)").bold()
-                            Text("건 추천 받음")
-                        }
-                    .padding(.horizontal, 10)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    HStack(spacing: 3) {
+                        Text("📸")
+                            .font(.system(size: 14))
+                        Text("\(savedCount)")
+                            .font(.system(size: 18, weight: .bold))
+                        Text("건 정보 저장")
+                            .font(.system(size: 16))
+                        
+                        Text("|")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 4)
+                        
+                        Text("💡")
+                            .font(.system(size: 14))
+                        Text("\(recommendedCount)")
+                            .font(.system(size: 18, weight: .bold))
+                        Text("건 추천 받음")
+                            .font(.system(size: 16))
+                    }
+                    .frame(maxWidth: .infinity)
                 )
         }
         .frame(maxWidth: .infinity, alignment: .center)

@@ -1,18 +1,19 @@
 import SwiftUI
 import PhotosUI
-import Vision
 
+/// 통합 파이프라인을 사용하는 PhotoPicker (OCR -> Google Vision -> GPT -> Card 자동 생성)
 struct PhotoPicker: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    @Binding var recognizedText: [String]
-    @Binding var preprocessedImage: UIImage?
-    @Binding var gptResult: String?
-    @Binding var apiUsage: String?
-
+    @Binding var isProcessing: Bool
+    @Binding var resultCard: Card?
+    @Binding var processingResult: ProcessingResult?  // ✅ 원본 데이터 함께 저장
+    @Binding var errorMessage: String?
+    
+    var onProcessingComplete: ((ProcessingResult) -> Void)?
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
         config.selectionLimit = 1
@@ -21,152 +22,173 @@ struct PhotoPicker: UIViewControllerRepresentable {
         picker.delegate = context.coordinator
         return picker
     }
-
+    
     func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
-
+    
     class Coordinator: NSObject, PHPickerViewControllerDelegate {
         let parent: PhotoPicker
-
+        let processingService = ScreenshotProcessingService()
+        
         init(_ parent: PhotoPicker) {
             self.parent = parent
         }
-
+        
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             picker.dismiss(animated: true)
+            
             guard let provider = results.first?.itemProvider,
-                  provider.canLoadObject(ofClass: UIImage.self) else { return }
-
-            provider.loadObject(ofClass: UIImage.self) { image, _ in
-                guard let uiImage = image as? UIImage else { return }
-                DispatchQueue.main.async {
-                    self.parent.selectedImage = uiImage
-                    if let processed = self.preprocessImage(uiImage) {
-                        self.parent.preprocessedImage = processed
-                        self.recognizeText(from: processed)
-                    }
-                }
-            }
-        }
-
-        private func preprocessImage(_ uiImage: UIImage) -> UIImage? {
-            guard let ciImage = CIImage(image: uiImage) else { return nil }
-            let enhanced = ciImage
-                .applyingFilter("CIColorControls", parameters: [
-                    kCIInputSaturationKey: 0.0,
-                    kCIInputContrastKey: 1.4
-                ])
-                .applyingFilter("CIExposureAdjust", parameters: [
-                    kCIInputEVKey: 0.7
-                ])
-                .applyingFilter("CILanczosScaleTransform", parameters: [
-                    kCIInputScaleKey: 1.5,
-                    kCIInputAspectRatioKey: 1.0
-                ])
-            let context = CIContext()
-            guard let cgImage = context.createCGImage(enhanced, from: enhanced.extent) else { return nil }
-            return UIImage(cgImage: cgImage)
-        }
-
-        private func recognizeText(from image: UIImage) {
-            guard let cgImage = image.cgImage else { return }
-
-            let request = VNRecognizeTextRequest { request, _ in
-                guard let observations = request.results as? [VNRecognizedTextObservation] else { return }
-
-                let lines = observations.compactMap { $0.topCandidates(1).first?.string }
-                let allLines = lines.joined(separator: "\n")
-                    .components(separatedBy: .newlines)
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
-
-                let merged: [String] = allLines.flatMap { line -> [String] in
-                    let delimiters = [". ", "? ", "! "]
-                    for delimiter in delimiters {
-                        if line.contains(delimiter) {
-                            return line.components(separatedBy: delimiter).map { $0 + delimiter.trimmingCharacters(in: .whitespaces) }.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-                        }
-                    }
-                    return [line]
-                }
-
-                DispatchQueue.main.async {
-                    self.parent.recognizedText = merged
-                    self.callGPT(with: merged.joined(separator: "\n"))
-                }
-            }
-
-            request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["ko-KR", "en-US"]
-            request.usesLanguageCorrection = true
-
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            try? handler.perform([request])
-        }
-
-        private func callGPT(with text: String) {
-            guard let apiKey = Bundle.main.infoDictionary?["GPT_API_KEY"] as? String else {
-                print("❌ GPT API 키를 불러올 수 없습니다.")
+                  provider.canLoadObject(ofClass: UIImage.self) else {
                 return
             }
-
-            let prompt = makePrompt(from: text)
-            classifyTextWithGPT_stable(prompt: prompt, apiKey: apiKey) { result, usage in
-                DispatchQueue.main.async {
-                    print("📨 GPT Raw Response:\n\(result)") // ✅ 디버깅용 출력
-                    self.parent.gptResult = result
-                    self.parent.apiUsage = usage
+            
+            DispatchQueue.main.async {
+                self.parent.isProcessing = true
+                self.parent.errorMessage = nil
+            }
+            
+            provider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+                guard let self = self,
+                      let uiImage = image as? UIImage else {
+                    DispatchQueue.main.async {
+                        self?.parent.isProcessing = false
+                        self?.parent.errorMessage = "이미지 로드 실패"
+                    }
+                    return
                 }
-            }
-        }
-
-        // ✅ GPT 분류 요청용 프롬프트 생성 함수 수정
-        private func makePrompt(from text: String) -> String {
-            guard let url = Bundle.main.url(forResource: "categories", withExtension: "json"),
-                  let data = try? Data(contentsOf: url),
-                  let decoded = try? JSONDecoder().decode(TabCategoryMap.self, from: data) else {
-                return "❌ 분류 기준 로딩 실패"
-            }
-
-            var formatted = ""
-            for (tab, categories) in decoded {
-                formatted += "=== \(tab) ===\n"
-                let sortedKeys = categories.keys.sorted()
-                for key in sortedKeys {
-                    if let group = categories[key] {
-                        formatted += "\(key). \(group.name)\n"
-                        let sortedChildren = group.children.keys.sorted()
-                        for subKey in sortedChildren {
-                            if let label = group.children[subKey] {
-                                formatted += "  - [\(subKey)] \(label)\n"
-                            }
+                
+                // 🚀 통합 파이프라인 실행
+                self.processingService.processScreenshot(image: uiImage) { result in
+                    DispatchQueue.main.async {
+                        self.parent.isProcessing = false
+                        
+                        switch result {
+                        case .success(let processingResult):
+                            print("✅ 처리 완료: \(processingResult.card.title)")
+                            print("OCR 라인: \(processingResult.ocrText.count)개")
+                            print("Google Vision 레이블: \(processingResult.googleVisionLabels.count)개")
+                            
+                            self.parent.resultCard = processingResult.card
+                            self.parent.processingResult = processingResult
+                            self.parent.onProcessingComplete?(processingResult)
+                            
+                        case .failure(let error):
+                            print("❌ 처리 실패: \(error.localizedDescription)")
+                            self.parent.errorMessage = error.localizedDescription
                         }
-                        formatted += "\n"
                     }
                 }
             }
-
-            return """
-            다음은 사용자가 스크린샷에서 추출한 텍스트입니다:
-
-            ""
-            \(text)
-            ""
-            
-            아래 분류 기준에 따라 가장 적절한 카테고리를 골라줘.
-            포맷은 [1.3] 장소 - 취미 (영화, 공연, 액티비티) 식으로 작성해.
-
-            만약 분류 결과가 [1.1] 맛집 또는 [1.2] 카페라면, 아래 항목도 함께 추출해줘.
-
-            예시 출력:
-            카테고리: [1.1] 맛집
-            1. 식당 이름: 화랑초밥
-            2. 지역: 송파구
-            3. 주소: 서울시 송파구 법원로11길 25
-            4. 위치: 법조타운 근처
-            5. 메뉴: 초밥, 회, 우동
-
-            \(formatted)
-            """
         }
     }
+}
+
+// MARK: - 사용 예시 View
+struct ScreenshotUploadView: View {
+    @State private var showPhotoPicker = false
+    @State private var isProcessing = false
+    @State private var resultCard: Card?
+    @State private var processingResult: ProcessingResult?
+    @State private var errorMessage: String?
+    @State private var showResult = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("스크린샷 업로드")
+                .font(.title)
+                .bold()
+            
+            if isProcessing {
+                ProgressView("처리 중...")
+                    .progressViewStyle(.circular)
+                Text("OCR → Google Vision → GPT 분류 → 카드 생성")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            } else {
+                Button {
+                    showPhotoPicker = true
+                } label: {
+                    Label("사진 선택", systemImage: "photo.on.rectangle")
+                        .font(.headline)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+            
+            if let error = errorMessage {
+                Text("❌ \(error)")
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            
+            if let card = resultCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("✅ 카드 생성 완료!")
+                        .font(.headline)
+                        .foregroundColor(.green)
+                    
+                    Text(card.title)
+                        .font(.title3)
+                        .bold()
+                    
+                    Text(card.summary)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                    
+                    HStack {
+                        Text(card.category.emoji)
+                        Text(card.subcategory)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(card.category.color.opacity(0.2))
+                            .cornerRadius(8)
+                    }
+                    
+                    if !card.tags.isEmpty {
+                        Text(card.tags.map { "#\($0)" }.joined(separator: " "))
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Button("상세 보기") {
+                        showResult = true
+                    }
+                    .font(.caption)
+                    .padding(8)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            }
+        }
+        .padding()
+        .sheet(isPresented: $showPhotoPicker) {
+            PhotoPicker(
+                isProcessing: $isProcessing,
+                resultCard: $resultCard,
+                processingResult: $processingResult,
+                errorMessage: $errorMessage
+            ) { result in
+                print("🔄 처리 완료: \(result.card.title)")
+                print("OCR 텍스트: \(result.ocrText.count)개 라인")
+                print("Google Vision 레이블: \(result.googleVisionLabels.count)개")
+            }
+        }
+        .sheet(isPresented: $showResult) {
+            if let card = resultCard {
+                CardDetailView(card: card)
+            }
+        }
+    }
+}
+
+#Preview {
+    ScreenshotUploadView()
 }

@@ -7,17 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3C6871E42EC1C48600292CA8 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3CE26BE42EBEFFAA009654F1 /* Info.plist */; };
 		CE8108562E9CFE3700181F2D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108552E9CFE3700181F2D /* GoogleSignIn */; };
 		CE8108582E9CFE3700181F2D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108572E9CFE3700181F2D /* GoogleSignInSwift */; };
 		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
 		CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108622E9CFECD00181F2D /* KakaoSDKCommon */; };
 		CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108652E9D009E00181F2D /* KakaoSDKUser */; };
+		CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = CEA428962ED529D2003457FC /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3CE26BE42EBEFFAA009654F1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Caplog/Info.plist; sourceTree = "<group>"; };
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
+		CEA428962ED529D2003457FC /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		CEB027E72E9FE78B007EE2D8 /* Caplog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caplog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -80,7 +80,6 @@
 		CEFCA1132E8D8F5C0014AA05 = {
 			isa = PBXGroup;
 			children = (
-				3CE26BE42EBEFFAA009654F1 /* Info.plist */,
 				CEEFC37C2E9E4DEA0002AAAF /* Core */,
 				CEEFC3822E9E4EB50002AAAF /* UIComponents */,
 				CEEFC3892E9E501A0002AAAF /* Features */,
@@ -90,6 +89,7 @@
 				CE8108642E9D009E00181F2D /* Frameworks */,
 				CE81079B2E9CF74300181F2D /* caplog.entitlements */,
 				CEB027E72E9FE78B007EE2D8 /* Caplog.app */,
+				CEA428962ED529D2003457FC /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -171,7 +171,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C6871E42EC1C48600292CA8 /* Info.plist in Resources */,
+				CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +190,7 @@
 /* Begin XCBuildConfiguration section */
 		CEFCA1252E8D8F620014AA05 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEA428962ED529D2003457FC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -254,6 +255,7 @@
 		};
 		CEFCA1262E8D8F620014AA05 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEA428962ED529D2003457FC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -317,8 +319,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = caplog/Info.plist;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Caplog/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "위치 기반 추천 기능 제공을 위해 위치 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "스크린샷 자동 분류를 위해 사진 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -352,8 +354,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = caplog/Info.plist;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Caplog/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "위치 기반 추천 기능 제공을 위해 위치 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "스크린샷 자동 분류를 위해 사진 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

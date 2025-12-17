@@ -8,9 +8,9 @@ struct MyPageProfileSection: View {
     var onSave: () -> Void
     var isSaveEnabled: Bool = true
     
-    // ✅ 🔥 추가: 원래 값 추적
     @State private var originalGender: Gender? = nil
     @State private var originalBirthday: Date? = nil
+    @State private var tempBirthday: Date = Date()
 
     private let profileFieldFont = Font.system(size: 16, weight: .regular)
 
@@ -59,14 +59,12 @@ struct MyPageProfileSection: View {
                         print("✅ 현재 성별: \(gender?.rawValue ?? "미선택")")
                         print("✅ 현재 생일: \(birthday?.description ?? "없음")")
                         onSave()
-                        // ✅ 🔥 저장 후 원래 값 업데이트
                         originalGender = gender
                         originalBirthday = birthday
                     },
                     tint: .primary,
                     fill: .white,
                     fullWidth: false,
-                    // ✅ 🔥 수정: 항상 활성화
                     isEnabled: true
                 )
             }
@@ -85,8 +83,11 @@ struct MyPageProfileSection: View {
                 Spacer(minLength: 8)
 
                 CapsuleButton(
-                    title: "날짜 선택하기",
-                    action: { showPicker = true },
+                    title: "날짜 선택",
+                    action: {
+                        tempBirthday = birthday ?? Date()
+                        showPicker = true
+                    },
                     tint: .primary,
                     fill: .white
                 )
@@ -95,7 +96,6 @@ struct MyPageProfileSection: View {
         }
         .sectionContainer()
         .onAppear {
-            // ✅ 🔥 추가: 초기값 저장
             originalGender = gender
             originalBirthday = birthday
         }
@@ -103,37 +103,72 @@ struct MyPageProfileSection: View {
             print("✅ 성별 변경됨: \(oldValue?.rawValue ?? "없음") -> \(newValue?.rawValue ?? "없음")")
         }
         .sheet(isPresented: $showPicker) {
-            NavigationStack {
-                VStack {
-                    DatePicker(
-                        "",
-                        selection: Binding<Date>(
-                            get: { birthday ?? Date() },
-                            set: { birthday = $0 }
-                        ),
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .padding()
+            BirthdayPickerSheet(
+                selectedDate: $tempBirthday,
+                onConfirm: {
+                    birthday = tempBirthday
+                    showPicker = false
+                    print("🎂 생년월일 변경됨: \(tempBirthday)")
+                    // 생년월일 변경 후 자동 저장
+                    onSave()
+                },
+                onCancel: {
+                    showPicker = false
                 }
-                .navigationTitle("생년월일")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("취소") {
-                            showPicker = false
-                        }
+            )
+        }
+    }
+}
+
+// MARK: - Birthday Picker Sheet
+
+struct BirthdayPickerSheet: View {
+    @Binding var selectedDate: Date
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // 상단 여백
+                Spacer()
+                    .frame(height: 20)
+                
+                // DatePicker
+                DatePicker(
+                    "",
+                    selection: $selectedDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .padding()
+                
+                Spacer()
+                    .frame(height: 20)
+            }
+            .background(Color(.systemBackground))
+            .navigationTitle("생년월일")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") {
+                        onCancel()
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("완료") {
-                            print("✅ 생년월일 선택 완료: \(birthday?.description ?? "없음")")
-                            showPicker = false
-                        }
+                    .foregroundColor(.primary)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("완료") {
+                        print("✅ 생년월일 선택 완료: \(selectedDate.description)")
+                        onConfirm()
                     }
+                    .foregroundColor(Color.myPageActionBlue)
+                    .fontWeight(.semibold)
                 }
             }
         }
+        .presentationDetents([.height(400)])
+        .presentationDragIndicator(.visible)
     }
 }
 
@@ -143,4 +178,23 @@ private extension DateFormatter {
         f.dateFormat = "yyyy. MM. dd."
         return f
     }()
+}
+
+#Preview {
+    struct PreviewWrapper: View {
+        @State var gender: MyPageViewModel.Gender? = nil
+        @State var birthday: Date? = nil
+        
+        var body: some View {
+            MyPageProfileSection(
+                gender: $gender,
+                birthday: $birthday,
+                onSave: {
+                    print("저장됨")
+                }
+            )
+        }
+    }
+    
+    return PreviewWrapper()
 }
