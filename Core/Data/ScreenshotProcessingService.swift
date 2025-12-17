@@ -329,22 +329,41 @@ class ScreenshotProcessingService {
         visionLabels: [VisionLabel],
         image: UIImage
     ) -> Card? {
+        print("🔍 GPT 원본 응답:")
+        print(gptResult)
+        print(String(repeating: "=", count: 50))
+        
         // JSON 이외 문자가 섞였을 때 방어용
         let cleanedJSON = stripFences(gptResult)
+        
+        print("🧹 정제된 JSON:")
+        print(cleanedJSON)
+        print(String(repeating: "=", count: 50))
         
         // JSON 파싱
         guard let jsonData = cleanedJSON.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
             print("❌ JSON 파싱 실패")
+            print("원본 길이: \(gptResult.count)")
+            print("정제 후 길이: \(cleanedJSON.count)")
             return nil
         }
+        
+        print("✅ JSON 파싱 성공")
+        print("JSON 키: \(json.keys)")
         
         // 필드 추출 (새 스키마)
         guard let categoryMain = json["category_main"] as? String,
               let title = json["title"] as? String else {
-            print("❌ 필수 필드 누락 (category_main, title)")
+            print("❌ 필수 필드 누락")
+            print("category_main: \(json["category_main"] as? String ?? "nil")")
+            print("title: \(json["title"] as? String ?? "nil")")
             return nil
         }
+        
+        print("✅ 필수 필드 확인 완료")
+        print("category_main: \(categoryMain)")
+        print("title: \(title)")
         
         // category_main -> FolderCategory 매핑
         let category = mapCategoryMain(categoryMain)

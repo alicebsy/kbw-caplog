@@ -12,6 +12,9 @@ struct Register1View: View {
     @State private var gptResult: String?
     @State private var showPhotoPicker = false
     @State private var navigateToResult = false
+    
+    // ✅ 디버그 뷰 상태
+    @State private var showDebugView = false
 
     var body: some View {
         NavigationStack {
@@ -54,6 +57,21 @@ struct Register1View: View {
                     .padding(.horizontal, 40)
                 
                 #if DEBUG
+                // ✅ 디버그 버튼 (개발 모드에서만 표시)
+                Button {
+                    showDebugView = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "ladybug.fill")
+                        Text("OCR/Vision/GPT-4 결과 확인")
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 343, height: 49)
+                    .background(Color.orange.opacity(0.8))
+                    .cornerRadius(16)
+                }
+                .padding(.top, 20)
                 #endif
                 
                 Spacer()
@@ -90,6 +108,11 @@ struct Register1View: View {
                 gptResult: $gptResult,
                 navigateToResult: $navigateToResult
             )
+        }
+        
+        // ✅ 디버그 뷰 시트
+        .sheet(isPresented: $showDebugView) {
+            ScreenshotDebugView()
         }
     }
 }

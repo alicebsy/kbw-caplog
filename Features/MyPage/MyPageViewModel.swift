@@ -131,7 +131,8 @@ final class MyPageViewModel: ObservableObject {
                 userInfo: ["nickname": name]
             )
         } catch {
-            print("❌❌❌ 프로필 로드 실패: \(error)")
+            print("⚠️⚠️⚠️ 프로필 로드 실패: \(error)")
+            // ✅ 서버 연결 실패를 사용자에게 알리지 않음 (errorMessage 설정 안 함)
             // 이미 UserDefaults에서 로드했으므로 기본값으로 덮어쓰지 않음
             if userId.isEmpty {
                 userId = "ewhakbw"
@@ -226,7 +227,10 @@ final class MyPageViewModel: ObservableObject {
             try await userService.logout()
             AuthStorage.shared.clear()
         } catch {
-            errorMessage = error.localizedDescription
+            print("⚠️ 로그아웃 실패: \(error)")
+            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
+            // 로컬에서는 일단 로그아웃 처리
+            AuthStorage.shared.clear()
         }
     }
     
@@ -255,7 +259,9 @@ final class MyPageViewModel: ObservableObject {
             nextCursor = page.nextCursor
             savedCount = page.items.count
         } catch {
-            errorMessage = error.localizedDescription
+            print("⚠️ 스크린샷 로드 실패: \(error)")
+            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
+            // errorMessage 설정 안 함
         }
     }
 
@@ -270,7 +276,8 @@ final class MyPageViewModel: ObservableObject {
             nextCursor = page.nextCursor
             savedCount = screenshots.count
         } catch {
-            errorMessage = error.localizedDescription
+            print("⚠️ 추가 스크린샷 로드 실패: \(error)")
+            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
         }
     }
     
