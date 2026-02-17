@@ -169,11 +169,12 @@ class ScreenshotProcessingService {
     ) {
         print("🤖 Step 2: GPT-4 분류 시작")
         
-        guard let apiKey = Bundle.main.infoDictionary?["GPT_API_KEY"] as? String else {
-            print("❌ GPT_API_KEY가 Info.plist에 없습니다.")
-            completion(.failure(.gptFailed("GPT API Key가 없습니다.")))
+        guard let raw = Bundle.main.infoDictionary?["GPT_API_KEY"] as? String, !raw.isEmpty else {
+            print("❌ GPT_API_KEY가 Info.plist에 없거나 비어 있습니다. caplog/Info.plist에 OpenAI API 키를 넣어주세요.")
+            completion(.failure(.gptFailed("GPT API Key가 없습니다. Info.plist의 GPT_API_KEY를 설정하세요.")))
             return
         }
+        let apiKey = raw
         
         let prompt = makeGPTPrompt(from: ocrText, visionLabels: visionLabels)
         
@@ -190,8 +191,14 @@ class ScreenshotProcessingService {
                 visionLabels: visionLabels,
                 image: originalImage
             ) else {
-                print("❌ Card 파싱 실패")
-                completion(.failure(.cardCreationFailed("GPT 응답 파싱 실패")))
+                // GPT가 에러 문자열(❌ API 에러, ❌ 빈 응답 등)을 반환한 경우 원인을 그대로 전달
+                if gptResult.hasPrefix("❌") {
+                    print("❌ GPT 에러 전달: \(gptResult)")
+                    completion(.failure(.gptFailed(gptResult)))
+                } else {
+                    print("❌ Card 파싱 실패 (JSON/필드 문제)")
+                    completion(.failure(.cardCreationFailed("GPT 응답 파싱 실패")))
+                }
                 return
             }
             
@@ -329,41 +336,46 @@ class ScreenshotProcessingService {
         visionLabels: [VisionLabel],
         image: UIImage
     ) -> Card? {
-        print("🔍 GPT 원본 응답:")
-        print(gptResult)
-        print(String(repeating: "=", count: 50))
+        let debug = "[Caplog GPT 디버그]"
+        print("\(debug) 1단계: GPT 원본 응답 수신, 길이=\(gptResult.count), 앞 200자: \(String(gptResult.prefix(200)))")
         
-        // JSON 이외 문자가 섞였을 때 방어용
-        let cleanedJSON = stripFences(gptResult)
-        
-        print("🧹 정제된 JSON:")
-        print(cleanedJSON)
-        print(String(repeating: "=", count: 50))
-        
-        // JSON 파싱
-        guard let jsonData = cleanedJSON.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
-            print("❌ JSON 파싱 실패")
-            print("원본 길이: \(gptResult.count)")
-            print("정제 후 길이: \(cleanedJSON.count)")
+        if gptResult.hasPrefix("❌") {
+            print("\(debug) 실패: GPT가 에러 문자열 반환 → \(gptResult.prefix(80))")
             return nil
         }
         
-        print("✅ JSON 파싱 성공")
-        print("JSON 키: \(json.keys)")
+        var cleanedJSON = stripFences(gptResult)
+        if cleanedJSON.hasPrefix("\u{FEFF}") { cleanedJSON = String(cleanedJSON.dropFirst()) }
+        cleanedJSON = cleanedJSON.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("\(debug) 2단계: stripFences 후 길이=\(cleanedJSON.count), 앞 150자: \(String(cleanedJSON.prefix(150)))")
         
-        // 필드 추출 (새 스키마)
-        guard let categoryMain = json["category_main"] as? String,
-              let title = json["title"] as? String else {
-            print("❌ 필수 필드 누락")
-            print("category_main: \(json["category_main"] as? String ?? "nil")")
-            print("title: \(json["title"] as? String ?? "nil")")
+        var json: [String: Any]?
+        if let data = cleanedJSON.data(using: .utf8),
+           let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            json = parsed
+            print("\(debug) 3단계: JSON 파싱 성공 (직렬)")
+        } else if let span = extractFirstJSONObject(cleanedJSON),
+                  let data = span.data(using: .utf8),
+                  let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            json = parsed
+            print("\(debug) 3단계: JSON 파싱 성공 ({ } 구간 추출 후)")
+        }
+        guard let json = json else {
+            print("\(debug) 실패: JSON 파싱 불가. 원본 앞 300자: \(String(gptResult.prefix(300)))")
             return nil
         }
         
-        print("✅ 필수 필드 확인 완료")
-        print("category_main: \(categoryMain)")
-        print("title: \(title)")
+        print("\(debug) 4단계: JSON 키 목록: \(json.keys.sorted().joined(separator: ", "))")
+        
+        let catMain = json["category_main"]
+        let titleVal = json["title"]
+        guard let categoryMain = catMain as? String,
+              let title = titleVal as? String, !title.isEmpty else {
+            print("\(debug) 실패: 필수 필드 누락. category_main 타입=\(type(of: catMain)), 값=\(String(describing: catMain)); title 타입=\(type(of: titleVal)), 값=\(String(describing: titleVal))")
+            return nil
+        }
+        
+        print("\(debug) 5단계: 필수 필드 확인 완료. category_main=\(categoryMain), title=\(title)")
         
         // category_main -> FolderCategory 매핑
         let category = mapCategoryMain(categoryMain)
@@ -420,11 +432,17 @@ class ScreenshotProcessingService {
         )
     }
     
-    /// JSON 이외 문자가 섞였을 때 방어용
+    /// JSON 이외 문자가 섞였을 때 방어용 (```json / ```JSON / ``` 제거)
     private func stripFences(_ s: String) -> String {
-        s.replacingOccurrences(of: "```json", with: "")
+        s.replacingOccurrences(of: "```json", with: "", options: .caseInsensitive)
          .replacingOccurrences(of: "```", with: "")
          .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// 첫 번째 { 부터 마지막 } 까지 문자열 추출
+    private func extractFirstJSONObject(_ s: String) -> String? {
+        guard let start = s.firstIndex(of: "{"), let end = s.lastIndex(of: "}"), start < end else { return nil }
+        return String(s[start...end])
     }
     
     /// category_main 문자열 -> FolderCategory 매핑

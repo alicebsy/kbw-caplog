@@ -19,7 +19,7 @@ struct MyPageAccountSection: View {
                     .font(.system(size: 15, weight: .semibold))
                     .frame(width: 90, alignment: .leading)
 
-                TextField("", text: $name, prompt: Text("강배우").foregroundColor(.gray))
+                TextField("", text: $name, prompt: Text("이름 입력").foregroundColor(.gray))
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

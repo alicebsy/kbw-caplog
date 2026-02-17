@@ -7,7 +7,7 @@ enum Endpoints {
     static let login            = "/auth/login"
     static let logout           = "/auth/logout"
     static let refreshToken     = "/auth/refresh"
-    static let changePassword   = "/api/v1/auth/password"
+    static let changePassword   = "/auth/password"
 
     // MARK: - User (유저)
     static let me               = "/users/me"
@@ -22,6 +22,11 @@ enum Endpoints {
     static let screenshotById   = "/screenshots/{id}"
     static let uploadScreenshot = "/screenshots/upload"
     static let metadata         = "/screenshots/metadata"
+
+    // MARK: - Cards (카드 목록, 추천 등)
+    static let cards            = "/cards"
+    static let cardsRecommended = "/cards/recommended"
+    static let cardsRecent      = "/cards/recent"
 
     // MARK: - Folder
     static let folders          = "/folders"

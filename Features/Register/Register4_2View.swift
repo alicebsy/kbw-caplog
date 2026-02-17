@@ -1,7 +1,9 @@
 import SwiftUI
 import Photos
 
+/// 권한 안내 2: 스크린샷(사진) 접근 권한
 struct Register4_2View: View {
+    @ObservedObject var appState: AppState
     @StateObject private var photos = PhotoAccess()
     @State private var goNext = false
 
@@ -35,7 +37,7 @@ struct Register4_2View: View {
                     .cornerRadius(12)
                     .disabled(!photos.isAuthorized)
                     .navigationDestination(isPresented: $goNext) {
-                        Register4_3View()
+                        Register4_3View(appState: appState)
                     }
             }
             .padding()

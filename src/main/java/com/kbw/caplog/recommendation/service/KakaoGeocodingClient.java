@@ -11,30 +11,37 @@ import reactor.core.publisher.Mono;
 public class KakaoGeocodingClient {
 
     private final WebClient client;
+    private final String apiKey;
 
     public KakaoGeocodingClient(
-            @Value("${kakao.restApiKey:}") String keyFromProp   // ← 스프링 프로퍼티 주입
+            @Value("${kakao.restApiKey:}") String keyFromProp
     ) {
-        String apiKey = keyFromProp;
-        if (apiKey == null || apiKey.isBlank()) {
-            apiKey = System.getenv("KAKAO_REST_API_KEY");       // ← 환경변수 폴백
+        String key = keyFromProp;
+        if (key == null || key.isBlank()) {
+            key = System.getenv("KAKAO_REST_API_KEY");
         }
-        if (apiKey == null || apiKey.isBlank()) {
-            apiKey = System.getProperty("kakao.restApiKey");    // ← -Dkakao.restApiKey 폴백
+        if (key == null || key.isBlank()) {
+            key = System.getProperty("kakao.restApiKey");
         }
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("KAKAO_REST_API_KEY(또는 kakao.restApiKey)가 설정되지 않았습니다.");
-        }
+        this.apiKey = (key != null && !key.isBlank()) ? key.trim() : null;
 
-        this.client = WebClient.builder()
-                .baseUrl("https://dapi.kakao.com")
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey.trim())
-                .build();
+        if (this.apiKey != null) {
+            this.client = WebClient.builder()
+                    .baseUrl("https://dapi.kakao.com")
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + this.apiKey)
+                    .build();
+        } else {
+            this.client = null;
+            // 키 없이 기동 가능 (지오코딩 호출 시에만 에러)
+        }
     }
 
 
     /** 주소 문자열로 좌표 조회 -> JSON(String) 반환 */
     public String geocodeByAddress(String address) {
+        if (client == null) {
+            throw new IllegalStateException("KAKAO_REST_API_KEY(또는 kakao.restApiKey)가 설정되지 않았습니다. application.yml 또는 환경변수 KAKAO_REST_API_KEY를 설정하세요.");
+        }
         return client.get()
                 .uri(b -> b.path("/v2/local/search/address.json")
                         .queryParam("query", address)
@@ -53,6 +60,9 @@ public class KakaoGeocodingClient {
 
     /** 장소명(키워드)로 좌표 조회 -> JSON(String) 반환 */
     public String geocodeByKeyword(String keyword) {
+        if (client == null) {
+            throw new IllegalStateException("KAKAO_REST_API_KEY(또는 kakao.restApiKey)가 설정되지 않았습니다.");
+        }
         return client.get()
                 .uri(b -> b.path("/v2/local/search/keyword.json")
                         .queryParam("query", keyword)

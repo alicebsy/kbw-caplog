@@ -6,48 +6,10 @@ enum Route: Hashable {
     case detail(id: String)
 }
 
+/// 프리뷰/테스트용. 실제 앱 메인은 StartView → AppNavigation 사용.
 struct AppRootView: View {
-    @State private var path = NavigationPath()
-    @State private var selectedTab: CaplogTab = .home
-
     var body: some View {
-        NavigationStack(path: $path) {
-            TabView(selection: $selectedTab) {
-
-                // 홈
-                HomeView()
-                    .tag(CaplogTab.home)
-                    .tabItem { Label("Home", systemImage: "house.fill") }
-
-                // 폴더(보관함)
-                FolderView()
-                    .tag(CaplogTab.folder)
-                    .tabItem { Label("Folder", systemImage: "folder.fill") }
-
-                // 검색  ✅ 트레일링 클로저 제거
-                SearchView()
-                    .tag(CaplogTab.search)
-                    .tabItem { Label("Search", systemImage: "magnifyingglass") }
-
-                // 공유 (ShareView는 onSelectTab을 받도록 설계된 상태라 유지 가능)
-                ShareView { tab in selectedTab = tab }
-                    .tag(CaplogTab.share)
-                    .tabItem { Label("Share", systemImage: "square.and.arrow.up") }
-
-                // 마이페이지
-                MyPageView()
-                    .tag(CaplogTab.myPage)
-                    .tabItem { Label("My", systemImage: "person.fill") }
-            }
-            .navigationDestination(for: Route.self) { route in
-                switch route {
-                case .myPage:
-                    MyPageView().customBackButton()
-                case .detail(let id):
-                    Text("Detail View for \(id)").customBackButton()
-                }
-            }
-        }
+        AppNavigation()
     }
 }
 

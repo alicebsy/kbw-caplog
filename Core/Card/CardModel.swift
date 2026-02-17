@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-// MARK: - (추가) 목업 카드용 고정 UUID
+// MARK: - [개발/UI 참고용] 목업 카드 ID (DB 연동 시 실제 카드는 GET /api/cards에서 로드)
 struct MockCardIDs {
     static let starbucksCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000001")!
     static let megacoffeeCoupon = UUID(uuidString: "10000000-0000-0000-0000-000000000002")!
@@ -215,9 +215,8 @@ struct FolderSubcategory: Identifiable, Hashable {
     var displayGroup: String { group ?? "" }
 }
 
-// MARK: - 더미 샘플 데이터
+// MARK: - [개발용] 더미 샘플 데이터 (DB/API 연동 시 미사용 → 카드는 GET /api/cards에서 로드)
 extension Card {
-    // ✅ (수정) 고정 UUID를 사용하도록 수정
     static let sampleCards: [Card] = [
         // ✅ 쿠폰 5개
         Card(

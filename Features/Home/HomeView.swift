@@ -5,17 +5,11 @@ struct HomeView: View {
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
+    @ObservedObject private var pipelineStatus = ScreenshotPipelineStatus.shared
 
     @State private var selectedCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     @State private var editingCard: Card? = nil
-    @State private var selectedTab: CaplogTab = .home
-
-    // 하단 탭 라우팅
-    @State private var showFolder = false
-    @State private var showSearch = false
-    @State private var showShare  = false
-    @State private var showMyPage = false
 
     // 메트릭
     private let S = HomeMetrics.sectionSpacing // 24pt
@@ -33,9 +27,71 @@ struct HomeView: View {
                 )
                 Spacer().frame(height: S) // 24pt
 
-                // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) ──
-                if !vm.coupons.isEmpty {
-                    HomeSection(title: "⏳ Expiring Soon") {
+                // ── 카드 없을 때: 스크린샷에서 카드 가져오기 안내 ──
+                if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
+                    VStack(spacing: 16) {
+                        Text("아직 카드가 없어요")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        Text("시뮬레이터: ⌘+S로 스크린샷을 찍은 뒤 아래 버튼을 눌러보세요.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button {
+                            Task { await vm.importScreenshotsFromGallery() }
+                        } label: {
+                            HStack {
+                                if vm.isImportingScreenshots {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "photo.on.rectangle.angled")
+                                }
+                                Text(vm.isImportingScreenshots ? "가져오는 중…" : "스크린샷에서 카드 가져오기")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(vm.isImportingScreenshots)
+                        .padding(.horizontal, 24)
+                        // 스크린샷 → 카드 연동 상태 (POST 나갔는지 등 확인용)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("마지막 확인")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Text(pipelineStatus.lastMessage)
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                            if let err = pipelineStatus.lastError {
+                                Text(err)
+                                    .font(.caption2)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 12)
+                    }
+                    .padding(.vertical, 32)
+                    Spacer().frame(height: S)
+                }
+
+                // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) — 없어도 탭은 표시 ──
+                HomeSection(title: "⏳ Expiring Soon") {
+                    if vm.coupons.isEmpty {
+                        Text("마감 임박한 스크린샷이 아직 없어요")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: couponH)
+                    } else {
                         TabView {
                             ForEach(vm.coupons) { card in
                                 UnifiedCardView(
@@ -59,8 +115,8 @@ struct HomeView: View {
                         .frame(height: couponH)
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
-                    Spacer().frame(height: S) // 24pt
                 }
+                Spacer().frame(height: S) // 24pt
 
                 // ── 섹션 2: Recommended Contents ──
                 if !vm.recommended.isEmpty {
@@ -110,14 +166,6 @@ struct HomeView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            CaplogTabBar(selected: selectedTab) { tab in
-                selectedTab = tab
-                onSelectTab?(tab)
-                route(from: .home, to: tab)
-            }
-            .frame(maxWidth: .infinity)
-        }
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -154,23 +202,8 @@ struct HomeView: View {
         // 네비게이션
         .navigationDestination(item: $selectedCard) { CardDetailView(card: $0) }
         .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }
-        .navigationDestination(isPresented: $showMyPage) { MyPageView() }
-        .navigationDestination(isPresented: $showFolder) { FolderView() }
-        .navigationDestination(isPresented: $showSearch) { SearchView() }
-        .navigationDestination(isPresented: $showShare)  { ShareView() }
 
         .task { await vm.load() }
-    }
-
-    // MARK: - 탭 라우팅
-    private func route(from current: CaplogTab, to tab: CaplogTab) {
-        guard current != tab else { return }
-        switch tab {
-        case .home:   break
-        case .folder: showFolder = true
-        case .search: showSearch = true
-        case .share:  showShare  = true
-        case .myPage: showMyPage = true
-        }
+        .refreshable { await vm.load() }
     }
 }

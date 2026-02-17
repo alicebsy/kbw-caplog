@@ -3,7 +3,9 @@ import AuthenticationServices
 import GoogleSignIn
 import KakaoSDKAuth
 
+/// 로그인 화면 (이메일/비밀번호 + 소셜 로그인)
 struct Register3View: View {
+    @ObservedObject var appState: AppState
     @State private var email = ""
     @State private var password = ""
     @State private var showAlert = false
@@ -64,7 +66,7 @@ struct Register3View: View {
                 .alert("로그인", isPresented: $showAlert) {
                     Button("확인", role: .cancel) {}
                 } message: { Text(alertMessage) }
-                .navigationDestination(isPresented: $goPerm) { Register4_1View() }
+                .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
 
                 Text("OR")
                     .font(.system(size: 12))

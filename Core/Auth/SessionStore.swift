@@ -13,6 +13,7 @@ enum SessionStore {
     private static let key = "caplog.jwt"
 
     static func saveJWT(_ token: String) {
+        AuthStorage.shared.accessToken = token
         let data = token.data(using: .utf8)!
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -38,6 +39,7 @@ enum SessionStore {
     }
 
     static func clear() {
+        AuthStorage.shared.clear()
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key

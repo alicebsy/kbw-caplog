@@ -1,20 +1,28 @@
 import SwiftUI
 
+/// 앱 진입점 루트 뷰
+/// - appState.isLoggedIn: 로그인/회원가입 플로우 완료 여부
+/// - true → AppNavigation(탭바: 홈/폴더/검색/공유/마이페이지)
+/// - false → Register1View(Join / Log in)
 struct StartView: View {
-    // 1. 로그인 상태를 저장할 변수 추가
-    @State private var isLoggedIn = false
+    @ObservedObject var appState: AppState
 
     var body: some View {
-        // 2. 앱 전체를 관리할 단 하나의 NavigationStack
-        NavigationStack {
-            // 3. 로그인 상태에 따라 다른 뷰를 보여주는 로직
-            if isLoggedIn {
-                // 로그인이 성공하면 TabView가 있는 메인 화면으로 전환
+        Group {
+            if appState.isLoggedIn {
+                // 로그인 완료 → 탭바 메인 화면
                 AppNavigation()
             } else {
-                // 로그인 전에는 가입/로그인 화면을 보여줌
-                Register1View(isLoggedIn: $isLoggedIn)
+                // 로그인 전 → 회원가입/로그인 화면
+                Register1View(appState: appState)
             }
+        }
+        .onAppear {
+            // 앱 시작 시 기존 JWT 있으면 자동 로그인
+            appState.checkExistingSession()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .logoutCompleted)) { _ in
+            appState.logout()
         }
     }
 }

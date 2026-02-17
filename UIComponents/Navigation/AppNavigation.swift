@@ -1,29 +1,27 @@
 import SwiftUI
 
+/// 하단에 커스텀 탭바(CaplogTabBar) 하나만 표시. 시스템 TabView 미사용.
 struct AppNavigation: View {
     @State private var selectedTab: CaplogTab = .home
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem { Label("홈", systemImage: "house.fill") }
-                .tag(CaplogTab.home)
-
-            FolderView()
-                .tabItem { Label("폴더", systemImage: "folder.fill") }
-                .tag(CaplogTab.folder)
-
-            SearchView()
-                .tabItem { Label("검색", systemImage: "magnifyingglass") }
-                .tag(CaplogTab.search)
-
-            ShareView()
-                .tabItem { Label("공유", systemImage: "square.and.arrow.up.fill") }
-                .tag(CaplogTab.share)
-
-            MyPageView()
-                .tabItem { Label("마이페이지", systemImage: "person.fill") }
-                .tag(CaplogTab.myPage)
+        Group {
+            switch selectedTab {
+            case .home:      HomeView()
+            case .folder:    FolderView()
+            case .search:    SearchView()
+            case .share:     ShareView()
+            case .myPage:    MyPageView()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            CaplogTabBar(selected: selectedTab) { selectedTab = $0 }
+        }
+        .onChange(of: selectedTab) { _, newValue in
+            if newValue == .myPage {
+                NotificationCenter.default.post(name: .myPageTabSelected, object: nil)
+            }
         }
     }
 }

@@ -1,13 +1,14 @@
 import Foundation
 
 // MARK: - 환경 스위치
+/// Mock 사용 여부 (true: 로컬 테스트, false: 실제 백엔드 연동)
 enum BackendEnv {
-    /// 서버 없이 앱만 돌릴 때 true. 실제 서버 붙일 땐 false로 바꾸기,
-    static var isMock: Bool = true
+    static var isMock: Bool = false
 }
 
-
 // MARK: - AuthAPI
+/// 인증 API (회원가입, 로그인, 소셜 로그인)
+/// - Base: APIConfig.baseURL + /api/auth
 enum AuthAPI {
     static let baseURL = APIConfig.baseURL
 
@@ -20,13 +21,12 @@ enum AuthAPI {
     // MARK: - Public APIs
 
     /// 회원가입 (성공만 확인)
+    /// - POST /api/auth/signup
     static func register(name: String, email: String, userId: String, password: String) async throws {
         if BackendEnv.isMock {
-            print("--- Mock: Register Succeeded ---")
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             return
         }
-        
         let body: [String: String] = [
             "name": name, "email": email, "userId": userId, "password": password
         ]
@@ -49,14 +49,13 @@ enum AuthAPI {
         }
     }
 
-    /// 로그인: 액세스 토큰 문자열 반환
+    /// 로그인: 액세스 토큰 반환 (SessionStore에 저장 후 API 호출 시 Bearer 헤더로 사용)
+    /// - POST /api/auth/login
     static func login(email: String, password: String) async throws -> String {
         if BackendEnv.isMock {
-            print("--- Mock: Login Succeeded ---")
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             return "mock_jwt_token_for_test"
         }
-
         let body = ["email": email, "password": password]
 
         var url = baseURL

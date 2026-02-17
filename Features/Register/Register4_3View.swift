@@ -1,8 +1,9 @@
 import SwiftUI
 
+/// 권한 안내 3: 알림 권한 → 완료 시 메인(탭바) 화면으로 전환
 struct Register4_3View: View {
+    @ObservedObject var appState: AppState
     @StateObject private var noti = NotificationPermission()
-    @State private var goMain = false
 
     var body: some View {
         VStack {
@@ -27,7 +28,10 @@ struct Register4_3View: View {
 
                 // ✅ 숨김 NavigationLink 제거
 
-                Button("모두 완료") { goMain = true }
+                Button("모두 완료") {
+                    // 로그인 플로우 완료 → StartView가 AppNavigation(탭바) 표시
+                    appState.isLoggedIn = true
+                }
                     .frame(maxWidth: .infinity, minHeight: 48)
                     .background(noti.isAuthorized ? Color.blue.opacity(0.8) : Color.gray.opacity(0.3))
                     .foregroundColor(.white)
@@ -39,9 +43,5 @@ struct Register4_3View: View {
             Spacer()
         }
         .onAppear { noti.refresh() }
-        // ✅ iOS 17+ 신 API: isPresented로 목적지 푸시
-        .navigationDestination(isPresented: $goMain) {
-            HomeView()
-        }
     }
 }

@@ -1,5 +1,8 @@
 import Foundation
 
+/// API 기본 설정
+/// - baseURL: 시뮬레이터=localhost, 실기기=맥북 로컬 IP
+/// - apiPrefix: /api (모든 엔드포인트 앞에 붙음)
 enum APIConfig {
     static var baseURL: URL {
         #if targetEnvironment(simulator)

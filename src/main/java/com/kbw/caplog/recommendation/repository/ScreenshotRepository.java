@@ -9,6 +9,9 @@ import java.util.List;
 
 public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
 
+    /** 현재 유저의 스크린샷 목록 조회 (최신순) */
+    List<Screenshot> findByUserNoOrderByIdDesc(Long userNo);
+
     @Query(value = """
     SELECT
       s.screenshot_id    AS id,

@@ -1,5 +1,6 @@
 package com.kbw.caplog.auth.security;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,9 +12,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Spring Security 전역 설정
+ * - /api/auth/**: 인증 없이 허용 (로그인, 회원가입, refresh 등)
+ * - /api/screenshots/upload: 인증 없이 허용 (테스트용, 추후 JWT 검증 추가 권장)
+ * - 그 외: JWT Bearer 토큰 필요
+ */
 @Configuration
 @EnableWebSecurity
-// 전역 보안 설정
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -33,12 +39,13 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable()) // 브라우저 기본 인증 팝업 비활성
                 .formLogin(login -> login.disable()) // 폼 로그인(스프링 제공 로그인 페이지) 비활성
 
+                
                 // 인가 규칙 (어떤 URL을 누구에게 열어줄지 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // 로그인/회원가입은 모두에게 공개
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/password").authenticated() // 비밀번호 변경은 JWT 필요
+                        .requestMatchers("/api/auth/**").permitAll() // 로그인/회원가입/refresh/logout은 인증 없이 허용
 
-                        // ✅ 추가된 부분
-                        // Swift 테스트용: 스크린샷 업로드 API는 인증 없이 접근 허용 (JWT 없이 테스트 가능)
+                        // 테스트용: 스크린샷 업로드 API는 인증 없이 접근 허용 (JWT 없이 테스트 가능)
                         .requestMatchers("/api/screenshots/upload").permitAll()
 
                         .anyRequest().authenticated()   // 그 외는 인증 필요

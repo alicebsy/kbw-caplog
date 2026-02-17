@@ -12,13 +12,6 @@ struct SearchView: View {
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
 
-    // 탭 라우팅을 위한 변수 추가
-    var onSelectTab: ((CaplogTab) -> Void)? = nil
-    @State private var goHome = false
-    @State private var goFolder = false
-    @State private var goShare = false
-    @State private var goMyPage = false
-
     private var showLogo: Bool { !isFocused }
 
     var body: some View {
@@ -178,25 +171,6 @@ struct SearchView: View {
         .navigationDestination(item: $selectedCard) { card in
             CardDetailView(card: card)
         }
-
-        // 하단 탭 바
-        .safeAreaInset(edge: .bottom) {
-            CaplogTabBar(selected: .search) { tab in
-                onSelectTab?(tab)
-                switch tab {
-                case .home:   goHome   = true
-                case .folder: goFolder = true
-                case .search: break
-                case .share:  goShare  = true
-                case .myPage: goMyPage = true
-                }
-            }
-        }
-        // 탭 라우팅
-        .navigationDestination(isPresented: $goHome)   { HomeView() }
-        .navigationDestination(isPresented: $goFolder) { FolderView() }
-        .navigationDestination(isPresented: $goShare)  { ShareView() }
-        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
 }
 

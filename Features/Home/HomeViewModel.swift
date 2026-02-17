@@ -8,11 +8,11 @@ final class HomeViewModel: ObservableObject {
     // MARK: - UI State
     @Published var showNotificationView: Bool = false
     @Published var showMyPageView: Bool = false
+    @Published var isImportingScreenshots: Bool = false
     
-    // MARK: - Data
+    // MARK: - Data (서버/캐시 기반, mock 기본값 없음)
     @Published var userName: String = {
-        let defaults = UserDefaults.standard
-        return defaults.string(forKey: "userProfile_nickname") ?? "강배우"
+        return UserDefaults.standard.string(forKey: "userProfile_nickname") ?? ""
     }()
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
@@ -71,11 +71,11 @@ final class HomeViewModel: ObservableObject {
             // 서버에서 최신 값 받아오면 UserDefaults도 업데이트
             defaults.set(userProfile.nickname, forKey: "userProfile_nickname")
         } catch {
-            // 이미 UserDefaults에서 로드했으므로, 값이 비어 있을 때만 기본값 사용
-            if userName.isEmpty {
-                userName = "강배우"
+            // 서버 실패 시 캐시만 유지 (mock 기본값 사용 안 함)
+            if userName.isEmpty, let cached = UserDefaults.standard.string(forKey: "userProfile_nickname") {
+                userName = cached
             }
-            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 → UserDefaults/기본값 사용")
+            print("⚠️ HomeViewModel: 사용자 정보 로드 실패 (DB)")
         }
         
         // 2) 카드 전체 로드
@@ -84,7 +84,21 @@ final class HomeViewModel: ObservableObject {
         // 3) 홈 화면 내용 채우기 (최근 본 카드까지 포함)
         await reloadHomeContent()
         
+        // 4) 기존 스크린샷 최근 5장 한 번만 AI 분류 (폰 갤러리 연동)
+        Task {
+            await ScreenshotIndexer.shared.importRecentScreenshotsIfNeeded(limit: 5)
+        }
+        
         print("🏠 HomeViewModel: 홈 초기 로드 완료")
+    }
+
+    /// 갤러리 스크린샷 앨범에서 최근 5장을 다시 가져와서 카드로 만듦 (홈에서 수동 트리거)
+    func importScreenshotsFromGallery() async {
+        guard !isImportingScreenshots else { return }
+        isImportingScreenshots = true
+        await ScreenshotIndexer.shared.forceImportRecentScreenshots(limit: 5)
+        await reloadHomeContent()
+        isImportingScreenshots = false
     }
     
     

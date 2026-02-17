@@ -8,9 +8,11 @@ spring:
       enabled: true
 
   datasource:
+    # MySQL 주소·DB이름 (로컬 3306, DB명 caplog) — 보통 수정 안 함
     url: jdbc:mysql://localhost:3306/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
-    username: caplog
-    password: caplogpw
+    # MySQL 로그인 계정 — Workbench에서 쓰는 아이디/비밀번호와 동일하게
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -31,6 +33,10 @@ logging:
     org.springframework.http.converter: DEBUG
 server:
   port: 8080
+
+# API base URL (스크린샷 등 리소스 절대 URL 생성용)
+app:
+  baseUrl: http://localhost:8080
 
 # JWT 설정 (임시 값, 나중에 환경변수로 분리 권장)
 jwt:

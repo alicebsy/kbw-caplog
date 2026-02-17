@@ -52,7 +52,7 @@ struct MyPageProfileHeader: View {
             // 이름 + 비밀번호 변경 버튼
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(displayName.isEmpty ? "강배우" : displayName) 님")
+                    Text(displayName.isEmpty ? "프로필" : "\(displayName) 님")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.black)
                 }

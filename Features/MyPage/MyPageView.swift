@@ -1,17 +1,10 @@
 import SwiftUI
 
 struct MyPageView: View {
-    var onSelectTab: ((CaplogTab) -> Void)? = nil
-    
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = MyPageViewModel()
     @State private var showingError = false
     @State private var showPasswordSheet = false
-
-    @State private var goHome = false
-    @State private var goFolder = false
-    @State private var goSearch = false
-    @State private var goShare  = false
 
     var body: some View {
         ScrollView(showsIndicators: false) { content }
@@ -27,22 +20,6 @@ struct MyPageView: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                CaplogTabBar(selected: .myPage) { tab in
-                    onSelectTab?(tab)
-                    switch tab {
-                    case .home:   goHome   = true
-                    case .folder: goFolder = true
-                    case .search: goSearch = true
-                    case .share:  goShare  = true
-                    case .myPage: break
-                    }
-                }
-            }
-            .navigationDestination(isPresented: $goHome)   { HomeView() }
-            .navigationDestination(isPresented: $goFolder) { FolderView() }
-            .navigationDestination(isPresented: $goSearch) { SearchView() }
-            .navigationDestination(isPresented: $goShare)  { ShareView() }
             .sheet(isPresented: $showPasswordSheet) { MyPagePasswordChangeView() }
     }
 
@@ -102,6 +79,20 @@ struct MyPageView: View {
                 onLocationToggle: vm.toggleLocationPermission,
                 onNotificationToggle: vm.toggleNotificationPermission
             )
+
+            // 로그아웃 버튼 (맨 아래)
+            Button {
+                Task { await vm.logout() }
+            } label: {
+                Text("로그아웃")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 32)
         }
         .padding(.vertical, 8)
     }

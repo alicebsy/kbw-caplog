@@ -17,6 +17,9 @@ struct MyPageModifier: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: .logoutTapped)) { _ in
                 Task { await vm.logout() }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .myPageTabSelected)) { _ in
+                Task { await vm.refreshAll() }
+            }
             .onChange(of: vm.errorMessage) { oldValue, newValue in
                 print("🔔 errorMessage 변경: '\(oldValue ?? "nil")' -> '\(newValue ?? "nil")'")
                 showingError = (newValue != nil)
@@ -50,4 +53,8 @@ struct MyPageModifier: ViewModifier {
 
 extension Notification.Name {
     static let logoutTapped = Notification.Name("logoutTapped")
+    /// 로그아웃 완료 시 MyPageViewModel이 post → StartView가 AppState.logout() 호출
+    static let logoutCompleted = Notification.Name("logoutCompleted")
+    /// 마이페이지 탭 선택 시 AppNavigation이 post → 프로필 새로고침
+    static let myPageTabSelected = Notification.Name("myPageTabSelected")
 }

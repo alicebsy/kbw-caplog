@@ -1,7 +1,9 @@
 import SwiftUI
 import CoreLocation
 
+/// 권한 안내 1: 위치 권한
 struct Register4_1View: View {
+    @ObservedObject var appState: AppState
     @StateObject private var loc = LocationPermission()
     @State private var goNext = false
 
@@ -28,7 +30,7 @@ struct Register4_1View: View {
                     .cornerRadius(12)
                     .disabled(!(loc.status == .authorizedAlways || loc.status == .authorizedWhenInUse))
                     .navigationDestination(isPresented: $goNext) {
-                        Register4_2View()
+                        Register4_2View(appState: appState)
                     }
             }
             .padding()

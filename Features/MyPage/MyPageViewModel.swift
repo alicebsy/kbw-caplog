@@ -2,6 +2,9 @@ import SwiftUI
 import Combine
 import CoreLocation
 
+/// 마이페이지 VM: 프로필·스크린샷 목록 모두 DB(서버) 연동
+/// - 프로필: GET/PUT /api/users/me
+/// - 스크린샷: GET /api/screenshots (screenshot_file 테이블)
 @MainActor
 final class MyPageViewModel: ObservableObject {
     enum Gender: String, CaseIterable, Identifiable {
@@ -79,7 +82,6 @@ final class MyPageViewModel: ObservableObject {
     }
 
     func onAppear() {
-        print("🚀🚀🚀 MyPageViewModel onAppear 시작!")
         Task { await refreshAll() }
     }
 
@@ -90,69 +92,46 @@ final class MyPageViewModel: ObservableObject {
         }
     }
 
+    /// 프로필 로드: DB(서버) 우선, 성공 시 캐시 갱신. 실패 시 기존 캐시만 표시 (mock 기본값 없음)
     func loadProfile() async {
-        print("🔵🔵🔵 loadProfile 시작!")
-        
-        // 먼저 UserDefaults에서 즉시 로드하여 UI 업데이트 (깜빡임 방지)
         let defaults = UserDefaults.standard
-        if let savedNickname = defaults.string(forKey: "userProfile_nickname") {
-            name = savedNickname
-            print("⚡️ UserDefaults에서 즉시 로드: \(savedNickname)")
-        }
+        // 깜빡임 방지: 캐시된 값으로 먼저 표시
+        if let savedNickname = defaults.string(forKey: "userProfile_nickname") { name = savedNickname }
+        if let savedUserId = defaults.string(forKey: "userProfile_userId") { userId = savedUserId }
+        if let savedEmail = defaults.string(forKey: "userProfile_email") { email = savedEmail }
         if let savedGender = defaults.string(forKey: "userProfile_gender") {
             gender = savedGender == "M" ? .male : .female
         }
         let birthdayTimestamp = defaults.double(forKey: "userProfile_birthday")
-        if birthdayTimestamp > 0 {
-            birthday = Date(timeIntervalSince1970: birthdayTimestamp)
-        }
-        // 프로필 이미지 로드
+        if birthdayTimestamp > 0 { birthday = Date(timeIntervalSince1970: birthdayTimestamp) }
         if let imageData = defaults.data(forKey: "userProfile_imageData"),
-           let image = UIImage(data: imageData) {
-            profileImage = image
-            print("⚡️ 프로필 이미지 로드 성공")
-        }
-        
-        // 그 다음 서버에서 동기화
+           let image = UIImage(data: imageData) { profileImage = image }
+
+        // 서버(DB)에서 최신 프로필 동기화
         do {
-            print("🔵 userService.fetchMe() 호출 중...")
             let me = try await userService.fetchMe()
-            print("🔵 fetchMe 성공! userId: \(me.userId), nickname: \(me.nickname)")
             userId = me.userId
             name = me.nickname
             email = me.email
             gender = me.gender.map { $0 == "M" ? .male : .female }
             birthday = me.birthday
-            print("✅ 프로필 로드 완료: \(userId), \(name), \(gender?.rawValue ?? "미선택"), birthday: \(birthday?.description ?? "nil")")
-            
-            NotificationCenter.default.post(
-                name: .userProfileUpdated,
-                object: nil,
-                userInfo: ["nickname": name]
-            )
+            // 캐시 갱신 (다음 로드 시 깜빡임 방지)
+            defaults.set(me.userId, forKey: "userProfile_userId")
+            defaults.set(me.nickname, forKey: "userProfile_nickname")
+            defaults.set(me.email, forKey: "userProfile_email")
+            defaults.set(me.gender, forKey: "userProfile_gender")
+            if let b = me.birthday { defaults.set(b.timeIntervalSince1970, forKey: "userProfile_birthday") }
+            else { defaults.removeObject(forKey: "userProfile_birthday") }
+            NotificationCenter.default.post(name: .userProfileUpdated, object: nil, userInfo: ["nickname": name])
         } catch {
-            print("⚠️⚠️⚠️ 프로필 로드 실패: \(error)")
-            // ✅ 서버 연결 실패를 사용자에게 알리지 않음 (errorMessage 설정 안 함)
-            // 이미 UserDefaults에서 로드했으므로 기본값으로 덮어쓰지 않음
-            if userId.isEmpty {
-                userId = "ewhakbw"
-                email = "ewhakbw@gmail.com"
-            }
-            
-            NotificationCenter.default.post(
-                name: .userProfileUpdated,
-                object: nil,
-                userInfo: ["nickname": name]
-            )
+            print("⚠️ 프로필 로드 실패 (DB 연동): \(error)")
+            // 서버 실패 시 캐시 값 유지, mock 기본값은 사용하지 않음
+            NotificationCenter.default.post(name: .userProfileUpdated, object: nil, userInfo: ["nickname": name])
         }
     }
 
+    /// 프로필 저장 (PUT /api/users/me → DB 반영)
     func saveProfile() async {
-        print("🟢🟢🟢 saveProfile() 시작!")
-        print("   - name: \(name)")
-        print("   - gender: \(gender?.rawValue ?? "미선택")")
-        print("   - birthday: \(birthday?.description ?? "nil")")
-        
         guard isNameValid else {
             print("❌ 이름이 비어있음")
             errorMessage = "이름을 입력해주세요."
@@ -169,34 +148,19 @@ final class MyPageViewModel: ObservableObject {
         }
 
         isLoading = true
-        print("⏳ 저장 시작...")
-        
+        errorMessage = nil
         do {
-            print("🟢 userService.updateMe 호출 중...")
             let updated = try await userService.updateMe(
                 nickname: name,
                 gender: gender,
                 birthday: birthday
             )
-            
-            print("✅ API 호출 성공!")
-            print("   - 반환된 userId: \(updated.userId)")
-            print("   - 반환된 nickname: \(updated.nickname)")
-            print("   - 반환된 gender: \(updated.gender ?? "nil")")
-            
             userId = updated.userId
             name = updated.nickname
             email = updated.email
             gender = updated.gender.map { $0 == "M" ? MyPageViewModel.Gender.male : MyPageViewModel.Gender.female }
             birthday = updated.birthday
-            
-            print("✅ 상태 업데이트 완료")
-            
-            await MainActor.run {
-                self.successMessage = "프로필이 저장되었습니다."
-                print("✅ successMessage 설정됨: '\(self.successMessage ?? "")'")
-            }
-            
+            await MainActor.run { self.successMessage = "프로필이 저장되었습니다." }
             NotificationCenter.default.post(
                 name: .userProfileUpdated,
                 object: nil,
@@ -204,34 +168,38 @@ final class MyPageViewModel: ObservableObject {
             )
             
         } catch {
-            print("❌ API 호출 실패: \(error)")
-            
-            await MainActor.run {
-                self.successMessage = "프로필이 저장되었습니다."
-                print("✅ (Mock) successMessage 설정됨: '\(self.successMessage ?? "")'")
-            }
-            
-            NotificationCenter.default.post(
-                name: .userProfileUpdated,
-                object: nil,
-                userInfo: ["nickname": name]
-            )
+            print("❌ 프로필 저장 실패 (DB): \(error)")
+            await MainActor.run { self.errorMessage = "저장에 실패했습니다. \(error.localizedDescription)" }
         }
         
         isLoading = false
         print("✅ saveProfile() 완료")
     }
 
+    /// 로그아웃: 서버 호출 후 로컬 정리, NotificationCenter로 앱 로그인 상태 갱신
     func logout() async {
         do {
             try await userService.logout()
-            AuthStorage.shared.clear()
         } catch {
             print("⚠️ 로그아웃 실패: \(error)")
-            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
-            // 로컬에서는 일단 로그아웃 처리
-            AuthStorage.shared.clear()
         }
+        // 로그인 계정 프로필 캐시 삭제 (다음 로그인 시 이전 계정 정보 안 보이게)
+        Self.clearProfileCache()
+        // 로컬 토큰 정리
+        AuthStorage.shared.clear()
+        SessionStore.clear()
+        // StartView가 AppState.logout() 호출해 Register 화면으로 전환
+        NotificationCenter.default.post(name: .logoutCompleted, object: nil)
+    }
+
+    /// UserDefaults에 저장된 프로필 캐시 삭제 (로그아웃 시 호출)
+    static func clearProfileCache() {
+        let keys = [
+            "userProfile_userId", "userProfile_nickname", "userProfile_email",
+            "userProfile_gender", "userProfile_birthday", "userProfile_imageData"
+        ]
+        let defaults = UserDefaults.standard
+        keys.forEach { defaults.removeObject(forKey: $0) }
     }
     
     func toggleLocationPermission(_ newValue: Bool) {
@@ -250,6 +218,7 @@ final class MyPageViewModel: ObservableObject {
         }
     }
 
+    /// 스크린샷 목록 로드 (GET /api/screenshots → DB screenshot_file 기준)
     func refreshScreenshots() async {
         isLoading = true
         defer { isLoading = false }
@@ -259,9 +228,7 @@ final class MyPageViewModel: ObservableObject {
             nextCursor = page.nextCursor
             savedCount = page.items.count
         } catch {
-            print("⚠️ 스크린샷 로드 실패: \(error)")
-            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
-            // errorMessage 설정 안 함
+            print("⚠️ 스크린샷 로드 실패 (DB): \(error)")
         }
     }
 

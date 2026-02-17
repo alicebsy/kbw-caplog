@@ -1,17 +1,26 @@
 package com.kbw.caplog.screenshot.controller;
 
 import com.kbw.caplog.screenshot.domain.ScreenshotFile;
+import com.kbw.caplog.screenshot.dto.PagedScreenshotResponse;
+import com.kbw.caplog.screenshot.dto.ScreenshotItemDto;
 import com.kbw.caplog.screenshot.dto.UploadResponseDto;
 import com.kbw.caplog.screenshot.service.ScreenshotService;
+import com.kbw.caplog.user.User;
+import com.kbw.caplog.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
- * ScreenshotController
- * - 클라이언트(iOS, 웹 등)에서 업로드 요청을 처리하는 REST API
- * - multipart/form-data 형식의 파일 업로드 지원
+ * 스크린샷 API
+ * - POST /api/screenshots/upload: 업로드 (인증 없음, 테스트용)
+ * - GET /api/screenshots: 내 스크린샷 목록 (JWT Bearer 필요)
  */
 @RestController
 @RequestMapping("/api/screenshots")
@@ -19,6 +28,10 @@ import org.springframework.web.multipart.MultipartFile;
 public class ScreenshotController {
 
     private final ScreenshotService screenshotService;
+    private final UserRepository userRepository;
+
+    @Value("${app.baseUrl:http://localhost:8080}")
+    private String baseUrl;
 
     /**
      * 스크린샷 업로드 엔드포인트
@@ -63,5 +76,29 @@ public class ScreenshotController {
             // 500 내부 서버 에러 반환
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    /**
+     * 내 스크린샷 목록 조회 (인증 필요)
+     */
+    @GetMapping
+    public ResponseEntity<PagedScreenshotResponse> listMyScreenshots(
+            Authentication auth,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        String email = auth != null ? auth.getName() : null;
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(401).build();
+        }
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        List<ScreenshotItemDto> items = screenshotService.findByUserId(user.getUserNo())
+                .stream()
+                .map(f -> ScreenshotItemDto.from(f, baseUrl))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new PagedScreenshotResponse(items, null));
     }
 }

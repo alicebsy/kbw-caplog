@@ -6,13 +6,6 @@ struct FolderView: View {
     
     @Environment(\.dismiss) private var dismiss
     
-    // 탭 선택 및 화면 전환을 위한 상태 변수
-    @State private var selectedTab: CaplogTab = .folder
-    @State private var goHome = false
-    @State private var goSearch = false
-    @State private var goShare  = false
-    @State private var goMyPage = false
-
     var body: some View {
         NavigationStack {
             FolderCategoryListView()
@@ -33,27 +26,11 @@ struct FolderView: View {
                     }
                 }
         }
-        .safeAreaInset(edge: .bottom) {
-            CaplogTabBar(selected: selectedTab) { tab in
-                selectedTab = tab
-                switch tab {
-                case .home:   goHome = true
-                case .search: goSearch = true
-                case .share:  goShare = true
-                case .myPage: goMyPage = true
-                case .folder: break
-                }
-            }
-        }
         .onAppear {
             Task {
                 await manager.loadAllCards()
             }
         }
-        .navigationDestination(isPresented: $goHome)   { HomeView() }
-        .navigationDestination(isPresented: $goSearch) { SearchView() }
-        .navigationDestination(isPresented: $goShare)  { ShareView() }
-        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
 }
 
@@ -154,12 +131,6 @@ struct FolderItemListView: View {
     @State private var editingCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     
-    @State private var selectedTab: CaplogTab = .folder
-    @State private var goHome = false
-    @State private var goSearch = false
-    @State private var goShare  = false
-    @State private var goMyPage = false
-    
     private var filtered: [Card] {
         manager.cards(for: category, subcategory: subcategory)
     }
@@ -217,22 +188,6 @@ struct FolderItemListView: View {
         .navigationDestination(item: $selectedCard) { card in
             CardDetailView(card: card)
         }
-        .safeAreaInset(edge: .bottom) {
-            CaplogTabBar(selected: selectedTab) { tab in
-                selectedTab = tab
-                switch tab {
-                case .home:   goHome = true
-                case .search: goSearch = true
-                case .share:  goShare = true
-                case .myPage: goMyPage = true
-                case .folder: break
-                }
-            }
-        }
-        .navigationDestination(isPresented: $goHome)   { HomeView() }
-        .navigationDestination(isPresented: $goSearch) { SearchView() }
-        .navigationDestination(isPresented: $goShare)  { ShareView() }
-        .navigationDestination(isPresented: $goMyPage) { MyPageView() }
     }
     
     private var emptyState: some View {

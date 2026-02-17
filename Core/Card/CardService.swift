@@ -1,132 +1,124 @@
 import Foundation
 
-/// 카드 CRUD API 서비스
+/// 카드 CRUD API 서비스 (백엔드 GET /api/cards 연동)
 struct CardService {
     private let client = APIClient()
-    
-    // Mock 모드 스위치 (개발 중에는 true, 프로덕션에서는 false)
-    private var useMockData: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
-        #endif
-    }
-    
+    /// Mock 사용 여부 (false: 실제 백엔드 연동)
+    private let useMockData = false
+
     // MARK: - Card CRUD
-    
-    /// 모든 카드 조회
+
+    /// 모든 카드 조회 (GET /api/cards, JWT Bearer 필요)
     func fetchAllCards() async throws -> [Card] {
         if useMockData {
-            print("🔧 Mock: fetchAllCards() - 더미 데이터 반환")
             try? await Task.sleep(nanoseconds: 500_000_000)
             return Card.sampleCards
         }
-        
-        // TODO: 실제 API 연동
-        return try await client.request("GET", path: "/cards")
+        let dtos: [CardResponseDto] = try await client.request("GET", path: Endpoints.cards)
+        return dtos.map { $0.toCard() }
     }
     
-    /// 카테고리별 카드 조회
+    /// 카테고리별 카드 조회 (서버에서 전체 조회 후 로컬 필터)
     func fetchCards(category: FolderCategory, subcategory: String? = nil) async throws -> [Card] {
-        if useMockData {
-            print("🔧 Mock: fetchCards(category: \(category.rawValue), subcategory: \(subcategory ?? "nil"))")
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            
-            var filtered = Card.sampleCards.filter { $0.category == category }
-            if let sub = subcategory {
-                filtered = filtered.filter { $0.subcategory == sub }
-            }
-            return filtered
+        let all = try await fetchAllCards()
+        var filtered = all.filter { $0.category == category }
+        if let sub = subcategory {
+            filtered = filtered.filter { $0.subcategory == sub }
         }
-        
-        // TODO: 실제 API 연동
-        let query = [
-            URLQueryItem(name: "category", value: category.rawValue),
-            subcategory.map { URLQueryItem(name: "subcategory", value: $0) }
-        ].compactMap { $0 }
-        
-        return try await client.request("GET", path: "/cards", query: query)
+        return filtered
     }
     
-    /// 카드 검색
+    /// 카드 검색 (서버에서 전체 조회 후 로컬 검색)
     func searchCards(query: String) async throws -> [Card] {
-        if useMockData {
-            print("🔧 Mock: searchCards(query: \(query))")
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            
-            return Card.sampleCards.filter { card in
-                card.title.localizedCaseInsensitiveContains(query) ||
-                card.summary.localizedCaseInsensitiveContains(query) ||
-                card.subcategory.localizedCaseInsensitiveContains(query) ||
-                card.tags.contains { $0.localizedCaseInsensitiveContains(query) }
-            }
+        let all = try await fetchAllCards()
+        return all.filter { card in
+            card.title.localizedCaseInsensitiveContains(query) ||
+            card.summary.localizedCaseInsensitiveContains(query) ||
+            card.subcategory.localizedCaseInsensitiveContains(query) ||
+            card.tags.contains { $0.localizedCaseInsensitiveContains(query) }
         }
-        
-        // TODO: 실제 API 연동
-        let queryItems = [URLQueryItem(name: "q", value: query)]
-        return try await client.request("GET", path: "/cards/search", query: queryItems)
     }
     
-    /// 추천 카드 조회 (Home용)
+    /// 추천 카드 조회 (최신순 limit개)
     func fetchRecommendedCards(limit: Int = 10) async throws -> [Card] {
-        if useMockData {
-            print("🔧 Mock: fetchRecommendedCards(limit: \(limit))")
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            return Array(Card.sampleCards.prefix(limit))
-        }
-        
-        // TODO: 실제 API 연동
-        let query = [URLQueryItem(name: "limit", value: "\(limit)")]
-        return try await client.request("GET", path: "/cards/recommended", query: query)
+        let all = try await fetchAllCards()
+        return Array(all.prefix(limit))
     }
-    
-    /// 최근 카드 조회 (Home용)
+
+    /// 최근 카드 조회 (최신순 limit개)
     func fetchRecentCards(limit: Int = 10) async throws -> [Card] {
-        if useMockData {
-            print("🔧 Mock: fetchRecentCards(limit: \(limit))")
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            return Array(Card.sampleCards.prefix(limit))
-        }
-        
-        // TODO: 실제 API 연동
-        let query = [URLQueryItem(name: "limit", value: "\(limit)")]
-        return try await client.request("GET", path: "/cards/recent", query: query)
+        let all = try await fetchAllCards()
+        return Array(all.prefix(limit))
     }
     
-    /// 카드 생성
+    /// 카드 생성 (POST /api/cards → DB 저장 후 응답 카드 반환)
     func createCard(_ card: Card) async throws -> Card {
-        if useMockData {
-            print("🔧 Mock: createCard() - 카드 생성 성공")
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            return card
-        }
-        
-        // TODO: 실제 API 연동
-        return try await client.request("POST", path: "/cards", body: card)
+        let body = CreateCardRequestBody(
+            title: card.title,
+            summary: card.summary,
+            category: card.category.rawValue,
+            subcategory: card.subcategory,
+            tags: card.tags,
+            fields: card.fields,
+            thumbnailURL: card.thumbnailURL,
+            screenshotURLs: card.screenshotURLs.isEmpty ? nil : card.screenshotURLs
+        )
+        let dto: CardResponseDto = try await client.request("POST", path: Endpoints.cards, body: body)
+        return dto.toCard()
     }
-    
-    /// 카드 수정
+
+    /// 카드 수정 (백엔드 API 미구현 시 로컬만)
     func updateCard(_ card: Card) async throws -> Card {
-        if useMockData {
-            print("🔧 Mock: updateCard() - 카드 수정 성공")
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            return card
-        }
-        
-        // TODO: 실제 API 연동
-        return try await client.request("PUT", path: "/cards/\(card.id.uuidString)", body: card)
+        // TODO: PUT /api/cards/{id} 구현 시 연동
+        return card
     }
-    
-    /// 카드 삭제
+
+    /// 카드 삭제 (백엔드 API 미구현 시 로컬만)
     func deleteCard(id: UUID) async throws {
-        if useMockData {
-            print("🔧 Mock: deleteCard() - 카드 삭제 성공")
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            return
-        }
-        
-        // TODO: 실제 API 연동
-        try await client.requestVoid("DELETE", path: "/cards/\(id.uuidString)")
+        // TODO: DELETE /api/cards/{id} 구현 시 연동
+    }
+}
+
+// MARK: - 카드 생성 요청 body (백엔드 CreateCardRequest와 매핑)
+private struct CreateCardRequestBody: Encodable {
+    let title: String
+    let summary: String
+    let category: String
+    let subcategory: String
+    let tags: [String]
+    let fields: [String: String]
+    let thumbnailURL: String?
+    let screenshotURLs: [String]?
+}
+
+// MARK: - API 응답 DTO (백엔드 CardDto와 매핑)
+private struct CardResponseDto: Decodable {
+    let id: String
+    let title: String
+    let summary: String?
+    let category: String?
+    let subcategory: String?
+    let tags: [String]?
+    let fields: [String: String]?
+    let createdAt: Date?
+    let updatedAt: Date?
+    let thumbnailURL: String?
+    let screenshotURLs: [String]?
+
+    func toCard() -> Card {
+        let cat = FolderCategory(rawValue: category ?? "Etc.") ?? .etc
+        return Card(
+            id: UUID(uuidString: id) ?? UUID(),
+            title: title,
+            summary: summary ?? "",
+            category: cat,
+            subcategory: subcategory ?? "기타",
+            tags: tags ?? [],
+            fields: fields ?? [:],
+            createdAt: createdAt ?? Date(),
+            updatedAt: updatedAt ?? Date(),
+            thumbnailURL: thumbnailURL,
+            screenshotURLs: screenshotURLs ?? []
+        )
     }
 }

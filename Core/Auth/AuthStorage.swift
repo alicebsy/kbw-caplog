@@ -11,7 +11,10 @@ final class AuthStorage: AuthStoring {
     private init() {}
 
     var accessToken: String? {
-        get { UserDefaults.standard.string(forKey: key) }
+        get {
+            if let v = UserDefaults.standard.string(forKey: key) { return v }
+            return SessionStore.readJWT()
+        }
         set {
             if let v = newValue { UserDefaults.standard.set(v, forKey: key) }
             else { UserDefaults.standard.removeObject(forKey: key) }

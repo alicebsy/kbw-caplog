@@ -122,4 +122,16 @@ public class AuthService {
             System.out.println("단일 refresh 토큰 삭제 완료");
         }
     }
+
+    /** 비밀번호 변경 (JWT Bearer 인증된 사용자) */
+    @Transactional
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }

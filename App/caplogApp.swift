@@ -8,6 +8,8 @@ import Photos
 @main
 struct CaplogApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    /// 앱 전역 상태 (로그인 여부 등)
+    @StateObject private var appState = AppState()
 
     init() {
         KakaoSDK.initSDK(appKey: "81b506b612e5cc41201bc15a145764cb")
@@ -15,7 +17,8 @@ struct CaplogApp: App {
 
     var body: some Scene {
         WindowGroup {
-            StartView()
+            StartView(appState: appState)
+                .environmentObject(appState)
                 .onOpenURL { url in
                     if AuthApi.isKakaoTalkLoginUrl(url) {
                         _ = AuthController.handleOpenUrl(url: url)

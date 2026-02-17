@@ -1,8 +1,9 @@
 import Foundation
 import Combine
 
-/// 전역 카드 상태 관리
-/// Home, Folder, Search, Share 모든 탭에서 공유
+/// 전역 카드 상태 관리 (DB 연동)
+/// - 카드 목록: GET /api/cards (서버 Screenshot 기반)
+/// - Home, Folder, Search, Share 탭에서 공유
 @MainActor
 final class CardManager: ObservableObject {
     
@@ -18,6 +19,9 @@ final class CardManager: ObservableObject {
     // ✅ 2. "최근 본" 카드 ID 목록 (Published로 선언)
     @Published private(set) var viewedCardIDs: [UUID] = []
     private let viewedCardsKey = "recentlyViewedCardIDs" // UserDefaults 키
+
+    /// 스크린샷으로 생성된 카드 ID (서버에 없을 수 있음 → load 시 유지)
+    private var localOnlyCardIds: Set<UUID> = []
 
     // MARK: - Dependencies
     
@@ -38,15 +42,8 @@ final class CardManager: ObservableObject {
     
     // MARK: - Load Methods
     
-    /// 모든 카드 로드
+    /// 카드 전체 로드 (GET /api/cards → DB). 스크린샷으로 만든 로컬 카드는 유지.
     func loadAllCards() async {
-        // 이미 카드가 로드되어 있으면 다시 로드하지 않음
-        guard allCards.isEmpty else {
-            print("ℹ️ CardManager: 이미 \(allCards.count)개 카드가 로드되어 있습니다. 재로드 생략.")
-            return
-        }
-        
-        // 이미 로딩 중이면 중복 호출 방지
         guard !isLoading else {
             print("ℹ️ CardManager: 이미 카드를 로드 중입니다.")
             return
@@ -54,16 +51,24 @@ final class CardManager: ObservableObject {
         
         isLoading = true
         errorMessage = nil
-        
+        let localCardsToKeep = allCards.filter { localOnlyCardIds.contains($0.id) }
         do {
-            allCards = try await service.fetchAllCards()
-            print("✅ CardManager: \(allCards.count)개 카드 로드 완료")
+            let serverCards = try await service.fetchAllCards()
+            allCards = serverCards + localCardsToKeep
+            print("✅ CardManager: 서버 \(serverCards.count)개 + 로컬(스크린샷) \(localCardsToKeep.count)개")
         } catch {
             errorMessage = "카드를 불러오는데 실패했습니다: \(error.localizedDescription)"
-            print("❌ CardManager 에러: \(error)")
+            // 실패 시에도 로컬 카드는 유지
+            if !localCardsToKeep.isEmpty {
+                allCards = localCardsToKeep
+            }
         }
-        
         isLoading = false
+    }
+
+    /// DB에서 카드 목록 강제 새로고침 (로컬 스크린샷 카드는 유지)
+    func reloadAllCards() async {
+        await loadAllCards()
     }
     
     /// 카테고리별 카드 필터링 (로컬)
@@ -130,15 +135,20 @@ final class CardManager: ObservableObject {
 
     // MARK: - CRUD Methods
     
-    /// 카드 생성
+    /// 카드 생성 (스크린샷 AI 분류 결과 등). 서버 저장 성공 시 DB 반영, 실패 시 로컬만 유지.
     func createCard(_ card: Card) async {
+        ScreenshotPipelineStatus.shared.setPostSending()
         do {
             let newCard = try await service.createCard(card)
             allCards.append(newCard)
-            print("✅ CardManager: 카드 생성 완료 - \(newCard.title)")
+            ScreenshotPipelineStatus.shared.setPostSuccess(cardTitle: newCard.title)
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
         } catch {
-            errorMessage = "카드 생성 실패: \(error.localizedDescription)"
-            print("❌ CardManager 생성 에러: \(error)")
+            allCards.append(card)
+            localOnlyCardIds.insert(card.id)
+            ScreenshotPipelineStatus.shared.setPostFailed(errorDescription: error.localizedDescription)
+            print("❌ CardManager: 서버 저장 실패 → 로컬만 유지 - \(card.title) | \(error.localizedDescription)")
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
         }
     }
     
@@ -209,13 +219,15 @@ final class CardManager: ObservableObject {
             try await service.deleteCard(id: id)
             allCards.removeAll { $0.id == id }
             viewedCardIDs.removeAll { $0 == id }
+            localOnlyCardIds.remove(id)
             print("✅ CardManager: 카드 삭제 완료")
-            
-            // 홈 화면 갱신을 위한 알림
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
         } catch {
-            errorMessage = "카드 삭제 실패: \(error.localizedDescription)"
-            print("❌ CardManager 삭제 에러: \(error)")
+            allCards.removeAll { $0.id == id }
+            viewedCardIDs.removeAll { $0 == id }
+            localOnlyCardIds.remove(id)
+            print("✅ CardManager: 카드 로컬에서 삭제")
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
         }
     }
     

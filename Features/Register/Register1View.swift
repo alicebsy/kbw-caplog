@@ -1,10 +1,11 @@
 import SwiftUI
 import Combine
 
+/// 회원가입/로그인 첫 화면 (Join / Log in 버튼)
 struct Register1View: View {
-    @Binding var isLoggedIn: Bool
+    @ObservedObject var appState: AppState
     
-    // ✅ OCR + GPT 상태 관리
+    // OCR + GPT 상태 관리
     @State private var selectedImage: UIImage?
     @State private var recognizedText: [String] = []
     @State private var googleVisionLabels: [VisionLabel] = []
@@ -31,7 +32,7 @@ struct Register1View: View {
                 
                 // Join / Log in
                 VStack(spacing: 16) {
-                    NavigationLink(destination: Register2View()) {
+                    NavigationLink(destination: Register2View(appState: appState)) {
                         Text("Join")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
@@ -39,7 +40,7 @@ struct Register1View: View {
                             .background(Color.joinButton)
                             .cornerRadius(16)
                     }
-                    NavigationLink(destination: Register3View()) {
+                    NavigationLink(destination: Register3View(appState: appState)) {
                         Text("Log in")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)

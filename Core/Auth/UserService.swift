@@ -1,15 +1,19 @@
 import Foundation
 
+/// 사용자 프로필/인증 API
+/// - GET /api/users/me: 프로필 조회
+/// - PUT /api/users/me: 프로필 수정
+/// - POST /api/auth/logout: 로그아웃
 struct UserService {
     private let client = APIClient()
-    
-    // ✅ Mock 모드 스위치 (개발 중에는 true로 설정)
-    private let useMockData = true  // 서버 연결 전까지 true로 유지
+    /// Mock 사용 여부 (false: 실제 백엔드 연동)
+    private let useMockData = false
 
     // MARK: - Profile
 
+    /// 내 프로필 조회 (JWT Bearer 필요)
+    /// - GET /api/users/me
     func fetchMe() async throws -> UserProfile {
-        // ✅ Mock 모드일 때 UserDefaults에서 저장된 데이터 로드
         if useMockData {
             print("🔧 Mock: fetchMe() - UserDefaults에서 데이터 로드")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
@@ -29,6 +33,7 @@ struct UserService {
             print("   - birthday date: \(birthday?.description ?? "nil")")
             
             return UserProfile(
+                userNo: nil,
                 userId: userId,
                 nickname: nickname,
                 email: email,
@@ -41,8 +46,9 @@ struct UserService {
         return try await client.request("GET", path: Endpoints.me)
     }
 
+    /// 프로필 수정 (JWT Bearer 필요)
+    /// - PUT /api/users/me
     func updateMe(nickname: String, gender: MyPageViewModel.Gender?, birthday: Date?) async throws -> UserProfile {
-        // ✅ Mock 모드일 때 UserDefaults에 저장
         if useMockData {
             print("🔧 Mock: updateMe() - 프로필 업데이트 성공")
             print("   - nickname: \(nickname)")
@@ -68,6 +74,7 @@ struct UserService {
             df.dateFormat = "yyyy-MM-dd"
             
             return UserProfile(
+                userNo: nil,
                 userId: "ewhakbw",
                 nickname: nickname,
                 email: "ewhakbw@gmail.com",
@@ -94,8 +101,9 @@ struct UserService {
 
     // MARK: - Auth
 
+    /// 로그아웃 (선택적 refreshToken 전송)
+    /// - POST /api/auth/logout
     func logout() async throws {
-        // ✅ Mock 모드일 때 성공 처리
         if useMockData {
             print("🔧 Mock: logout() - 로그아웃 성공")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
@@ -105,11 +113,9 @@ struct UserService {
         try await client.requestVoid("POST", path: Endpoints.logout)
     }
 
-    /// ✅ 비밀번호 변경
-    /// 서버 엔드포인트 예시: PUT /api/v1/auth/password
-    /// Endpoints.changePassword 가 프로젝트에 정의되어 있어야 합니다.
+    /// 비밀번호 변경 (JWT Bearer 필요)
+    /// - PUT /api/auth/password
     func changePassword(current: String, new: String) async throws {
-        // ✅ Mock 모드일 때 성공 처리
         if useMockData {
             print("🔧 Mock: changePassword() - 비밀번호 변경 성공")
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
@@ -121,6 +127,6 @@ struct UserService {
             let newPassword: String
         }
         let body = Payload(currentPassword: current, newPassword: new)
-        try await client.requestVoid("PUT", path: Endpoints.changePassword, body: body)
+        try await client.requestVoid("PUT", path: Endpoints.changePassword, body: body, authorized: true)
     }
 }

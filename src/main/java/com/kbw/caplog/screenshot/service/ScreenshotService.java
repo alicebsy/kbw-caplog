@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * ScreenshotService
@@ -35,5 +36,9 @@ public class ScreenshotService {
                 .build();
 
         return screenshotFileRepository.save(screenshot);
+    }
+
+    public List<ScreenshotFile> findByUserId(Long userId) {
+        return screenshotFileRepository.findByUserId(userId);
     }
 }

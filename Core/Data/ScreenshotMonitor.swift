@@ -68,15 +68,16 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         
         print("📸 새 스크린샷 감지: \(insertedIndexes.count)개")
         
-        insertedIndexes.forEach { index in
-            let asset = changeDetails.fetchResultAfterChanges.object(at: index)
-            
-            // 중복 처리 방지
-            if lastProcessedAssetIdentifier == asset.localIdentifier {
-                print("⏭️ 이미 처리한 스크린샷: \(asset.localIdentifier)")
-                return
+        for index in insertedIndexes {
+            let asset = changeDetails.fetchResultAfterChanges.object(at: index) as! PHAsset
+            if ScreenshotIndexer.shared.isAssetProcessed(asset) {
+                print("⏭️ 이미 카드로 만든 스크린샷 스킵: \(asset.localIdentifier)")
+                continue
             }
-            
+            if lastProcessedAssetIdentifier == asset.localIdentifier {
+                print("⏭️ 동일 세션에서 이미 처리한 스크린샷 스킵")
+                continue
+            }
             lastProcessedAssetIdentifier = asset.localIdentifier
             processNewScreenshot(asset: asset)
         }
@@ -116,17 +117,12 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                 Task { @MainActor in
                     switch result {
                     case .success(let processingResult):
-                        print("✅ 자동 분류 완료!")
-                        print("   제목: \(processingResult.card.title)")
-                        print("   카테고리: \(processingResult.card.category.rawValue)")
-                        print("   서브카테고리: \(processingResult.card.subcategory)")
-                        
-                        // 카드 저장
-                        await self.cardManager.createCard(processingResult.card)
-                        
-                        // 알림 표시 (선택사항)
+                        let card = processingResult.card
+                        print("📤 ScreenshotMonitor: OCR/GPT 결과 DB 저장 시도 - \(card.title)")
+                        ScreenshotIndexer.shared.markAssetAsProcessed(asset)
+                        await self.cardManager.createCard(card)
+                        await self.uploadScreenshotToServer(image: uiImage)
                         self.showNotification(for: processingResult.card)
-                        
                     case .failure(let error):
                         print("❌ 자동 분류 실패: \(error.localizedDescription)")
                     }
@@ -135,6 +131,17 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         }
     }
     
+    /// 스크린샷을 서버에 업로드 (POST /api/screenshots/upload) → DB 저장 후 마이페이지 목록에 반영
+    private func uploadScreenshotToServer(image: UIImage) async {
+        guard let userNo = try? await UserService().fetchMe().userNo else { return }
+        let no = userNo
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            ScreenshotUploader.upload(image: image, userId: no) { _ in
+                continuation.resume()
+            }
+        }
+    }
+
     /// 로컬 알림 표시 (선택사항)
     private func showNotification(for card: Card) {
         // UNUserNotificationCenter를 사용하여 알림 표시

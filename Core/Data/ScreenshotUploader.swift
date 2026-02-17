@@ -1,15 +1,17 @@
 import Foundation
 import UIKit
 
+/// 스크린샷 업로드 (POST /api/screenshots/upload)
+/// - APIConfig.baseURL 사용 (시뮬레이터: localhost, 실기기: 맥북 IP)
 class ScreenshotUploader {
 
     static func upload(image: UIImage, userId: Int, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        guard let url = URL(string: "http://192.168.0.15:8080/api/screenshots/upload") else {
-            completion(.failure(NSError(domain: "Invalid URL", code: 0)))
-            return
-        }
+        let uploadURL = APIConfig.baseURL
+            .appendingPathComponent(APIConfig.apiPrefix.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+            .appendingPathComponent("screenshots")
+            .appendingPathComponent("upload")
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: uploadURL)
         request.httpMethod = "POST"
 
         let boundary = UUID().uuidString

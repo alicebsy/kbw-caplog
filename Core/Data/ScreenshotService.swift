@@ -2,9 +2,8 @@
 //  ScreenshotService.swift
 //  caplog
 //
-//  Created by user on 10/13/25.
+//  내 스크린샷 목록 조회 (GET /api/screenshots, JWT Bearer 필요)
 //
-
 
 import Foundation
 
