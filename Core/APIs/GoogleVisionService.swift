@@ -256,9 +256,12 @@ class GoogleVisionService {
 }
 
 // MARK: - Data Models
-struct VisionLabel: Codable {
+struct VisionLabel: Codable, Identifiable {
     let description: String
     let confidence: Double
+    
+    /// ForEach 등에서 중복 없이 쓰기 위한 고유 id (description만 쓰면 중복 가능)
+    var id: String { "\(description)_\(confidence)" }
     
     var confidencePercentage: String {
         String(format: "%.1f%%", confidence * 100)

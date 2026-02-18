@@ -135,13 +135,13 @@ class ScreenshotProcessingService {
             
             // OCR은 필수, 레이블은 선택
             if let ocrError = ocrError {
-                print("❌ OCR 에러로 인한 실패: \(ocrError.localizedDescription)")
+                print("[Caplog 스크린샷] ❌ 카드 생성 불가: OCR 에러 - \(ocrError.localizedDescription)")
                 completion(.failure(.ocrFailed(ocrError.localizedDescription)))
                 return
             }
             
             if ocrText.isEmpty {
-                print("❌ OCR 텍스트가 비어있음")
+                print("[Caplog 스크린샷] ❌ 카드 생성 불가: OCR 텍스트 없음")
                 completion(.failure(.ocrFailed("텍스트를 찾을 수 없습니다.")))
                 return
             }
@@ -193,10 +193,10 @@ class ScreenshotProcessingService {
             ) else {
                 // GPT가 에러 문자열(❌ API 에러, ❌ 빈 응답 등)을 반환한 경우 원인을 그대로 전달
                 if gptResult.hasPrefix("❌") {
-                    print("❌ GPT 에러 전달: \(gptResult)")
+                    print("[Caplog 스크린샷] ❌ 카드 생성 불가: GPT 에러 - \(gptResult.prefix(120))")
                     completion(.failure(.gptFailed(gptResult)))
                 } else {
-                    print("❌ Card 파싱 실패 (JSON/필드 문제)")
+                    print("[Caplog 스크린샷] ❌ 카드 생성 불가: GPT 응답 파싱 실패 (JSON/필드 문제)")
                     completion(.failure(.cardCreationFailed("GPT 응답 파싱 실패")))
                 }
                 return

@@ -23,6 +23,8 @@ final class CardManager: ObservableObject {
     /// 스크린샷으로 생성된 카드 ID (서버에 없을 수 있음 → load 시 유지)
     private var localOnlyCardIds: Set<UUID> = []
 
+    private let persistedLocalCardsKey = "CardManager_persistedLocalCards"
+
     // MARK: - Dependencies
     
     private lazy var service: CardService = CardService()
@@ -37,6 +39,13 @@ final class CardManager: ObservableObject {
         let savedIDs = UserDefaults.standard.array(forKey: viewedCardsKey) as? [String] ?? []
         let uuids = savedIDs.compactMap { UUID(uuidString: $0) }
         self.viewedCardIDs = uuids
+        // ✅ 한번이라도 카드로 만든 것은 재시작 후에도 유지: 저장된 로컬 카드 복원
+        let restored = loadPersistedLocalCards()
+        if !restored.isEmpty {
+            self.allCards = restored
+            self.localOnlyCardIds = Set(restored.map(\.id))
+            print("🔧 CardManager init: 저장된 로컬 카드 \(restored.count)개 복원")
+        }
         print("🔧 CardManager init: 최근 본 카드 \(uuids.count)개 로드됨")
     }
     
@@ -51,16 +60,25 @@ final class CardManager: ObservableObject {
         
         isLoading = true
         errorMessage = nil
-        let localCardsToKeep = allCards.filter { localOnlyCardIds.contains($0.id) }
+        // 메모리 + 저장된 로컬 카드 합쳐서 기준 (재시작 후에도 저장된 걸 씀)
+        let currentLocal = allCards.filter { localOnlyCardIds.contains($0.id) }
+        let persisted = loadPersistedLocalCards()
+        let mergedLocal = (currentLocal + persisted).uniqued(by: { $0.id })
         do {
             let serverCards = try await service.fetchAllCards()
+            let serverIds = Set(serverCards.map(\.id))
+            // 서버에 이미 있는 건 제외, 로컬에서만 만든 카드만 유지 (한번 만든 카드는 그대로)
+            let localCardsToKeep = mergedLocal.filter { !serverIds.contains($0.id) }
             allCards = serverCards + localCardsToKeep
+            localOnlyCardIds = Set(localCardsToKeep.map(\.id))
+            savePersistedLocalCards(localCardsToKeep)
             print("✅ CardManager: 서버 \(serverCards.count)개 + 로컬(스크린샷) \(localCardsToKeep.count)개")
         } catch {
             errorMessage = "카드를 불러오는데 실패했습니다: \(error.localizedDescription)"
-            // 실패 시에도 로컬 카드는 유지
-            if !localCardsToKeep.isEmpty {
-                allCards = localCardsToKeep
+            if !mergedLocal.isEmpty {
+                allCards = mergedLocal
+            } else if !currentLocal.isEmpty {
+                allCards = currentLocal
             }
         }
         isLoading = false
@@ -137,18 +155,37 @@ final class CardManager: ObservableObject {
     
     /// 카드 생성 (스크린샷 AI 분류 결과 등). 서버 저장 성공 시 DB 반영, 실패 시 로컬만 유지.
     func createCard(_ card: Card) async {
+        print("[Caplog 카드] createCard 요청: \(card.title)")
         ScreenshotPipelineStatus.shared.setPostSending()
         do {
             let newCard = try await service.createCard(card)
-            allCards.append(newCard)
+            // 서버가 thumbnailURL을 비워서 주면 로컬 스크린샷(UUID) 참조를 유지해 썸네일이 보이도록 함
+            let toAppend = Card(
+                id: newCard.id,
+                title: newCard.title,
+                summary: newCard.summary,
+                category: newCard.category,
+                subcategory: newCard.subcategory,
+                tags: newCard.tags,
+                fields: newCard.fields,
+                createdAt: newCard.createdAt,
+                updatedAt: newCard.updatedAt,
+                thumbnailURL: newCard.thumbnailURL ?? card.thumbnailURL,
+                screenshotURLs: newCard.screenshotURLs.isEmpty ? card.screenshotURLs : newCard.screenshotURLs
+            )
+            allCards.append(toAppend)
+            localOnlyCardIds.insert(toAppend.id)
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             ScreenshotPipelineStatus.shared.setPostSuccess(cardTitle: newCard.title)
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            print("[Caplog 카드] ✅ 서버 저장 성공, 목록 \(allCards.count)개")
         } catch {
             allCards.append(card)
             localOnlyCardIds.insert(card.id)
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             ScreenshotPipelineStatus.shared.setPostFailed(errorDescription: error.localizedDescription)
-            print("❌ CardManager: 서버 저장 실패 → 로컬만 유지 - \(card.title) | \(error.localizedDescription)")
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            print("[Caplog 카드] ⚠️ 서버 저장 실패 → 로컬 반영됨: \(card.title), 목록 \(allCards.count)개 | \(error.localizedDescription)")
         }
     }
     
@@ -220,12 +257,14 @@ final class CardManager: ObservableObject {
             allCards.removeAll { $0.id == id }
             viewedCardIDs.removeAll { $0 == id }
             localOnlyCardIds.remove(id)
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             print("✅ CardManager: 카드 삭제 완료")
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
         } catch {
             allCards.removeAll { $0.id == id }
             viewedCardIDs.removeAll { $0 == id }
             localOnlyCardIds.remove(id)
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             print("✅ CardManager: 카드 로컬에서 삭제")
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
         }
@@ -243,12 +282,36 @@ final class CardManager: ObservableObject {
         }
         return found
     }
+
+    // MARK: - 로컬 카드 저장/복원 (한번 만든 카드는 재시작 후에도 유지)
+
+    private func loadPersistedLocalCards() -> [Card] {
+        guard let data = UserDefaults.standard.data(forKey: persistedLocalCardsKey) else { return [] }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        return (try? decoder.decode([Card].self, from: data)) ?? []
+    }
+
+    private func savePersistedLocalCards(_ cards: [Card]) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .secondsSince1970
+        guard let data = try? encoder.encode(cards) else { return }
+        UserDefaults.standard.set(data, forKey: persistedLocalCardsKey)
+    }
     
     // MARK: - Utility
     
     /// 에러 메시지 초기화
     func clearError() {
         errorMessage = nil
+    }
+}
+
+// MARK: - Array 유일값 (로컬+저장 병합 시 중복 제거)
+private extension Array {
+    func uniqued<Key: Hashable>(by keyPath: (Element) -> Key) -> [Element] {
+        var seen = Set<Key>()
+        return filter { seen.insert(keyPath($0)).inserted }
     }
 }
 

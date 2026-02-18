@@ -145,8 +145,7 @@ struct UnifiedCardView: View {
             
             // RIGHT: 이미지 + 버튼
             VStack(spacing: 0) {
-                Image(card.thumbnailName)
-                    .resizable()
+                CardThumbnailView(thumbnailId: card.thumbnailName)
                     .scaledToFill()
                     .frame(width: 80, height: 90)
                     .clipped()
@@ -187,8 +186,7 @@ struct UnifiedCardView: View {
     // MARK: - Horizontal Style
     private var horizontalStyle: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(card.thumbnailName)
-                .resizable()
+            CardThumbnailView(thumbnailId: card.thumbnailName)
                 .scaledToFill()
                 .frame(height: 160)
                 .clipped()
@@ -257,8 +255,7 @@ struct UnifiedCardView: View {
             
             Spacer(minLength: 10)
             
-            Image(card.thumbnailName)
-                .resizable()
+            CardThumbnailView(thumbnailId: card.thumbnailName)
                 .scaledToFill()
                 .frame(width: isNotificationCard ? 80 : 64, height: isNotificationCard ? 80 : 64)
                 .clipped()
@@ -311,8 +308,7 @@ struct UnifiedCardView: View {
             
             Spacer(minLength: 8)
             
-            Image(card.thumbnailName)
-                .resizable()
+            CardThumbnailView(thumbnailId: card.thumbnailName)
                 .scaledToFill()
                 .frame(width: 60, height: 60)
                 .clipped()
@@ -334,9 +330,8 @@ struct UnifiedCardView: View {
             // ✅ 홈 화면에서만 특별 카드 이미지, 다른 곳에서는 일반 썸네일
             let imageName = isHomeScreen ? card.homeThumbnailName : card.thumbnailName
             
-            // 쿠폰 이미지 전체를 보여줌
-            Image(imageName)
-                .resizable()
+            // 쿠폰 이미지 전체를 보여줌 (스크린샷 기반 카드는 로컬 이미지 표시)
+            CardThumbnailView(thumbnailId: imageName)
                 .scaledToFit()
                 .frame(height: isHomeScreen ? 160 : 120) // ✅ 홈 화면에서 더 크게
                 .clipShape(RoundedRectangle(cornerRadius: 16))

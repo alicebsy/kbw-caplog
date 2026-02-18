@@ -84,19 +84,28 @@ final class HomeViewModel: ObservableObject {
         // 3) 홈 화면 내용 채우기 (최근 본 카드까지 포함)
         await reloadHomeContent()
         
-        // 4) 기존 스크린샷 최근 5장 한 번만 AI 분류 (폰 갤러리 연동)
+        // 4) 기존 스크린샷 최근 20장 한 번만 AI 분류 (폰 갤러리 연동)
         Task {
-            await ScreenshotIndexer.shared.importRecentScreenshotsIfNeeded(limit: 5)
+            await ScreenshotIndexer.shared.importRecentScreenshotsIfNeeded(limit: 20)
         }
         
         print("🏠 HomeViewModel: 홈 초기 로드 완료")
     }
 
-    /// 갤러리 스크린샷 앨범에서 최근 5장을 다시 가져와서 카드로 만듦 (홈에서 수동 트리거)
+    /// 갤러리 스크린샷 앨범에서 최근 20장을 가져와서 카드로 만듦 (이미 처리된 건 스킵)
     func importScreenshotsFromGallery() async {
         guard !isImportingScreenshots else { return }
         isImportingScreenshots = true
-        await ScreenshotIndexer.shared.forceImportRecentScreenshots(limit: 5)
+        await ScreenshotIndexer.shared.forceImportRecentScreenshots(limit: 20)
+        await reloadHomeContent()
+        isImportingScreenshots = false
+    }
+
+    /// 기존 처리 목록 초기화 후, 최근 스크린샷 전부 다시 인식·OCR·카드 생성 (한번 더 돌리기)
+    func reimportAllScreenshotsFromGallery() async {
+        guard !isImportingScreenshots else { return }
+        isImportingScreenshots = true
+        await ScreenshotIndexer.shared.resetAndReimportScreenshots(limit: 50)
         await reloadHomeContent()
         isImportingScreenshots = false
     }

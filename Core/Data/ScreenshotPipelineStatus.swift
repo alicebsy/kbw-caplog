@@ -69,11 +69,11 @@ final class ScreenshotPipelineStatus: ObservableObject {
     }
 
     func setPostFailed(errorDescription: String) {
-        lastMessage = "DB 저장 실패(POST 실패)"
+        lastMessage = "카드는 홈에 추가됨 (서버 동기화 실패)"
         lastError = errorDescription
         lastUpdated = Date()
         lastPostSuccess = false
-        print("[Caplog 스크린샷] ❌ POST 실패: \(errorDescription)")
+        print("[Caplog 스크린샷] ❌ POST 실패 → 로컬에는 반영됨: \(errorDescription)")
     }
 
     func setPipelineFailed(step: String, errorDescription: String) {

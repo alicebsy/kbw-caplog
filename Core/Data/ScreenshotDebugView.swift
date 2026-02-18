@@ -182,7 +182,7 @@ struct ResultSections: View {
                         .foregroundColor(.secondary)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(result.googleVisionLabels, id: \.description) { label in
+                        ForEach(result.googleVisionLabels) { label in
                             HStack {
                                 Text(label.description)
                                     .font(.body)

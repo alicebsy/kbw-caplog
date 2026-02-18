@@ -119,6 +119,9 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                     case .success(let processingResult):
                         let card = processingResult.card
                         print("📤 ScreenshotMonitor: OCR/GPT 결과 DB 저장 시도 - \(card.title)")
+                        if let id = card.thumbnailURL ?? card.screenshotURLs.first {
+                            CardImageStore.save(image: uiImage, id: id)
+                        }
                         ScreenshotIndexer.shared.markAssetAsProcessed(asset)
                         await self.cardManager.createCard(card)
                         await self.uploadScreenshotToServer(image: uiImage)

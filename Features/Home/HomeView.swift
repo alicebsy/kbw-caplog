@@ -58,6 +58,25 @@ struct HomeView: View {
                         }
                         .disabled(vm.isImportingScreenshots)
                         .padding(.horizontal, 24)
+
+                        Button {
+                            Task { await vm.reimportAllScreenshotsFromGallery() }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.clockwise")
+                                Text("기존 스크린샷 전부 다시 인식·카드 만들기")
+                                    .font(.subheadline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color(.systemGray5))
+                            .foregroundColor(.primary)
+                            .cornerRadius(12)
+                        }
+                        .disabled(vm.isImportingScreenshots)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+
                         // 스크린샷 → 카드 연동 상태 (POST 나갔는지 등 확인용)
                         VStack(alignment: .leading, spacing: 6) {
                             Text("마지막 확인")

@@ -33,9 +33,20 @@ final class ScreenshotIndexer {
         }
     }
 
+    /// 지금까지 인식(처리)된 스크린샷 개수 (폴더 등에서 표시용)
+    var processedScreenshotCount: Int {
+        processedAssetIds.count
+    }
+
     /// 이미 카드로 만든 스크린샷인지 (ScreenshotMonitor에서도 사용)
     func isAssetProcessed(_ asset: PHAsset) -> Bool {
         processedAssetIds.contains(asset.localIdentifier)
+    }
+
+    /// 앱 재설치 후 첫 실행 시 로컬 인덱스 초기화 (처리 목록·초기 인덱싱 플래그 삭제)
+    static func clearAllProcessedData() {
+        UserDefaults.standard.removeObject(forKey: "ScreenshotIndexer_processedAssetIds")
+        UserDefaults.standard.removeObject(forKey: "ScreenshotIndexer_initialImportDone")
     }
 
     /// 스크린샷을 카드로 저장했음을 기록 (한 스크린샷당 카드 하나)
@@ -71,14 +82,21 @@ final class ScreenshotIndexer {
     }
 
     /// 플래그 초기화 후 최근 스크린샷 다시 가져오기 (홈에서 "스크린샷에서 카드 가져오기" 버튼용)
-    func forceImportRecentScreenshots(limit: Int = 5) async {
+    func forceImportRecentScreenshots(limit: Int = 20) async {
+        UserDefaults.standard.removeObject(forKey: initialImportDoneKey)
+        await importRecentScreenshotsIfNeeded(limit: limit)
+    }
+
+    /// 기존 "처리 완료" 목록을 비우고, 최근 스크린샷을 처음부터 다시 인식·OCR·카드 생성 (전부 새로 돌림)
+    func resetAndReimportScreenshots(limit: Int = 50) async {
+        Self.clearAllProcessedData()
         UserDefaults.standard.removeObject(forKey: initialImportDoneKey)
         await importRecentScreenshotsIfNeeded(limit: limit)
     }
 
     /// 최근 스크린샷 N개만 인덱싱 (앱 실행 시 기존 스크린샷 반영용). 세션당 1회만 실행.
     /// 연결 대상: 갤러리(사진 앱)의 "스크린샷" 스마트 앨범 = .smartAlbumScreenshots
-    func importRecentScreenshotsIfNeeded(limit: Int = 5) async {
+    func importRecentScreenshotsIfNeeded(limit: Int = 20) async {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
             let msg = "사진 권한 없음. 설정 → Caplog → 사진에서 허용해 주세요."
@@ -102,7 +120,7 @@ final class ScreenshotIndexer {
 
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        options.fetchLimit = limit * 2
+        options.fetchLimit = min(limit * 2, 100)
         let fetched = PHAsset.fetchAssets(in: collection, options: options)
         var toProcess: [PHAsset] = []
         fetched.enumerateObjects { asset, _, _ in
@@ -142,6 +160,10 @@ final class ScreenshotIndexer {
                         switch result {
                         case .success(let processingResult):
                             let card = processingResult.card
+                            print("[Caplog 스크린샷] OCR·GPT 성공 → 카드 생성 단계: \(card.title)")
+                            if let id = card.thumbnailURL ?? card.screenshotURLs.first {
+                                CardImageStore.save(image: uiImage, id: id)
+                            }
                             await ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
                             await self.cardManager.createCard(card)
                             self.markAssetAsProcessed(asset)
@@ -182,6 +204,9 @@ final class ScreenshotIndexer {
                     case .success(let processingResult):
                         let card = processingResult.card
                         print("📤 ScreenshotIndexer: OCR/GPT 결과 DB 저장 시도 - \(card.title)")
+                        if let id = card.thumbnailURL ?? card.screenshotURLs.first {
+                            CardImageStore.save(image: uiImage, id: id)
+                        }
                         self.markAssetAsProcessed(asset)
                         Task { @MainActor in
                             await self.cardManager.createCard(card)

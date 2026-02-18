@@ -39,6 +39,10 @@ struct FolderCategoryListView: View {
     @EnvironmentObject private var manager: CardManager
     @State private var selectedCategory: FolderCategory = .info
 
+    private var screenshotRecognizedCount: Int {
+        ScreenshotIndexer.shared.processedScreenshotCount
+    }
+
     private var groupedSubcategories: [String: [FolderSubcategory]] {
         Dictionary(grouping: selectedCategory.subcategories, by: { $0.displayGroup })
     }
@@ -90,6 +94,15 @@ struct FolderCategoryListView: View {
 
             // --- 오른쪽: 소분류 리스트 ---
             List {
+                Section {
+                    Text("스크린샷 인식 총 \(screenshotRecognizedCount)개")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 4, trailing: 20))
+                }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+
                 ForEach(orderedGroupKeys, id: \.self) { key in
                     Section {
                         if !key.isEmpty {

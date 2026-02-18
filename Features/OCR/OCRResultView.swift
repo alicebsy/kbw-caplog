@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct OCRResultView: View {
     let image: UIImage?
@@ -61,7 +62,7 @@ struct OCRResultView: View {
                             .foregroundColor(.gray)
                         
                         VStack(alignment: .leading, spacing: 6) {
-                            ForEach(labels, id: \.description) { label in
+                            ForEach(labels) { label in
                                 HStack {
                                     Text(label.description)
                                         .font(.body)
@@ -119,7 +120,7 @@ struct DetailItemStyle: ViewModifier {
         content
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6))
+            .background(Color(UIColor.systemGray6))
             .cornerRadius(10)
     }
 }

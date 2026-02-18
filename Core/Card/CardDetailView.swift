@@ -230,9 +230,8 @@ struct CardDetailView: View {
 
                     Spacer().frame(height: 60)
 
-                    // 썸네일 이미지
-                    Image(card.thumbnailName)
-                        .resizable()
+                    // 썸네일 이미지 (스크린샷 기반 카드는 로컬 이미지 표시)
+                    CardThumbnailView(thumbnailId: card.thumbnailName)
                         .aspectRatio(contentMode: .fill)
                         .frame(height: calculateImageHeight(card))
                         .frame(maxWidth: .infinity)

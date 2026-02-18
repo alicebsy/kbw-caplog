@@ -59,6 +59,22 @@ struct CaplogApp: App {
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
+    private static let hasLaunchedBeforeKey = "caplog.hasLaunchedBefore"
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        // 앱 삭제 후 재설치 시: UserDefaults는 비어 있음. 이때 로그인/로컬 데이터를 초기화해 새로 시작하도록 함.
+        if !UserDefaults.standard.bool(forKey: Self.hasLaunchedBeforeKey) {
+            SessionStore.clear()
+            ScreenshotIndexer.clearAllProcessedData()
+            UserDefaults.standard.removeObject(forKey: "recentlyViewedCardIDs")
+            UserDefaults.standard.removeObject(forKey: "userProfile_nickname")
+            UserDefaults.standard.removeObject(forKey: "recent_searches")
+            UserDefaults.standard.set(true, forKey: Self.hasLaunchedBeforeKey)
+            print("🔄 앱 첫 실행(또는 재설치): 로그인·스크린샷 인덱스·캐시 초기화 완료")
+        }
+        return true
+    }
+
     @available(iOS, deprecated: 26.0)
     func application(_ app: UIApplication,
                      open url: URL,

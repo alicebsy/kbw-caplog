@@ -1,12 +1,21 @@
 import Foundation
 
+// MARK: - OpenAI 전용 URLSession (QUIC 연결 끊김 -1005 완화: 공유 풀 사용 안 함)
+private let gptURLSession: URLSession = {
+    let config = URLSessionConfiguration.ephemeral
+    config.timeoutIntervalForRequest = 60
+    config.timeoutIntervalForResource = 120
+    config.waitsForConnectivity = false
+    return URLSession(configuration: config)
+}()
+
 // MARK: - 안정 버전 GPT 분류 함수 (재시도 + 타임아웃 60초)
 func classifyTextWithGPT_stable(
     prompt: String,
     apiKey: String,
     completion: @escaping (String, String) -> Void
 ) {
-    let maxAttempts = 3
+    let maxAttempts = 4
     var attempt = 0
 
     func performRequest() {
@@ -33,19 +42,21 @@ func classifyTextWithGPT_stable(
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
 
-        // 시뮬레이터에서 waitsForConnectivity 사용 시 연결 끊김 나는 경우 있음 → shared + 요청 타임아웃만 사용
-        URLSession.shared.dataTask(with: req) { data, resp, err in
+        // QUIC(HTTP/3) 연결이 곧바로 끊기는 -1005 완화: 전용 ephemeral 세션 + 재시도 간격 4초
+        gptURLSession.dataTask(with: req) { data, resp, err in
             if let err = err as NSError? {
                 let code = err.code
                 let domain = err.domain
                 let msg = err.localizedDescription
                 print("[Caplog GPT] 네트워크 에러 상세: domain=\(domain), code=\(code), \(msg)")
-                // -1005 connection lost, -1001 timed out, -1009 not connected, -1200 SSL 등
+                // -1005(connection lost, QUIC path unavailable 등), -1001 타임아웃, -1009 오프라인, -1004 연결 실패, -1200 SSL
                 let isRetryable = (code == NSURLErrorNetworkConnectionLost || code == NSURLErrorTimedOut
-                    || code == NSURLErrorNotConnectedToInternet || code == NSURLErrorSecureConnectionFailed)
+                    || code == NSURLErrorNotConnectedToInternet || code == NSURLErrorSecureConnectionFailed
+                    || code == NSURLErrorCannotConnectToHost)
+                let retryDelay: TimeInterval = (code == NSURLErrorNetworkConnectionLost) ? 4.0 : 2.0
                 if isRetryable && attempt < maxAttempts {
-                    print("🌐 네트워크 오류(재시도 \(attempt)/\(maxAttempts)): \(msg)")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { performRequest() }
+                    print("🌐 네트워크 오류(재시도 \(attempt)/\(maxAttempts), \(retryDelay)초 후): \(msg)")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { performRequest() }
                     return
                 }
                 completion("❌ 네트워크 오류: \(msg)", "")
@@ -104,8 +115,17 @@ func classifyTextWithGPT_stable(
                     return (part["text"] as? String) ?? (part["content"] as? String)
                 }.joined().trimmingCharacters(in: .whitespacesAndNewlines)
                 print("[Caplog GPT] content 타입: 배열(\(parts.count)개), 합쳐진 길이 \(content.count)")
+            } else if raw != nil && !(raw is NSNull) {
+                // NSNull/기타 타입이면 문자열로 변환 시도 (방어)
+                let fallback = "\(raw)".trimmingCharacters(in: .whitespacesAndNewlines)
+                if !fallback.isEmpty {
+                    content = fallback
+                    print("[Caplog GPT] content 타입: fallback 문자열, 길이 \(content.count)")
+                } else {
+                    print("[Caplog GPT] content 추출 실패: message.content 타입이 문자열/배열 아님. raw=\(String(describing: raw))")
+                }
             } else {
-                print("[Caplog GPT] content 추출 실패: message.content 타입이 문자열/배열 아님. raw=\(String(describing: raw))")
+                print("[Caplog GPT] content 추출 실패: message.content null/없음. raw=\(String(describing: raw))")
             }
         } else {
             print("[Caplog GPT] choices/message 없음. choices 존재=\(json["choices"] != nil)")
