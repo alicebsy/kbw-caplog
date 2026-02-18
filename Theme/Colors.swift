@@ -66,6 +66,43 @@ extension Color {
     static let myPageActionBlue   = Color(hex: "#2E6CF6")
     static let myPageActionBlueBg = Color(hex: "#2E6CF6").opacity(0.12)
     static let myPageSectionGreen = Color.accentGreen
+
+    // === 마감 임박 카드: 브랜드별 색상 (원래 톤) ===
+    static func expiringCardBrandColor(brandName: String?) -> Color {
+        guard let name = brandName?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
+            return Color(hex: "#00704A")
+        }
+        if name.contains("스타벅스") || name.contains("starbucks") { return Color(hex: "#00704A") }
+        if name.contains("이마트") || name.contains("emart") { return Color(hex: "#F4A934") }
+        if name.contains("메가") || name.contains("megacoffee") || name.contains("mgc") { return Color(hex: "#6B4423") }
+        if name.contains("카카오") || name.contains("kakao") { return Color(hex: "#FFE812") }
+        if name.contains("gs25") || name.contains("gs 25") { return Color(hex: "#6BBD32") }
+        if name.contains("cu") || name.contains("씨유") { return Color(hex: "#8B1538") }
+        if name.contains("투썸") || name.contains("twosome") { return Color(hex: "#C41E3A") }
+        if name.contains("빽다방") || name.contains("baek") { return Color(hex: "#2C2C2C") }
+        if name.contains("할리스") || name.contains("hollys") { return Color(hex: "#5B2E62") }
+        if name.contains("던킨") || name.contains("dunkin") { return Color(hex: "#E31837") }
+        if name.contains("배스킨") || name.contains("baskin") { return Color(hex: "#D4145A") }
+        return Color(hex: "#00704A")
+    }
+
+    /// 마감 임박 카드에서 브랜드 배경에 맞는 글자색 (밝은 배경이면 검정, 아니면 흰색)
+    static func expiringCardTextColor(brandName: String?) -> Color {
+        let name = (brandName ?? "").lowercased()
+        if name.contains("카카오") || name.contains("kakao") { return .black }
+        if name.contains("이마트") || name.contains("emart") { return .black }
+        return .white
+    }
+
+    /// 마감 임박 카드용 브랜드 아이콘 에셋 이름 (있으면 표시, 없으면 nil)
+    static func expiringCardBrandIconName(brandName: String?) -> String? {
+        guard let name = brandName?.lowercased(), !name.isEmpty else { return nil }
+        if name.contains("스타벅스") || name.contains("starbucks") { return "스타벅스" }
+        if name.contains("이마트") || name.contains("emart") { return "이마트24" }
+        if name.contains("메가") || name.contains("megacoffee") || name.contains("mgc") { return "메가커피" }
+        if name.contains("카카오") || name.contains("kakao") { return "카카오페이" }
+        return nil
+    }
 }
 
 extension Color {

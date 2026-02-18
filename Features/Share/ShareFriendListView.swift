@@ -4,10 +4,10 @@ import Combine
 @MainActor
 struct ShareFriendListView: View {
     @ObservedObject var vm: ShareViewModel
+    @Binding var selectedThread: ChatThread?
     @State private var showAdd = false
     @State private var friendToDelete: Friend?
     @State private var showDeleteConfirm = false
-    @State private var selectedThread: ChatThread?
 
     var body: some View {
         ZStack {
@@ -83,9 +83,6 @@ struct ShareFriendListView: View {
             .sheet(isPresented: $showAdd) {
                 // ✅ (수정) ShareFriendSearchSheet에 vm을 전달
                 ShareFriendSearchSheet(vm: vm)
-            }
-            .navigationDestination(item: $selectedThread) { thread in
-                ChatRoomView(vm: vm, thread: thread)
             }
             
             // 플로팅 친구 추가 버튼

@@ -5,7 +5,7 @@ import Combine
 @MainActor
 struct ShareChatListView: View {
     @ObservedObject var vm: ShareViewModel
-    @State private var selectedThread: ChatThread?
+    @Binding var selectedThread: ChatThread?
     @State private var showFriendSelection = false
 
     var body: some View {
@@ -82,9 +82,6 @@ struct ShareChatListView: View {
             }
             .listStyle(.plain)
             .refreshable { await vm.loadAll() }
-            .navigationDestination(item: $selectedThread) { thread in
-                ChatRoomView(vm: vm, thread: thread)
-            }
             .sheet(isPresented: $showFriendSelection) {
                 ShareFriendSelectionView(vm: vm) { selectedFriends in
                     Task {

@@ -247,6 +247,25 @@ class ScreenshotProcessingService {
         - 날짜는 가능하면 YYYY-MM-DD 형식으로 통일하세요.
         - 카테고리 분류가 확실치 않으면 category_main은 "Unknown", category_sub은 ""로 두세요.
         
+        [기타 사용 최소화 - 반드시 준수]
+        - "기타"는 정말 어떤 소분류에도 넣기 어려울 때만 사용하세요. 웬만하면 아래 유사 매핑으로 가장 가까운 소분류를 선택하세요.
+        - 할인/쿠폰/기프티콘/금액권/이벤트권/상품권 → 쿠폰
+        - 식당/음식/맛집/배달/메뉴/리뷰 → 맛집
+        - 커피/카페/음료/브런치/디저트 매장 → 카페
+        - 채용/모집/공고/지원기한/인재 → 공고 또는 취업
+        - 뉴스/기사/정보글 → 뉴스
+        - 공부/시험/수업/과제 → 공부
+        - 전시/영화/공연/문화행사 → 문화생활
+        - 운동/헬스/건강/다이어트 → 운동/건강
+        - 메모/필기/노트/요약 → 필기
+        - 기록/로그/데이터/활동이력 → 기록 또는 활동
+        - 음악/노래/앨범/플레이리스트 → 음악
+        - 미술/전시/작품/갤러리 → 미술
+        - 채팅/대화/메신저/채널 → 채팅
+        - 사진/이미지/갤러리 → 사진
+        - 글/짤/밈/문구 → 글 또는 짤
+        - 장소/가게/매장 정보가 있으면 → 맛집 또는 카페 우선 고려
+        
         [공통 스키마]
         {
           "category_main": "",   // Info | Contents | Social | Log | Music | Art | Unknown
@@ -256,20 +275,20 @@ class ScreenshotProcessingService {
           "fields": {}           // 카테고리별 상세 (최대 4~5개)
         }
         
-        [category_sub 소분류 목록 - 반드시 이 중에서 선택]
-        Info: 맛집, 카페, 공부, 공고, 취업, 필기, 뉴스, 문화생활, 운동/건강, 기타, 쿠폰
+        [category_sub 소분류 목록 - 반드시 이 중에서 선택, 기타는 최후 수단만]
+        Info: 맛집, 카페, 공부, 공고, 취업, 필기, 뉴스, 문화생활, 운동/건강, 쿠폰, 기타(정말 불가 시에만)
         Contents: 글, 짤
         Social: 채팅, 사진
         Log: 기록, 활동
         Music: 음악
         Art: 미술
-        Unknown: 기타
+        Unknown: 기타(대분류부터 불명확할 때만)
         
         [카테고리별 필드 정의(최대 4~5개)]
         1) Info (정보)
-           - 맛집/카페: place_name, address(optional), menu_or_keyword(optional), valid_until(optional), benefit(optional)
-           - 공부/공고/취업/필기: topic, organization(optional), deadline(optional), notes(optional)
-           - 쿠폰: brand, benefit, valid_until(optional), conditions(optional)
+           - 맛집/카페: place_name(필수: 가게·매장·브랜드 이름이 보이면 반드시 추출), address(optional), menu_or_keyword(optional), valid_until(optional), benefit(optional)
+           - 공부/공고/취업/필기: topic, organization(optional), deadline(마감일 있으면 반드시 YYYY-MM-DD 또는 yyyy.MM.dd.), notes(optional)
+           - 쿠폰: brand(필수: 브랜드·가맹점명이 보이면 반드시 추출), benefit, valid_until(만료일 있으면 반드시 추출, 형식 YYYY-MM-DD 또는 yyyy.MM.dd.), conditions(optional)
         
         2) Contents (밈/짤/글)
            - content_text, tone(optional), topic(optional), share_intent(optional)
@@ -298,8 +317,17 @@ class ScreenshotProcessingService {
         - Vision에서 "신용카드 (95.3%)" → #신용카드 태그 추가
         
         [제목과 요약 생성 규칙]
-        - 제목: 가장 중요한 정보 1줄 (예: "이마트24 5천원권", "목화반점 맛집")
+        - 제목: 가장 중요한 정보 1줄. 가게/브랜드 이름이 있으면 반드시 포함 (예: "이마트24 5천원권", "목화반점 맛집", "스타벅스 아메리카노 1+1")
         - 요약: 사용자가 한눈에 이해할 수 있는 1~2문장 (예: "이마트24에서 사용할 수 있는 5천원 모바일금액권입니다.")
+        
+        [날짜·마감일 추출 규칙]
+        - 쿠폰: 유효기간·사용기한·만료일이 보이면 valid_until에 반드시 넣기. 형식: 2025-12-31 또는 2025. 12. 31.
+        - 공고/취업: 마감일·접수마감·지원기한이 보이면 deadline에 반드시 넣기. 형식 동일.
+        - 숫자만 보이면 (예: 12.31, 2025.12.31) 연도를 추정해 완성하세요.
+        
+        [가게·브랜드 이름 추출 규칙]
+        - 맛집/카페: 상호명, 매장 이름, 프랜차이즈명이 OCR/Vision에 있으면 place_name에 반드시 넣기. (예: "목화반점", "스타벅스 강남점", "메가커피")
+        - 쿠폰: 기프티콘 브랜드, 가맹점명이 보이면 brand에 반드시 넣기. (예: "이마트24", "GS25", "스타벅스")
         
         [입력 정보]
         
@@ -311,21 +339,14 @@ class ScreenshotProcessingService {
         **Google Vision 이미지 분석 (객체/개념 탐지):**
         \(labelsInfo)
         
-        [출력 예시]
-        {
-          "category_main": "Info",
-          "category_sub": "쿠폰",
-          "title": "이마트24 5천원권",
-          "summary": "이마트24에서 사용할 수 있는 5천원 모바일금액권입니다.",
-          "fields": {
-            "brand": "이마트24",
-            "benefit": "5천원권",
-            "valid_until": "2025-11-20",
-            "conditions": "모바일 금액권"
-          }
-        }
+        [출력 예시 - 쿠폰]
+        { "category_main": "Info", "category_sub": "쿠폰", "title": "이마트24 5천원권", "summary": "이마트24에서 사용할 수 있는 5천원 모바일금액권입니다.", "fields": { "brand": "이마트24", "benefit": "5천원권", "valid_until": "2025-11-20", "conditions": "모바일 금액권" } }
+        [출력 예시 - 맛집]
+        { "category_main": "Info", "category_sub": "맛집", "title": "목화반점 강남점", "summary": "강남역 인근 중식당 목화반점입니다.", "fields": { "place_name": "목화반점", "address": "서울 강남구", "menu_or_keyword": "짜장면, 짬뽕" } }
+        [출력 예시 - 공고]
+        { "category_main": "Info", "category_sub": "공고", "title": "OO회사 개발자 채용", "summary": "OO회사 백엔드 개발자 모집 공고입니다.", "fields": { "topic": "백엔드 개발자 채용", "organization": "OO회사", "deadline": "2025-12-15", "notes": "경력 3년 이상" } }
         
-        주의: 위의 필드(brand, benefit 등)에서 태그가 자동으로 추출됩니다.
+        주의: place_name, brand, valid_until, deadline은 보이면 반드시 채우고, 위 필드에서 태그가 자동 추출됩니다.
         """
     }
     
@@ -395,6 +416,11 @@ class ScreenshotProcessingService {
             } else {
                 fields[key] = "\(value)"
             }
+        }
+        // 마감일 통일: valid_until / deadline → 만료일 (홈·카드 상세에서 공통 사용)
+        if fields["만료일"] == nil || fields["만료일"]?.isEmpty == true {
+            if let v = fields["valid_until"], !v.isEmpty { fields["만료일"] = v }
+            else if let d = fields["deadline"], !d.isEmpty { fields["만료일"] = d }
         }
         
         // 태그 생성 (fields에서 추출)

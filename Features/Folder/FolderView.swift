@@ -31,6 +31,11 @@ struct FolderView: View {
                 await manager.loadAllCards()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .cardUpdated)) { _ in
+            Task {
+                await manager.loadAllCards()
+            }
+        }
     }
 }
 
@@ -38,6 +43,8 @@ struct FolderView: View {
 struct FolderCategoryListView: View {
     @EnvironmentObject private var manager: CardManager
     @State private var selectedCategory: FolderCategory = .info
+    /// 갤러리에 있는 스크린샷 전체 개수 (폴더 보일 때마다 갱신)
+    @State private var galleryScreenshotCount: Int?
 
     private var screenshotRecognizedCount: Int {
         ScreenshotIndexer.shared.processedScreenshotCount
@@ -59,7 +66,7 @@ struct FolderCategoryListView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // --- 왼쪽: 대분류 리스트 ---
+            // --- 왼쪽: 대분류 리스트 + 하단 갤러리/최근 인식 ---
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 28) {
                     ForEach(FolderCategory.allCases) { category in
@@ -75,7 +82,7 @@ struct FolderCategoryListView: View {
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(
                                         selectedCategory == category
-                                        ? .homeGreenDark
+                                        ? Color.homeGreenDark
                                         : .black
                                     )
                                     .lineLimit(1)
@@ -86,23 +93,47 @@ struct FolderCategoryListView: View {
                         .buttonStyle(.plain)
                         .padding(.leading, 20)
                     }
+
+                    // 갤러리·인식 정보 + 최근 인식 카드 (왼쪽 맨 아래)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Divider()
+                            .padding(.vertical, 8)
+                        if let total = galleryScreenshotCount {
+                            Text("갤러리 \(total)장 · 인식 \(screenshotRecognizedCount)장")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("인식 완료 \(screenshotRecognizedCount)장")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        NavigationLink {
+                            FolderRecentCardsView()
+                                .environmentObject(manager)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "photo.on.rectangle.angled")
+                                    .font(.system(size: 12))
+                                Text("최근 인식 카드")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(Color.homeGreenDark)
+                        }
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 }
                 .padding(.top, 16)
             }
             .frame(width: UIScreen.main.bounds.width / 2)
             .background(Color.white)
+            .onAppear {
+                Task { galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
+            }
 
             // --- 오른쪽: 소분류 리스트 ---
             List {
-                Section {
-                    Text("스크린샷 인식 총 \(screenshotRecognizedCount)개")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 4, trailing: 20))
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-
                 ForEach(orderedGroupKeys, id: \.self) { key in
                     Section {
                         if !key.isEmpty {
@@ -111,7 +142,6 @@ struct FolderCategoryListView: View {
                                 .foregroundStyle(Color.gray)
                                 .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
                         }
-                        
                         ForEach(groupedSubcategories[key] ?? []) { sub in
                             NavigationLink {
                                 FolderItemListView(category: selectedCategory, subcategory: sub.name)
@@ -125,8 +155,8 @@ struct FolderCategoryListView: View {
                         }
                     }
                     .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
-                .listRowBackground(Color.clear)
             }
             .listStyle(.plain)
             .background(Color(red: 246/255, green: 248/255, blue: 246/255))
@@ -214,5 +244,75 @@ struct FolderItemListView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
+    }
+}
+
+// MARK: - 최근 인식 카드 한눈에 보기 (인식된 N개를 카테고리 없이 전체 목록으로)
+struct FolderRecentCardsView: View {
+    @EnvironmentObject private var manager: CardManager
+    @State private var selectedCard: Card? = nil
+    @State private var editingCard: Card? = nil
+    @State private var fullscreenImage: String? = nil
+    
+    private var recentCards: [Card] {
+        manager.recommendedCards(limit: 50)
+    }
+    
+    var body: some View {
+        List {
+            if recentCards.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("인식된 카드가 없어요")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+                .listRowSeparator(.hidden)
+            } else {
+                ForEach(recentCards) { item in
+                    UnifiedCardView(
+                        card: item,
+                        style: .row,
+                        onTap: { selectedCard = item },
+                        onMore: { editingCard = item },
+                        onTapImage: {
+                            if let first = item.screenshotURLs.first {
+                                fullscreenImage = first
+                            } else {
+                                fullscreenImage = item.thumbnailName
+                            }
+                            CardManager.shared.markCardAsViewed(item)
+                        }
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .background(Color.clear)
+                    .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
+                }
+            }
+        }
+        .listStyle(.plain)
+        .navigationTitle("최근 인식 카드")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $editingCard) { card in
+            CardEditSheet(card: card) {
+                Task { await manager.loadAllCards() }
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { fullscreenImage != nil },
+            set: { if !$0 { fullscreenImage = nil } }
+        )) {
+            if let name = fullscreenImage {
+                HomeImagePopupView(imageName: name)
+            }
+        }
+        .navigationDestination(item: $selectedCard) { card in
+            CardDetailView(card: card)
+        }
     }
 }

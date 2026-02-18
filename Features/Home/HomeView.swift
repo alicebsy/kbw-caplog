@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// 알림 화면으로 가기 위한 value (navigationDestination용)
+private enum NotificationDestination: Hashable { case open }
+
 struct HomeView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
 
@@ -10,6 +13,7 @@ struct HomeView: View {
     @State private var selectedCard: Card? = nil
     @State private var fullscreenImage: String? = nil
     @State private var editingCard: Card? = nil
+    @State private var notificationDestination: NotificationDestination? = nil
 
     // 메트릭
     private let S = HomeMetrics.sectionSpacing // 24pt
@@ -23,7 +27,7 @@ struct HomeView: View {
                 // ── 상단 인사 헤더 ──
                 HomeHeader(
                     userName: vm.userName,
-                    onTapNotification: { vm.showNotificationView = true }
+                    onTapNotification: { notificationDestination = .open }
                 )
                 Spacer().frame(height: S) // 24pt
 
@@ -100,6 +104,32 @@ struct HomeView: View {
                     }
                     .padding(.vertical, 32)
                     Spacer().frame(height: S)
+                } else {
+                    // 카드가 있을 때: 스크린샷 새로고침 (전체 너비 버튼, 자연스럽게)
+                    Button {
+                        Task { await vm.reimportAllScreenshotsFromGallery() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if vm.isImportingScreenshots {
+                                ProgressView()
+                                    .scaleEffect(0.85)
+                                    .tint(.secondary)
+                            } else {
+                                Text("⟳")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            Text(vm.isImportingScreenshots ? "가져오는 중…" : "스크린샷 새로고침")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                    }
+                    .disabled(vm.isImportingScreenshots)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
                 }
 
                 // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) — 없어도 탭은 표시 ──
@@ -218,11 +248,17 @@ struct HomeView: View {
             }
         }
 
-        // 네비게이션
+        // 네비게이션 (value 기반으로 알림 화면 진입 보장)
         .navigationDestination(item: $selectedCard) { CardDetailView(card: $0) }
-        .navigationDestination(isPresented: $vm.showNotificationView) { NotificationView() }
+        .navigationDestination(item: $notificationDestination) { _ in NotificationView() }
 
         .task { await vm.load() }
         .refreshable { await vm.load() }
+        .onReceive(NotificationCenter.default.publisher(for: .homeTabSelected)) { _ in
+            Task { await vm.reloadHomeContent() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task { await vm.reloadHomeContent() }
+        }
     }
 }

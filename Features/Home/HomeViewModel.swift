@@ -114,31 +114,63 @@ final class HomeViewModel: ObservableObject {
     // ===================================================================
     // MARK: - 갱신 로직 (카드 수정/삭제/태그/최근본 변경 시 자동 호출)
     // ===================================================================
-    func reloadHomeContent() async {
-        // Recommended
-        recommended = cardManager.recommendedCards(limit: 5)
-        
-        // Coupons (만료일이 지나지 않은 것만 표시)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy. MM. dd."
-        let now = Date()
-        
-        coupons = cardManager.cards(for: .info, subcategory: "쿠폰")
-            .filter { card in
-                // 만료일 필드가 있는 경우에만 필터링
-                guard let expiryString = card.fields["만료일"],
-                      let expiryDate = dateFormatter.date(from: expiryString) else {
-                    return false // 만료일이 없으면 표시하지 않음
-                }
-                // 만료일이 현재 날짜보다 이후인 것만 표시
-                return expiryDate >= now
+    /// 여러 날짜 형식 파싱 (yyyy.MM.dd., yyyy-MM-dd, yy.MM.dd 등)
+    private static func parseDate(_ s: String) -> Date? {
+        let trimmed = s.trimmingCharacters(in: .whitespaces)
+        let formatters: [DateFormatter] = {
+            let formats = ["yyyy. MM. dd.", "yyyy.MM.dd", "yyyy-MM-dd", "yy. MM. dd.", "yy.MM.dd", "MM/dd/yyyy", "yyyy/MM/dd"]
+            return formats.map { f in
+                let df = DateFormatter()
+                df.dateFormat = f
+                df.locale = Locale(identifier: "en_US_POSIX")
+                return df
             }
-            .sorted(by: { $0.fields["만료일", default: "" ] < $1.fields["만료일", default: "" ] })
-            .prefix(3) // 가장 가까운 3개만
-            .map { $0 }
-        
-        // Recently viewed  → 항상 CardManager 상태 기반으로 직접 계산
-        recent = cardManager.recentlyViewedCards(limit: 3)
+        }()
+        for formatter in formatters {
+            if let date = formatter.date(from: trimmed) { return date }
+        }
+        return nil
+    }
+
+    /// 같은 카드가 여러 번 나오지 않도록 ID 기준 중복 제거 (순서 유지)
+    private static func deduplicateByID(_ cards: [Card]) -> [Card] {
+        var seen = Set<UUID>()
+        return cards.filter { seen.insert($0.id).inserted }
+    }
+
+    func reloadHomeContent() async {
+        // 마감 임박: 쿠폰·공고·취업 등 만료일 있는 카드(미래 기준) + 만료일 없는 쿠폰도 포함, 날짜 순 후 만료일 없는 건 맨 뒤
+        let now = Date()
+        let expiringCandidate: [Card] = cardManager.allCards.filter { card in
+            let isCouponOrDeadlineType = card.subcategory == "쿠폰" || card.subcategory == "공고" || card.subcategory == "취업"
+            guard isCouponOrDeadlineType else { return false }
+            let dateString = card.fields["만료일"] ?? card.fields["valid_until"] ?? card.fields["deadline"] ?? ""
+            if dateString.isEmpty { return card.subcategory == "쿠폰" } // 쿠폰은 만료일 없어도 표시
+            guard let date = Self.parseDate(dateString) else { return card.subcategory == "쿠폰" }
+            return date >= now
+        }
+        var expiringSorted = expiringCandidate.sorted { c1, c2 in
+            let s1 = c1.fields["만료일"] ?? c1.fields["valid_until"] ?? c1.fields["deadline"] ?? ""
+            let s2 = c2.fields["만료일"] ?? c2.fields["valid_until"] ?? c2.fields["deadline"] ?? ""
+            let hasDate1 = !s1.isEmpty && Self.parseDate(s1) != nil
+            let hasDate2 = !s2.isEmpty && Self.parseDate(s2) != nil
+            if hasDate1, hasDate2, let d1 = Self.parseDate(s1), let d2 = Self.parseDate(s2) { return d1 < d2 }
+            if hasDate1 { return true }
+            if hasDate2 { return false }
+            return s1 < s2
+        }
+        coupons = Self.deduplicateByID(expiringSorted).prefix(5).map { $0 }
+
+        // Recommended: 최근 생성 순, 마감 임박에 이미 나온 카드는 제외 (같은 것 여러 번 안 나오게)
+        let expiringIds = Set(coupons.map(\.id))
+        recommended = Self.deduplicateByID(cardManager.recommendedCards(limit: 10).filter { !expiringIds.contains($0.id) })
+            .prefix(5).map { $0 }
+
+        // Recently viewed: 마감 임박·추천에 이미 나온 카드 제외
+        let recommendedIds = Set(recommended.map(\.id))
+        let excludeIds = expiringIds.union(recommendedIds)
+        recent = Self.deduplicateByID(cardManager.recentlyViewedCards(limit: 5).filter { !excludeIds.contains($0.id) })
+            .prefix(3).map { $0 }
         
         print("""
         🔄 HomeViewModel: 홈 데이터 갱신됨

@@ -16,6 +16,32 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         super.init()
     }
     
+    /// 스크린샷 앨범 찾기 (시뮬레이터에서는 .smartAlbumScreenshots가 비어 있을 수 있어 제목·최근 항목 fallback)
+    static func findScreenshotCollection() -> PHAssetCollection? {
+        let bySubtype = PHAssetCollection.fetchAssetCollections(
+            with: .smartAlbum,
+            subtype: .smartAlbumScreenshots,
+            options: nil
+        )
+        if let first = bySubtype.firstObject { return first }
+        let all = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .any, options: nil)
+        var result: PHAssetCollection?
+        all.enumerateObjects { col, _, stop in
+            if col.localizedTitle == "Screenshots" || col.localizedTitle?.contains("스크린샷") == true {
+                result = col
+                stop.pointee = true
+            }
+        }
+        if result != nil { return result }
+        // 시뮬레이터 등에서 스크린샷 앨범이 없으면 최근 항목(Recents) 사용
+        let recents = PHAssetCollection.fetchAssetCollections(
+            with: .smartAlbum,
+            subtype: .smartAlbumUserLibrary,
+            options: nil
+        )
+        return recents.firstObject
+    }
+    
     /// 모니터링 시작
     func startMonitoring() {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
@@ -25,16 +51,11 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
             return
         }
         
-        // 스크린샷 컬렉션 찾기
-        let collections = PHAssetCollection.fetchAssetCollections(
-            with: .smartAlbum,
-            subtype: .smartAlbumScreenshots,
-            options: nil
-        )
+        screenshotCollection = Self.findScreenshotCollection()
+        if screenshotCollection == nil {
+            print("⚠️ ScreenshotMonitor: 스크린샷 앨범을 찾지 못함 (시뮬레이터에서는 Cmd+S로 찍은 항목이 앨범에 들어갈 때까지 대기)")
+        }
         
-        screenshotCollection = collections.firstObject
-        
-        // 변경 감지 등록
         PHPhotoLibrary.shared().register(self)
         print("✅ ScreenshotMonitor: 실시간 스크린샷 모니터링 시작")
     }
@@ -48,38 +69,42 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
     // MARK: - PHPhotoLibraryChangeObserver
     
     func photoLibraryDidChange(_ changeInstance: PHChange) {
-        guard let collection = screenshotCollection else { return }
-        
-        // 스크린샷 컬렉션 변경 확인
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        let screenshots = PHAsset.fetchAssets(in: collection, options: fetchOptions)
-        
-        guard let changeDetails = changeInstance.changeDetails(for: screenshots),
-              changeDetails.hasIncrementalChanges else {
-            return
-        }
-        
-        // 새로 추가된 스크린샷 처리
-        let insertedIndexes = changeDetails.insertedIndexes
-        guard let insertedIndexes = insertedIndexes, !insertedIndexes.isEmpty else {
-            return
-        }
-        
-        print("📸 새 스크린샷 감지: \(insertedIndexes.count)개")
-        
-        for index in insertedIndexes {
-            let asset = changeDetails.fetchResultAfterChanges.object(at: index) as! PHAsset
-            if ScreenshotIndexer.shared.isAssetProcessed(asset) {
-                print("⏭️ 이미 카드로 만든 스크린샷 스킵: \(asset.localIdentifier)")
-                continue
+        // 콜백이 백그라운드 스레드에서 올 수 있으므로 MainActor에서 처리
+        Task { @MainActor in
+            if screenshotCollection == nil {
+                screenshotCollection = Self.findScreenshotCollection()
             }
-            if lastProcessedAssetIdentifier == asset.localIdentifier {
-                print("⏭️ 동일 세션에서 이미 처리한 스크린샷 스킵")
-                continue
+            guard let collection = screenshotCollection else { return }
+            
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+            let screenshots = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+            
+            guard let changeDetails = changeInstance.changeDetails(for: screenshots),
+                  changeDetails.hasIncrementalChanges else {
+                return
             }
-            lastProcessedAssetIdentifier = asset.localIdentifier
-            processNewScreenshot(asset: asset)
+            
+            let insertedIndexes = changeDetails.insertedIndexes
+            guard let insertedIndexes = insertedIndexes, !insertedIndexes.isEmpty else {
+                return
+            }
+            
+            print("📸 새 스크린샷 감지: \(insertedIndexes.count)개")
+            
+            for index in insertedIndexes {
+                let asset = changeDetails.fetchResultAfterChanges.object(at: index) as! PHAsset
+                if ScreenshotIndexer.shared.isAssetProcessed(asset) {
+                    print("⏭️ 이미 카드로 만든 스크린샷 스킵: \(asset.localIdentifier)")
+                    continue
+                }
+                if lastProcessedAssetIdentifier == asset.localIdentifier {
+                    print("⏭️ 동일 세션에서 이미 처리한 스크린샷 스킵")
+                    continue
+                }
+                lastProcessedAssetIdentifier = asset.localIdentifier
+                processNewScreenshot(asset: asset)
+            }
         }
     }
     

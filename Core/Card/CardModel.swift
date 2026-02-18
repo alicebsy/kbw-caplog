@@ -133,14 +133,11 @@ struct Card: Identifiable, Hashable, Codable {
         }
     }
     
-    // ✅ (수정) 변수명 및 로직 변경 (쿠폰 -> 만료일, 그외 -> 위치)
+    // ✅ 쿠폰/공고/취업은 만료일·마감일, 그 외는 위치
     var contextualInfoText: String {
-        // 1. 쿠폰인 경우 "만료일"
-        if self.subcategory == "쿠폰" {
-            return fields["만료일"] ?? ""
+        if self.subcategory == "쿠폰" || self.subcategory == "공고" || self.subcategory == "취업" {
+            return fields["만료일"] ?? fields["valid_until"] ?? fields["deadline"] ?? ""
         }
-        
-        // 2. 그 외에는 "위치" (location이 알아서 "" 반환)
         return self.location
     }
 }

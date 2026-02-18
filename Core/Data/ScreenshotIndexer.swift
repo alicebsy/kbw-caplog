@@ -38,6 +38,15 @@ final class ScreenshotIndexer {
         processedAssetIds.count
     }
 
+    /// 갤러리(스크린샷 앨범/최근 항목)에 있는 스크린샷 전체 개수 (비동기, 폴더 등에서 표시용)
+    static func fetchGalleryScreenshotCount() async -> Int {
+        guard let collection = ScreenshotMonitor.findScreenshotCollection() else { return 0 }
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        let result = PHAsset.fetchAssets(in: collection, options: options)
+        return result.count
+    }
+
     /// 이미 카드로 만든 스크린샷인지 (ScreenshotMonitor에서도 사용)
     func isAssetProcessed(_ asset: PHAsset) -> Bool {
         processedAssetIds.contains(asset.localIdentifier)
@@ -108,13 +117,8 @@ final class ScreenshotIndexer {
             return
         }
 
-        let collections = PHAssetCollection.fetchAssetCollections(
-            with: .smartAlbum,
-            subtype: .smartAlbumScreenshots,
-            options: nil
-        )
-        guard let collection = collections.firstObject else {
-            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "스크린샷 앨범을 찾을 수 없음 (기기/권한 확인)")
+        guard let collection = ScreenshotMonitor.findScreenshotCollection() else {
+            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "사진 앨범을 찾을 수 없음 (권한 확인)")
             return
         }
 
