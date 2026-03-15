@@ -16,17 +16,18 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-
-            // ===== 상단 행: 로고 + 검색창 + 돋보기 =====
-            HStack(spacing: 2) {
+            HStack(spacing: 12) {
                 Image("caplog_letter")
                     .resizable()
                     .scaledToFit()
                     .frame(width: showLogo ? 76 : 0, height: 22)
                     .opacity(showLogo ? 1 : 0)
                     .animation(.easeInOut(duration: 0.18), value: showLogo)
-                HStack(spacing: 5) {
-                    TextField("검색어를 입력해주세요.", text: $vm.query)
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.myPageSectionGreen)
+                    TextField("검색어를 입력해주세요", text: $vm.query)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
                         .submitLabel(.search)
@@ -36,23 +37,21 @@ struct SearchView: View {
                             vm.resetAndSearch()
                         }
                     if !vm.query.isEmpty {
-                        Button {
-                            vm.query = ""
-                        } label: {
+                        Button { vm.query = "" } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundStyle(Color.brandTextSub)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.white)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(Color.brandLine, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(uiColor: .separator).opacity(0.3), lineWidth: 1)
                         )
                 )
                 Button {
@@ -61,14 +60,17 @@ struct SearchView: View {
                 } label: {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.black)
-                        .frame(width: 36, height: 36)
-                        .contentShape(Rectangle())
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.myPageSectionGreen)
+                        .clipShape(Circle())
                 }
                 .accessibilityLabel("검색")
             }
-            .padding(.horizontal, 8)
-            .padding(.top, 10)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            .background(Color(uiColor: .systemGroupedBackground))
             .animation(.easeInOut(duration: 0.18), value: isFocused)
 
             // ===== 콘텐츠 =====
@@ -126,15 +128,17 @@ struct SearchView: View {
                             }
                         }
                         .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
                     }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color(uiColor: .systemGroupedBackground))
         }
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(Color.white, for: .navigationBar)
+        .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -183,7 +187,7 @@ private struct RecentSearchList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !items.isEmpty {
-                Text("Recent search")
+                Text("최근 검색")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 6)
@@ -212,9 +216,8 @@ private struct RecentSearchList: View {
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 2)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 )
             }
         }

@@ -42,12 +42,12 @@ struct CaplogTabBar: View {
                         VStack(spacing: 4) {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(selected == tab ? .primary : .secondary)
-                                .scaleEffect(selected == tab ? 1.1 : 1.0)
+                                .foregroundStyle(selected == tab ? Color.myPageSectionGreen : .secondary)
+                                .scaleEffect(selected == tab ? 1.08 : 1.0)
                                 .animation(.spring(duration: 0.24), value: selected)
                             Text(tab.label)
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(selected == tab ? .primary : .secondary)
+                                .foregroundStyle(selected == tab ? Color.myPageSectionGreen : .secondary)
                         }
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())

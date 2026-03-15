@@ -8,9 +8,8 @@ spring:
       enabled: true
 
   datasource:
-    # MySQL 주소·DB이름 (로컬 3306, DB명 caplog) — 보통 수정 안 함
     url: jdbc:mysql://localhost:3306/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
-    # MySQL 로그인 계정 — Workbench에서 쓰는 아이디/비밀번호와 동일하게
+    # 로컬 MySQL 계정이 다르면 환경변수로 지정: export SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=비밀번호
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -3,12 +3,27 @@ import SwiftUI
 struct MyPageView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = MyPageViewModel()
+    @ObservedObject private var cardManager = CardManager.shared
     @State private var showingError = false
     @State private var showPasswordSheet = false
+    @State private var isRemovingDuplicates = false
+    @State private var screenshotCount: Int?
+    @State private var showResetConfirm = false
+    @State private var isImportingScreenshots = false
 
     var body: some View {
         ScrollView(showsIndicators: false) { content }
+            .background(Color(uiColor: .systemGroupedBackground))
             .onAppear { vm.onAppear() }
+            .task { screenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
+            .alert("로컬 카드 초기화", isPresented: $showResetConfirm) {
+                Button("취소", role: .cancel) {}
+                Button("초기화", role: .destructive) {
+                    cardManager.clearLocalCardsAndResetScreenshotState()
+                }
+            } message: {
+                Text("로컬에만 있는 카드를 모두 지우고, 스크린샷 처리 목록을 비웁니다. 아래 '스크린샷에서 카드 가져오기'를 누르면 스크린샷당 카드 1개만 다시 만들어집니다.")
+            }
             .modifier(MyPageModifier(vm: vm, showingError: $showingError))
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -55,8 +70,45 @@ struct MyPageView: View {
             )
 
             MyPageUsageCard(
-                savedCount: CardManager.shared.allCards.count,
-                recommendedCount: CardManager.shared.recommendedCards().count
+                savedCount: cardManager.allCards.count,
+                recommendedCount: cardManager.recommendedCards().count
+            )
+
+            // 스크린샷: 가져오기 / 새로고침
+            MyPageScreenshotSection(
+                isImporting: $isImportingScreenshots,
+                onImport: {
+                    isImportingScreenshots = true
+                    Task {
+                        await ScreenshotIndexer.shared.forceImportRecentScreenshots(limit: 20)
+                        NotificationCenter.default.post(name: .cardUpdated, object: nil)
+                        isImportingScreenshots = false
+                    }
+                },
+                onRefresh: {
+                    isImportingScreenshots = true
+                    Task {
+                        await ScreenshotIndexer.shared.resetAndReimportScreenshots(limit: 50)
+                        NotificationCenter.default.post(name: .cardUpdated, object: nil)
+                        isImportingScreenshots = false
+                    }
+                }
+            )
+
+            // 카드 관리: 중복 현황 + 중복 제거 + 로컬 초기화
+            MyPageCardCleanupSection(
+                cardCount: cardManager.allCards.count,
+                duplicateCount: cardManager.duplicateCount,
+                screenshotCount: screenshotCount,
+                isRemovingDuplicates: $isRemovingDuplicates,
+                onRemoveDuplicates: {
+                    isRemovingDuplicates = true
+                    Task {
+                        await cardManager.removeDuplicateCards()
+                        isRemovingDuplicates = false
+                    }
+                },
+                onResetAndReimport: { showResetConfirm = true }
             )
 
             MyPageProfileSection(

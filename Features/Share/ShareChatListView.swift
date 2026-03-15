@@ -81,80 +81,59 @@ struct ShareChatListView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
             .refreshable { await vm.loadAll() }
-            .sheet(isPresented: $showFriendSelection) {
-                ShareFriendSelectionView(vm: vm) { selectedFriends in
-                    Task {
-                        await startGroupChat(with: selectedFriends)
-                    }
-                }
-            }
-            
-            // 플로팅 새 채팅 버튼
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button {
-                        showFriendSelection = true
-                    } label: {
-                        Image(systemName: "plus.bubble.fill")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(
-                                Circle()
-                                    .fill(Color.blue)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                            )
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 20)
+        }
+        .sheet(isPresented: $showFriendSelection) {
+            ShareFriendSelectionView(vm: vm) { selectedFriends in
+                Task {
+                    await startGroupChat(with: selectedFriends)
                 }
             }
         }
+        // 하단 탭바와 겹치지 않도록 safeAreaInset으로 버튼 배치
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack {
+                Spacer()
+                Button {
+                    showFriendSelection = true
+                } label: {
+                    Image(systemName: "plus.bubble.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 60, height: 60)
+                        .background(
+                            Circle()
+                                .fill(Color.myPageSectionGreen)
+                                .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                        )
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 12)
+            }
+            .padding(.top, 4)
+        }
     }
     
-    /// 그룹 채팅 시작
+    /// 그룹 채팅 시작 (1:1 또는 단체 — 서버에 채팅방 생성 후 진입)
     private func startGroupChat(with friends: [Friend]) async {
         guard !friends.isEmpty else { return }
         
+        let participantUserIds = friends.map { $0.id }
+        let title: String
         if friends.count == 1 {
-            let friend = friends[0]
-            if let existingThread = vm.threads.first(where: { t in
-                t.participantIds.count == 2 && t.participantIds.contains(friend.id)
-            }) {
-                selectedThread = existingThread
-            } else {
-                let newThread = ChatThread(
-                    id: "new_\(friend.id)_\(UUID().uuidString)",
-                    title: friend.name,
-                    participantIds: ["me", friend.id],
-                    lastMessageText: nil,
-                    lastMessageAt: Date(),
-                    unreadCount: 0
-                )
-                await vm.addNewThread(newThread)
-                selectedThread = newThread
+            title = friends[0].name
+            if let existing = vm.threads.first(where: { $0.title == title }) {
+                selectedThread = existing
+                return
             }
         } else {
-            let participantIds = ["me"] + friends.map { $0.id }
-            let title = friends
-                .map { $0.name }
-                .sorted()
-                .joined(separator: ", ")
-            
-            let newThread = ChatThread(
-                id: "new_group_\(UUID().uuidString)",
-                title: title,
-                participantIds: participantIds,
-                lastMessageText: nil,
-                lastMessageAt: Date(),
-                unreadCount: 0
-            )
-            
-            await vm.addNewThread(newThread)
-            selectedThread = newThread
+            title = friends.map { $0.name }.sorted().joined(separator: ", ")
+        }
+        
+        if let thread = await vm.createAndEnterChat(participantUserIds: participantUserIds, title: title) {
+            selectedThread = thread
         }
     }
 }

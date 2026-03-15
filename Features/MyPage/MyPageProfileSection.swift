@@ -7,100 +7,95 @@ struct MyPageProfileSection: View {
     @State private var showPicker = false
     var onSave: () -> Void
     var isSaveEnabled: Bool = true
-    
+
     @State private var originalGender: Gender? = nil
     @State private var originalBirthday: Date? = nil
     @State private var tempBirthday: Date = Date()
 
-    private let profileFieldFont = Font.system(size: 16, weight: .regular)
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             MyPageSectionHeader(title: "프로필")
 
-            HStack(spacing: 12) {
-                Text("성별")
-                    .font(.system(size: 15, weight: .semibold))
-                    .frame(width: 90, alignment: .leading)
-
-                HStack(spacing: 24) {
-                    RadioButton(
-                        isOn: {
-                            if let g = gender {
-                                return g == .male
-                            }
-                            return false
-                        }(),
-                        title: "남성"
-                    ) {
-                        print("✅ 남성 선택됨")
-                        gender = .male
-                    }
-                    RadioButton(
-                        isOn: {
-                            if let g = gender {
-                                return g == .female
-                            }
-                            return false
-                        }(),
-                        title: "여성"
-                    ) {
-                        print("✅ 여성 선택됨")
-                        gender = .female
-                    }
+            VStack(spacing: 0) {
+                // 성별
+                HStack(spacing: 14) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Color.myPageSectionGreen)
+                        .frame(width: 24, alignment: .center)
+                    Text("성별")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+                        .frame(width: 72, alignment: .leading)
+                    MyPageSegmentedChoice(
+                        options: [
+                            (id: "남성", title: "남성"),
+                            (id: "여성", title: "여성")
+                        ],
+                        selection: gender?.rawValue,
+                        action: { id in
+                            gender = id == "남성" ? .male : .female
+                        }
+                    )
+                    .frame(maxWidth: 140)
+                    CapsuleButton(
+                        title: "저장",
+                        action: {
+                            onSave()
+                            originalGender = gender
+                            originalBirthday = birthday
+                        },
+                        tint: .white,
+                        fill: .clear,
+                        fullWidth: false,
+                        isEnabled: true,
+                        verticalPadding: 6,
+                        fontSize: 13,
+                        isPrimary: true
+                    )
                 }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 16)
 
-                Spacer(minLength: 8)
+                MyPageRowDivider()
 
-                CapsuleButton(
-                    title: "저장",
-                    action: {
-                        print("✅ 프로필 저장 버튼 클릭됨")
-                        print("✅ 현재 성별: \(gender?.rawValue ?? "미선택")")
-                        print("✅ 현재 생일: \(birthday?.description ?? "없음")")
-                        onSave()
-                        originalGender = gender
-                        originalBirthday = birthday
-                    },
-                    tint: .primary,
-                    fill: .white,
-                    fullWidth: false,
-                    isEnabled: true
-                )
+                // 생년월일
+                Button {
+                    tempBirthday = birthday ?? Date()
+                    showPicker = true
+                } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 15))
+                            .foregroundStyle(Color.myPageSectionGreen)
+                            .frame(width: 24, alignment: .center)
+                        Text("생년월일")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.primary)
+                            .frame(width: 72, alignment: .leading)
+                        Text(birthday.map { DateFormatter.display.string(from: $0) } ?? "미설정")
+                            .font(.system(size: 15))
+                            .foregroundColor(birthday == nil ? .secondary : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 16)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
-
-            HStack(spacing: 12) {
-                Text("생년월일")
-                    .font(.system(size: 15, weight: .semibold))
-                    .frame(width: 90, alignment: .leading)
-
-                Text(birthday.map { DateFormatter.display.string(from: $0) } ?? "미설정")
-                    .font(profileFieldFont)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .layoutPriority(1)
-
-                Spacer(minLength: 8)
-
-                CapsuleButton(
-                    title: "날짜 선택",
-                    action: {
-                        tempBirthday = birthday ?? Date()
-                        showPicker = true
-                    },
-                    tint: .primary,
-                    fill: .white
-                )
-            }
-            .animation(.none, value: birthday)
+            .background(Color(uiColor: .tertiarySystemGroupedBackground))
+            .cornerRadius(12)
         }
         .sectionContainer()
         .onAppear {
             originalGender = gender
             originalBirthday = birthday
-        }
-        .onChange(of: gender) { oldValue, newValue in
-            print("✅ 성별 변경됨: \(oldValue?.rawValue ?? "없음") -> \(newValue?.rawValue ?? "없음")")
         }
         .sheet(isPresented: $showPicker) {
             BirthdayPickerSheet(
@@ -108,13 +103,9 @@ struct MyPageProfileSection: View {
                 onConfirm: {
                     birthday = tempBirthday
                     showPicker = false
-                    print("🎂 생년월일 변경됨: \(tempBirthday)")
-                    // 생년월일 변경 후 자동 저장
                     onSave()
                 },
-                onCancel: {
-                    showPicker = false
-                }
+                onCancel: { showPicker = false }
             )
         }
     }
@@ -126,44 +117,29 @@ struct BirthdayPickerSheet: View {
     @Binding var selectedDate: Date
     let onConfirm: () -> Void
     let onCancel: () -> Void
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // 상단 여백
-                Spacer()
-                    .frame(height: 20)
-                
-                // DatePicker
-                DatePicker(
-                    "",
-                    selection: $selectedDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-                .padding()
-                
-                Spacer()
-                    .frame(height: 20)
+                Spacer().frame(height: 20)
+                DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding()
+                Spacer().frame(height: 20)
             }
             .background(Color(.systemBackground))
             .navigationTitle("생년월일")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") {
-                        onCancel()
-                    }
-                    .foregroundColor(.primary)
+                    Button("취소") { onCancel() }
+                        .foregroundColor(.primary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") {
-                        print("✅ 생년월일 선택 완료: \(selectedDate.description)")
-                        onConfirm()
-                    }
-                    .foregroundColor(Color.myPageActionBlue)
-                    .fontWeight(.semibold)
+                    Button("완료") { onConfirm() }
+                        .foregroundColor(Color.myPageActionBlue)
+                        .fontWeight(.semibold)
                 }
             }
         }
@@ -184,17 +160,14 @@ private extension DateFormatter {
     struct PreviewWrapper: View {
         @State var gender: MyPageViewModel.Gender? = nil
         @State var birthday: Date? = nil
-        
+
         var body: some View {
             MyPageProfileSection(
                 gender: $gender,
                 birthday: $birthday,
-                onSave: {
-                    print("저장됨")
-                }
+                onSave: { }
             )
         }
     }
-    
     return PreviewWrapper()
 }

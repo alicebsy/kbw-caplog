@@ -15,8 +15,20 @@ struct ShareAPI {
         try await client.request("GET", path: Endpoints.shareFriends)
     }
     
-    // MARK: - 채팅
-    
+// MARK: - 채팅
+
+    /// 채팅방 생성 (1:1 또는 단체) — participantUserIds: 상대방 userId 목록 (본인은 서버에서 JWT로 추가)
+    func createChatRoom(participantUserIds: [String]) async throws -> ChatSummary {
+        struct CreateBody: Encodable {
+            let participantUserIds: [String]
+        }
+        return try await client.request(
+            "POST",
+            path: Endpoints.shareChats,
+            body: CreateBody(participantUserIds: participantUserIds)
+        )
+    }
+
     /// 채팅방 목록 조회
     func fetchChats() async throws -> [ChatSummary] {
         try await client.request("GET", path: Endpoints.shareChats)

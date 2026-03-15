@@ -13,7 +13,7 @@ struct FolderView: View {
                 .navigationTitle("Folder")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarBackground(Color.white, for: .navigationBar)
+                .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
@@ -75,15 +75,15 @@ struct FolderCategoryListView: View {
                         }) {
                             HStack(spacing: 8) {
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(selectedCategory == category ? category.color : Color.clear)
+                                    .fill(selectedCategory == category ? Color.myPageSectionGreen : Color.clear)
                                     .frame(width: 4, height: 24)
 
                                 Text("\(category.emoji) \(category.rawValue)")
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 17, weight: .semibold))
                                     .foregroundColor(
                                         selectedCategory == category
-                                        ? Color.homeGreenDark
-                                        : .black
+                                        ? Color.myPageSectionGreen
+                                        : .primary
                                     )
                                     .lineLimit(1)
 
@@ -117,7 +117,7 @@ struct FolderCategoryListView: View {
                                 Text("최근 인식 카드")
                                     .font(.system(size: 13, weight: .medium))
                             }
-                            .foregroundStyle(Color.homeGreenDark)
+                            .foregroundStyle(Color.myPageSectionGreen)
                         }
                     }
                     .padding(.leading, 20)
@@ -127,7 +127,7 @@ struct FolderCategoryListView: View {
                 .padding(.top, 16)
             }
             .frame(width: UIScreen.main.bounds.width / 2)
-            .background(Color.white)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .onAppear {
                 Task { galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
             }
@@ -147,7 +147,7 @@ struct FolderCategoryListView: View {
                                 FolderItemListView(category: selectedCategory, subcategory: sub.name)
                                     .environmentObject(manager)
                             } label: {
-                                Text(sub.name)
+                                Text("\(Card.emoji(forSubcategory: sub.name)) \(sub.name)")
                                     .font(.system(size: 17, weight: .regular))
                                     .foregroundStyle(Color.primary)
                             }
@@ -159,7 +159,8 @@ struct FolderCategoryListView: View {
                 }
             }
             .listStyle(.plain)
-            .background(Color(red: 246/255, green: 248/255, blue: 246/255))
+            .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
         }
     }
 }
@@ -208,8 +209,19 @@ struct FolderItemListView: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                Divider()
+                    .background(Color.black.opacity(0.12))
+                Rectangle()
+                    .fill(Color(.systemBackground))
+                    .frame(height: 12)
+            }
+        }
         
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) {
@@ -296,8 +308,19 @@ struct FolderRecentCardsView: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("최근 인식 카드")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                Divider()
+                    .background(Color.black.opacity(0.12))
+                Rectangle()
+                    .fill(Color(.systemBackground))
+                    .frame(height: 12)
+            }
+        }
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) {
                 Task { await manager.loadAllCards() }

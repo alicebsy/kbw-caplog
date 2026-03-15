@@ -40,15 +40,18 @@ struct ChatThread: Identifiable, Codable, Equatable, Hashable {
 protocol ShareRepository {
     func fetchFriends() async throws -> [Friend]
     func fetchChatThreads() async throws -> [ChatThread]
+    func createChatRoom(participantUserIds: [String], title: String) async throws -> ChatThread
     func fetchMessages(threadId: String) async throws -> [ChatMessage]
     func sendMessage(threadId: String, text: String?, cardID: UUID?) async throws -> ChatMessage
     func markRead(threadId: String) async throws
     func leaveChat(threadId: String) async throws
+    func removeFriend(userId: String) async throws
 }
 
 extension ShareRepository {
     func markRead(threadId: String) async throws { }
     func leaveChat(threadId: String) async throws { }
+    func removeFriend(userId: String) async throws { }
 }
 
 
@@ -287,6 +290,23 @@ final class MockShareRepository: ShareRepository {
         return _threads
     }
 
+    func createChatRoom(participantUserIds: [String], title: String) async throws -> ChatThread {
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let id = "mock_\(UUID().uuidString)"
+        let thread = ChatThread(
+            id: id,
+            title: title,
+            participantIds: ["me"] + participantUserIds,
+            lastMessageText: nil,
+            lastMessageAt: Date(),
+            unreadCount: 0,
+            lastMessageCardTitle: nil
+        )
+        _threads.insert(thread, at: 0)
+        messageStore[id] = []
+        return thread
+    }
+
     func fetchMessages(threadId: String) async throws -> [ChatMessage] {
         try? await Task.sleep(nanoseconds: 100_000_000)
         return messageStore[threadId] ?? []
@@ -315,6 +335,111 @@ final class MockShareRepository: ShareRepository {
     func leaveChat(threadId: String) async throws {
         _threads.removeAll { $0.id == threadId }
         messageStore.removeValue(forKey: threadId)
+    }
+
+    func removeFriend(userId: String) async throws {
+        // Mock: 로컬만 제거 (FriendManager는 View에서 호출하는 쪽에서 동기화)
+    }
+}
+
+
+// MARK: - RealShareRepository (실제 백엔드 연동)
+
+/// 실제 백엔드 `ShareAPI`/`FriendAPI`와 연동하는 구현
+final class RealShareRepository: ShareRepository {
+    private let shareAPI: ShareAPI
+    private let friendAPI: FriendAPI
+    
+    init(
+        shareAPI: ShareAPI = ShareAPI(),
+        friendAPI: FriendAPI = FriendAPI()
+    ) {
+        self.shareAPI = shareAPI
+        self.friendAPI = friendAPI
+    }
+    
+    // 친구 목록은 `/users/friends`에서 그대로 가져온다.
+    func fetchFriends() async throws -> [Friend] {
+        try await shareAPI.fetchFriends()
+    }
+    
+// 채팅방 목록 → 서버 `ChatSummary`를 `ChatThread`로 매핑
+    func fetchChatThreads() async throws -> [ChatThread] {
+        let summaries = try await shareAPI.fetchChats()
+        return summaries.map { summary in
+            ChatThread(
+                id: summary.id,
+                title: summary.title,
+                participantIds: [],
+                lastMessageText: summary.lastMessage,
+                lastMessageAt: summary.updatedAt,
+                unreadCount: summary.unreadCount,
+                lastMessageCardTitle: nil
+            )
+        }
+    }
+
+    // 채팅방 생성 (1:1 또는 단체) — 서버에 생성 후 반환된 방 정보로 스레드 반환
+    func createChatRoom(participantUserIds: [String], title: String) async throws -> ChatThread {
+        let summary = try await shareAPI.createChatRoom(participantUserIds: participantUserIds)
+        return ChatThread(
+            id: summary.id,
+            title: summary.title.isEmpty ? title : summary.title,
+            participantIds: [],
+            lastMessageText: summary.lastMessage,
+            lastMessageAt: summary.updatedAt,
+            unreadCount: summary.unreadCount,
+            lastMessageCardTitle: nil
+        )
+    }
+
+    // 메시지 목록 → 서버 `Message`를 `ChatMessage`로 매핑
+    func fetchMessages(threadId: String) async throws -> [ChatMessage] {
+        let messages = try await shareAPI.fetchMessages(chatId: threadId)
+        return messages.map { msg in
+            ChatMessage(
+                id: msg.id,
+                senderId: msg.senderId,
+                text: msg.text,
+                cardID: nil,
+                createdAt: msg.createdAt
+            )
+        }
+    }
+    
+    // 텍스트 메시지는 서버로 전송, 카드 공유는 우선 로컬만 반영
+    func sendMessage(threadId: String, text: String?, cardID: UUID?) async throws -> ChatMessage {
+        if let cardID {
+            // 서버 메시지 모델에 카드 정보가 아직 없어서,
+            // 우선 로컬용 메시지로만 추가한다.
+            return ChatMessage(
+                senderId: "me",
+                text: text,
+                cardID: cardID
+            )
+        }
+        
+        let bodyText = text ?? ""
+        let serverMsg = try await shareAPI.sendMessage(chatId: threadId, text: bodyText)
+        return ChatMessage(
+            id: serverMsg.id,
+            senderId: serverMsg.senderId,
+            text: serverMsg.text,
+            cardID: nil,
+            createdAt: serverMsg.createdAt
+        )
+    }
+    
+    func markRead(threadId: String) async throws {
+        try await shareAPI.markRead(chatId: threadId)
+    }
+    
+    func leaveChat(threadId: String) async throws {
+        // 아직 별도 API가 없으므로 일단은 no-op 처리.
+    }
+
+    func removeFriend(userId: String) async throws {
+        try await friendAPI.delete(userId: userId)
     }
 }
 
@@ -346,7 +471,8 @@ final class ShareViewModel: ObservableObject {
     // --------------------------------------------------
     // MARK: - init()
     // --------------------------------------------------
-    private nonisolated init(repo: ShareRepository = MockShareRepository.shared) {
+    /// 기본값을 RealShareRepository로 두고, 필요 시 인자로 Mock을 주입해서 사용할 수 있다.
+    private nonisolated init(repo: ShareRepository = RealShareRepository()) {
         self.repo = repo
         
         // 🔥 (4번 기능) 프로필 변경 감지 — nickname, profileImageName 모두 반영
@@ -387,6 +513,11 @@ final class ShareViewModel: ObservableObject {
         catch {
             self.errorMessage = error.localizedDescription
         }
+    }
+
+    /// 외부에서 친구 목록만 다시 로드할 수 있도록 공개 래퍼 제공
+    func reloadFriends() async {
+        await loadFriends()
     }
 
 
@@ -538,6 +669,25 @@ final class ShareViewModel: ObservableObject {
     // MARK: - 새 채팅방
     // --------------------------------------------------
 
+    /// 서버에 채팅방 생성 후 목록에 추가하고 해당 스레드 반환 (1:1 또는 단체)
+    func createAndEnterChat(participantUserIds: [String], title: String) async -> ChatThread? {
+        guard !participantUserIds.isEmpty else { return nil }
+        do {
+            var thread = try await repo.createChatRoom(participantUserIds: participantUserIds, title: title)
+            if !threads.contains(where: { $0.id == thread.id }) {
+                threads.insert(thread, at: 0)
+                messagesByThread[thread.id] = []
+                print("✅ 새 채팅방 생성 및 추가: \(thread.title)")
+            } else if let existing = threads.first(where: { $0.id == thread.id }) {
+                thread = existing
+            }
+            return thread
+        } catch {
+            self.errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
     func addNewThread(_ thread: ChatThread) async {
         if !threads.contains(where: { $0.id == thread.id }) {
             threads.insert(thread, at: 0)
@@ -568,9 +718,18 @@ final class ShareViewModel: ObservableObject {
     // --------------------------------------------------
     
     func removeFriend(id: String) {
-        friends.removeAll { $0.id == id }
-        FriendManager.shared.removeFriend(id: id)  // FriendManager도 동기화
-        print("🗑️ 친구 삭제 완료: \(id)")
+        Task {
+            do {
+                try await repo.removeFriend(userId: id)
+                await MainActor.run {
+                    friends.removeAll { $0.id == id }
+                    FriendManager.shared.removeFriend(id: id)
+                    print("🗑️ 친구 삭제 완료: \(id)")
+                }
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
+        }
     }
     
     

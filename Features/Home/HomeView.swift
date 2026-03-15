@@ -8,7 +8,6 @@ struct HomeView: View {
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
-    @ObservedObject private var pipelineStatus = ScreenshotPipelineStatus.shared
 
     @State private var selectedCard: Card? = nil
     @State private var fullscreenImage: String? = nil
@@ -23,116 +22,27 @@ struct HomeView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-
-                // ── 상단 인사 헤더 ──
                 HomeHeader(
                     userName: vm.userName,
                     onTapNotification: { notificationDestination = .open }
                 )
-                Spacer().frame(height: S) // 24pt
+                Spacer().frame(height: S)
 
-                // ── 카드 없을 때: 스크린샷에서 카드 가져오기 안내 ──
                 if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Text("아직 카드가 없어요")
                             .font(.headline)
                             .foregroundColor(.secondary)
-                        Text("시뮬레이터: ⌘+S로 스크린샷을 찍은 뒤 아래 버튼을 눌러보세요.")
+                        Text("마이페이지 → 스크린샷에서 카드를 가져올 수 있어요.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
-                        Button {
-                            Task { await vm.importScreenshotsFromGallery() }
-                        } label: {
-                            HStack {
-                                if vm.isImportingScreenshots {
-                                    ProgressView()
-                                        .tint(.white)
-                                } else {
-                                    Image(systemName: "photo.on.rectangle.angled")
-                                }
-                                Text(vm.isImportingScreenshots ? "가져오는 중…" : "스크린샷에서 카드 가져오기")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                        .disabled(vm.isImportingScreenshots)
-                        .padding(.horizontal, 24)
-
-                        Button {
-                            Task { await vm.reimportAllScreenshotsFromGallery() }
-                        } label: {
-                            HStack {
-                                Image(systemName: "arrow.clockwise")
-                                Text("기존 스크린샷 전부 다시 인식·카드 만들기")
-                                    .font(.subheadline)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color(.systemGray5))
-                            .foregroundColor(.primary)
-                            .cornerRadius(12)
-                        }
-                        .disabled(vm.isImportingScreenshots)
-                        .padding(.horizontal, 24)
-                        .padding(.top, 8)
-
-                        // 스크린샷 → 카드 연동 상태 (POST 나갔는지 등 확인용)
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("마지막 확인")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text(pipelineStatus.lastMessage)
-                                .font(.caption)
-                                .foregroundColor(.primary)
-                            if let err = pipelineStatus.lastError {
-                                Text(err)
-                                    .font(.caption2)
-                                    .foregroundColor(.red)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                        .padding(.horizontal, 24)
-                        .padding(.top, 12)
                     }
                     .padding(.vertical, 32)
                     Spacer().frame(height: S)
-                } else {
-                    // 카드가 있을 때: 스크린샷 새로고침 (전체 너비 버튼, 자연스럽게)
-                    Button {
-                        Task { await vm.reimportAllScreenshotsFromGallery() }
-                    } label: {
-                        HStack(spacing: 8) {
-                            if vm.isImportingScreenshots {
-                                ProgressView()
-                                    .scaleEffect(0.85)
-                                    .tint(.secondary)
-                            } else {
-                                Text("⟳")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
-                            Text(vm.isImportingScreenshots ? "가져오는 중…" : "스크린샷 새로고침")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                    }
-                    .disabled(vm.isImportingScreenshots)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 8)
                 }
 
-                // ── 섹션 1: Expiring Soon (쿠폰 캐러셀) — 없어도 탭은 표시 ──
                 HomeSection(title: "⏳ Expiring Soon") {
                     if vm.coupons.isEmpty {
                         Text("마감 임박한 스크린샷이 아직 없어요")
@@ -140,6 +50,7 @@ struct HomeView: View {
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
                             .frame(height: couponH)
+                            .padding(.horizontal, 20)
                     } else {
                         TabView {
                             ForEach(vm.coupons) { card in
@@ -154,7 +65,7 @@ struct HomeView: View {
                                         }
                                         CardManager.shared.markCardAsViewed(card)
                                     },
-                                    isHomeScreen: true // ✅ 홈 화면 쿠폰 전용 이미지 사용
+                                    isHomeScreen: true
                                 )
                                 .frame(height: couponH)
                                 .padding(.horizontal, 20)
@@ -165,9 +76,8 @@ struct HomeView: View {
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
                 }
-                Spacer().frame(height: S) // 24pt
+                Spacer().frame(height: S)
 
-                // ── 섹션 2: Recommended Contents ──
                 if !vm.recommended.isEmpty {
                     HomeSection(title: "💡 Recommended Contents") {
                         TabView {
@@ -188,10 +98,9 @@ struct HomeView: View {
                         .frame(height: 180)
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
-                    Spacer().frame(height: S) // 24pt
+                    Spacer().frame(height: S)
                 }
 
-                // ── 섹션 3: Recently Viewed ──
                 if !vm.recent.isEmpty {
                     HomeSection(title: "👀 Recently Viewed") {
                         VStack(spacing: 12) {
@@ -211,10 +120,11 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 20)
                     }
-                    Spacer().frame(height: S) // 24pt
+                    Spacer().frame(height: S)
                 }
             }
         }
+        .background(Color(uiColor: .systemBackground))
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

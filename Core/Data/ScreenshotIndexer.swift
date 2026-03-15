@@ -163,7 +163,8 @@ final class ScreenshotIndexer {
                     Task { @MainActor in
                         switch result {
                         case .success(let processingResult):
-                            let card = processingResult.card
+                            var card = processingResult.card
+                            card.sourceScreenshotAssetId = asset.localIdentifier
                             print("[Caplog 스크린샷] OCR·GPT 성공 → 카드 생성 단계: \(card.title)")
                             if let id = card.thumbnailURL ?? card.screenshotURLs.first {
                                 CardImageStore.save(image: uiImage, id: id)
@@ -206,7 +207,8 @@ final class ScreenshotIndexer {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let processingResult):
-                        let card = processingResult.card
+                        var card = processingResult.card
+                        card.sourceScreenshotAssetId = asset.localIdentifier
                         print("📤 ScreenshotIndexer: OCR/GPT 결과 DB 저장 시도 - \(card.title)")
                         if let id = card.thumbnailURL ?? card.screenshotURLs.first {
                             CardImageStore.save(image: uiImage, id: id)

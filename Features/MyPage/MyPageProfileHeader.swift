@@ -14,67 +14,59 @@ struct MyPageProfileHeader: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
-            // 프로필 이미지 + 카메라 버튼
             ZStack(alignment: .bottomTrailing) {
-                // 프로필 이미지
                 if let profileImage = profileImage {
                     Image(uiImage: profileImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 60, height: 60)
+                        .frame(width: 64, height: 64)
                         .clipShape(Circle())
+                        .overlay(Circle().stroke(Color(uiColor: .systemGray5), lineWidth: 1))
                 } else {
                     Image(systemName: "person.circle.fill")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 60, height: 60)
-                        .foregroundStyle(Color.caplogGrayMedium, Color.caplogGrayLight)
+                        .frame(width: 64, height: 64)
+                        .foregroundStyle(Color.myPageSectionGreen.opacity(0.3), Color(uiColor: .systemGray6))
                 }
-
-                // 카메라 버튼 (검은 카메라 아이콘만)
                 Button {
-                    if profileImage != nil {
-                        // 사진이 있을 때는 옵션 알림 표시
-                        showPhotoAlert = true
-                    } else {
-                        // 아직 사진이 없으면 바로 앨범 열기
-                        showImagePicker = true
-                    }
+                    if profileImage != nil { showPhotoAlert = true }
+                    else { showImagePicker = true }
                 } label: {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.black)
-                        .padding(4)
+                    Image(systemName: "camera.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.white)
+                        .background(Circle().fill(Color.myPageSectionGreen))
                 }
                 .offset(x: 2, y: 2)
             }
 
-            // 이름 + 비밀번호 변경 버튼
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(displayName.isEmpty ? "프로필" : "\(displayName) 님")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.black)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(displayName.isEmpty ? "프로필" : displayName)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.primary)
+                Button(action: onChangePassword) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "lock.rotation")
+                            .font(.system(size: 12))
+                        Text("비밀번호 변경")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(Color.myPageActionBlue)
                 }
-
-                Spacer(minLength: 0) // ✅ 8 → 0으로 변경 (버튼을 왼쪽으로)
-
-                CapsuleButton(
-                    title: "비밀번호 변경",
-                    action: onChangePassword,
-                    tint: .primary,
-                    fill: .white,
-                    fullWidth: false,
-                    isEnabled: true,
-                    verticalPadding: 6,
-                    fontSize: 13
-                )
-                .padding(.trailing, 4) // ✅ 오른쪽 여백 추가로 더 왼쪽으로
+                .buttonStyle(.plain)
             }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
         .padding(.horizontal, 20)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         // 사진 선택용 PhotosPicker
         .photosPicker(
             isPresented: $showImagePicker,

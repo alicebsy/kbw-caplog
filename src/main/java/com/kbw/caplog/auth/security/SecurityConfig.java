@@ -39,7 +39,6 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable()) // 브라우저 기본 인증 팝업 비활성
                 .formLogin(login -> login.disable()) // 폼 로그인(스프링 제공 로그인 페이지) 비활성
 
-                
                 // 인가 규칙 (어떤 URL을 누구에게 열어줄지 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.PUT, "/api/auth/password").authenticated() // 비밀번호 변경은 JWT 필요

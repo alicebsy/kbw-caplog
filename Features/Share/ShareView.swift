@@ -12,24 +12,32 @@ struct ShareView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Button { innerTab = .friends } label: {
                     Label("친구", systemImage: "person.2.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(innerTab == .friends ? .primary : .secondary)
-                        .padding(.vertical, 8).padding(.horizontal, 10)
-                        .background(Capsule().fill(innerTab == .friends ? Color.secondary.opacity(0.15) : .clear))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(innerTab == .friends ? .white : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(innerTab == .friends ? Color.myPageSectionGreen : Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
                 }
+                .buttonStyle(.plain)
                 Button { innerTab = .chats } label: {
                     Label("채팅", systemImage: "bubble.left.and.bubble.right.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(innerTab == .chats ? .primary : .secondary)
-                        .padding(.vertical, 8).padding(.horizontal, 10)
-                        .background(Capsule().fill(innerTab == .chats ? Color.secondary.opacity(0.15) : .clear))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(innerTab == .chats ? .white : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(innerTab == .chats ? Color.myPageSectionGreen : Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
                 }
-                Spacer()
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 6)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            .background(Color(uiColor: .systemGroupedBackground))
             
             Group {
                 switch innerTab {
@@ -39,6 +47,8 @@ struct ShareView: View {
                     ShareChatListView(vm: vm, selectedThread: $selectedThread)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(uiColor: .systemGroupedBackground))
         }
         .navigationTitle("Share")
         .navigationBarTitleDisplayMode(.inline)

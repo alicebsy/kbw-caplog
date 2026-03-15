@@ -27,6 +27,6 @@ struct FriendAPI {
     
     /// 친구 삭제
     func delete(userId: String) async throws {
-        try await client.requestVoid("DELETE", path: "/friends/\(userId)")
+        try await client.requestVoid("DELETE", path: "\(Endpoints.friendList)/\(userId)")
     }
 }

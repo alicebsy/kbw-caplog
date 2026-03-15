@@ -33,8 +33,15 @@ struct Card: Identifiable, Hashable, Codable {
     var updatedAt: Date
     var thumbnailURL: String?
     var screenshotURLs: [String]
-    
-    // MARK: - 초기화
+    /// 스크린샷당 카드 1개 유지용 — 출처 asset localIdentifier (서버에는 미전송, 로컬 전용)
+    var sourceScreenshotAssetId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, summary, category, subcategory, tags, fields
+        case createdAt, updatedAt, thumbnailURL, screenshotURLs
+        case sourceScreenshotAssetId
+    }
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -46,7 +53,8 @@ struct Card: Identifiable, Hashable, Codable {
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         thumbnailURL: String? = nil,
-        screenshotURLs: [String] = []
+        screenshotURLs: [String] = [],
+        sourceScreenshotAssetId: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -59,6 +67,39 @@ struct Card: Identifiable, Hashable, Codable {
         self.updatedAt = updatedAt
         self.thumbnailURL = thumbnailURL
         self.screenshotURLs = screenshotURLs
+        self.sourceScreenshotAssetId = sourceScreenshotAssetId
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        summary = try c.decode(String.self, forKey: .summary)
+        category = try c.decode(FolderCategory.self, forKey: .category)
+        subcategory = try c.decode(String.self, forKey: .subcategory)
+        tags = try c.decode([String].self, forKey: .tags)
+        fields = try c.decode([String: String].self, forKey: .fields)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+        thumbnailURL = try c.decodeIfPresent(String.self, forKey: .thumbnailURL)
+        screenshotURLs = try c.decode([String].self, forKey: .screenshotURLs)
+        sourceScreenshotAssetId = try c.decodeIfPresent(String.self, forKey: .sourceScreenshotAssetId)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(title, forKey: .title)
+        try c.encode(summary, forKey: .summary)
+        try c.encode(category, forKey: .category)
+        try c.encode(subcategory, forKey: .subcategory)
+        try c.encode(tags, forKey: .tags)
+        try c.encode(fields, forKey: .fields)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(updatedAt, forKey: .updatedAt)
+        try c.encodeIfPresent(thumbnailURL, forKey: .thumbnailURL)
+        try c.encode(screenshotURLs, forKey: .screenshotURLs)
+        try c.encodeIfPresent(sourceScreenshotAssetId, forKey: .sourceScreenshotAssetId)
     }
     
     // ... (편의 속성: tagsString, location, dateString, thumbnailName, firstScreenshot) ...
@@ -99,7 +140,7 @@ struct Card: Identifiable, Hashable, Codable {
     }
     
     // ✅ (수정) 요청하신 이모지로 재변경
-    var subcategoryEmoji: String {
+    static func emoji(forSubcategory subcategory: String) -> String {
         switch subcategory {
         // Info (📂)
         case "맛집": return "🍽️"
@@ -131,6 +172,10 @@ struct Card: Identifiable, Hashable, Codable {
         default:
             return "❓"
         }
+    }
+    
+    var subcategoryEmoji: String {
+        Self.emoji(forSubcategory: subcategory)
     }
     
     // ✅ 쿠폰/공고/취업은 만료일·마감일, 그 외는 위치

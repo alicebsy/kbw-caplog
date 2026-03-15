@@ -19,28 +19,29 @@ struct HomeSectionHeader: View {
         HStack {
             Text(title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Color.black)
+                .foregroundColor(.primary)
                 .lineLimit(1)
             Spacer()
         }
-        .padding(.horizontal, 20)
     }
 }
 
-// MARK: - “타이틀 ↔ 카드 간격”을 항상 동일하게 만드는 래퍼
+// MARK: - 섹션: 타이틀 + 콘텐츠 (박스 없이 자연스럽게)
 struct HomeSection<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             HomeSectionHeader(title: title)
-            Spacer().frame(height: HomeMetrics.headerToCard)   // 8pt 적용
+                .padding(.horizontal, 20)
+            Spacer().frame(height: HomeMetrics.headerToCard)
             content
         }
+        .padding(.top, 8)
     }
 }
 
-// MARK: - 상단 헤더
+// MARK: - 상단 헤더 (심플하게)
 struct HomeHeader: View {
     let userName: String
     var onTapNotification: () -> Void
@@ -48,19 +49,19 @@ struct HomeHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             Text("Hello, \(userName) 👋")
-                .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.black)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.primary)
             Spacer()
-            // ✅ 수정: 알림(종) 아이콘 원래 위치로 복원
             Button(action: onTapNotification) {
                 Image(systemName: "bell")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.accentColor)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(Color.myPageSectionGreen)
             }
-            .padding(.trailing, 10)
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 12) // ✅ HomeView 상단 여백 대신 여기서 처리
+        .padding(.top, 12)
+        .padding(.bottom, 4)
     }
 }
 

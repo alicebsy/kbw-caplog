@@ -68,10 +68,13 @@ final class CardManager: ObservableObject {
             let serverCards = try await service.fetchAllCards()
             let serverIds = Set(serverCards.map(\.id))
             // 서버에 이미 있는 건 제외, 로컬에서만 만든 카드만 유지 (한번 만든 카드는 그대로)
-            let localCardsToKeep = mergedLocal.filter { !serverIds.contains($0.id) }
-            allCards = serverCards + localCardsToKeep
-            localOnlyCardIds = Set(localCardsToKeep.map(\.id))
-            savePersistedLocalCards(localCardsToKeep)
+            var localCardsToKeep = mergedLocal.filter { !serverIds.contains($0.id) }
+            // 스크린샷/이미지당 카드 1개 (기존 중복 포함 정리)
+            localCardsToKeep = Self.deduplicateByScreenshotOrImage(localCardsToKeep)
+            let combined = serverCards + localCardsToKeep
+            allCards = Self.deduplicateByScreenshotOrImage(combined)
+            localOnlyCardIds = Set(allCards.filter { !serverIds.contains($0.id) }.map(\.id))
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             print("✅ CardManager: 서버 \(serverCards.count)개 + 로컬(스크린샷) \(localCardsToKeep.count)개")
         } catch {
             errorMessage = "카드를 불러오는데 실패했습니다: \(error.localizedDescription)"
@@ -153,13 +156,24 @@ final class CardManager: ObservableObject {
 
     // MARK: - CRUD Methods
     
-    /// 카드 생성 (스크린샷 AI 분류 결과 등). 서버 저장 성공 시 DB 반영, 실패 시 로컬만 유지.
+    /// 카드 생성 (스크린샷 AI 분류 결과 등). 스크린샷당 카드 1개 유지, 서버 저장 성공 시 DB 반영, 실패 시 로컬만 유지.
     func createCard(_ card: Card) async {
         print("[Caplog 카드] createCard 요청: \(card.title)")
+        // 스크린샷당 카드 1개: 같은 sourceScreenshotAssetId면 기존 카드 제거 후 새 카드로 대체
+        if let assetId = card.sourceScreenshotAssetId, !assetId.isEmpty {
+            let existingIds = allCards.filter { $0.sourceScreenshotAssetId == assetId }.map(\.id)
+            for oldId in existingIds {
+                allCards.removeAll { $0.id == oldId }
+                viewedCardIDs.removeAll { $0 == oldId }
+                localOnlyCardIds.remove(oldId)
+            }
+            if !existingIds.isEmpty {
+                print("[Caplog 카드] 동일 스크린샷 기존 카드 \(existingIds.count)개 제거 → 1개로 유지")
+            }
+        }
         ScreenshotPipelineStatus.shared.setPostSending()
         do {
             let newCard = try await service.createCard(card)
-            // 서버가 thumbnailURL을 비워서 주면 로컬 스크린샷(UUID) 참조를 유지해 썸네일이 보이도록 함
             let toAppend = Card(
                 id: newCard.id,
                 title: newCard.title,
@@ -171,7 +185,8 @@ final class CardManager: ObservableObject {
                 createdAt: newCard.createdAt,
                 updatedAt: newCard.updatedAt,
                 thumbnailURL: newCard.thumbnailURL ?? card.thumbnailURL,
-                screenshotURLs: newCard.screenshotURLs.isEmpty ? card.screenshotURLs : newCard.screenshotURLs
+                screenshotURLs: newCard.screenshotURLs.isEmpty ? card.screenshotURLs : newCard.screenshotURLs,
+                sourceScreenshotAssetId: card.sourceScreenshotAssetId
             )
             allCards.append(toAppend)
             localOnlyCardIds.insert(toAppend.id)
@@ -304,6 +319,60 @@ final class CardManager: ObservableObject {
     /// 에러 메시지 초기화
     func clearError() {
         errorMessage = nil
+    }
+
+    // MARK: - 스크린샷/이미지당 카드 1개 (기존 중복도 이미지 키로 정리)
+    /// 같은 스크린샷/같은 이미지면 최신 1개만 유지. sourceScreenshotAssetId 없어도 썸네일·스크린샷 URL로 묶음.
+    private static func deduplicateByScreenshotOrImage(_ cards: [Card]) -> [Card] {
+        var byKey: [String: Card] = [:]
+        for card in cards {
+            let key = card.sourceScreenshotAssetId?.isEmpty == false
+                ? "asset:\(card.sourceScreenshotAssetId!)"
+                : "img:\(card.thumbnailURL ?? card.screenshotURLs.first ?? card.id.uuidString)"
+            if let existing = byKey[key] {
+                if card.updatedAt > existing.updatedAt { byKey[key] = card }
+            } else {
+                byKey[key] = card
+            }
+        }
+        return Array(byKey.values)
+    }
+
+    /// 현재 목록 기준 중복 의심 개수 (같은 키로 묶였을 때 제거될 카드 수). 카드마다 UUID 썸네일이면 0이 됨.
+    var duplicateCount: Int {
+        let keys = allCards.map { card -> String in
+            if let aid = card.sourceScreenshotAssetId, !aid.isEmpty {
+                return "asset:\(aid)"
+            }
+            return "img:\(card.thumbnailURL ?? card.screenshotURLs.first ?? card.id.uuidString)"
+        }
+        var keyCount: [String: Int] = [:]
+        for k in keys { keyCount[k, default: 0] += 1 }
+        return keyCount.values.reduce(0) { $0 + max(0, $1 - 1) }
+    }
+
+    /// 로컬 카드 전부 삭제 + 스크린샷 처리 목록 초기화 → 홈에서 "스크린샷에서 카드 가져오기"로 다시 만들면 스크린샷당 1개만 생성됨
+    func clearLocalCardsAndResetScreenshotState() {
+        let removedCount = allCards.filter { localOnlyCardIds.contains($0.id) }.count
+        allCards = allCards.filter { !localOnlyCardIds.contains($0.id) }
+        localOnlyCardIds = []
+        viewedCardIDs = viewedCardIDs.filter { id in allCards.contains(where: { $0.id == id }) }
+        savePersistedLocalCards([])
+        ScreenshotIndexer.clearAllProcessedData()
+        print("✅ CardManager: 로컬 카드 \(removedCount)개 삭제, 스크린샷 처리 목록 초기화")
+        NotificationCenter.default.post(name: .cardUpdated, object: nil)
+    }
+
+    /// 중복 제거 실행 (스크린샷/이미지당 1개만 유지, 저장·알림까지)
+    func removeDuplicateCards() async {
+        let before = allCards.count
+        allCards = Self.deduplicateByScreenshotOrImage(allCards)
+        localOnlyCardIds = localOnlyCardIds.intersection(Set(allCards.map(\.id)))
+        viewedCardIDs = viewedCardIDs.filter { id in allCards.contains(where: { $0.id == id }) }
+        savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
+        let after = allCards.count
+        print("✅ CardManager: 중복 제거 완료 \(before)개 → \(after)개")
+        NotificationCenter.default.post(name: .cardUpdated, object: nil)
     }
 }
 

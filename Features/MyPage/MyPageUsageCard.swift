@@ -6,40 +6,42 @@ struct MyPageUsageCard: View {
     let recommendedCount: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // 제목
+        VStack(alignment: .leading, spacing: 0) {
             MyPageSectionHeader(title: "사용정보")
-
-            // 카드 영역 - 1줄 레이아웃
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(uiColor: .systemGray6))
-                .frame(height: 60)
-                .padding(.horizontal, 2)
-                .overlay(
-                    HStack(spacing: 3) {
-                        Text("📸")
-                            .font(.system(size: 14))
-                        Text("\(savedCount)")
-                            .font(.system(size: 18, weight: .bold))
-                        Text("건 정보 저장")
-                            .font(.system(size: 16))
-                        
-                        Text("|")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 4)
-                        
-                        Text("💡")
-                            .font(.system(size: 14))
-                        Text("\(recommendedCount)")
-                            .font(.system(size: 18, weight: .bold))
-                        Text("건 추천 받음")
-                            .font(.system(size: 16))
-                    }
-                    .frame(maxWidth: .infinity)
-                )
+            HStack(spacing: 0) {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.stack.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Color.myPageSectionGreen)
+                    Text("\(savedCount)")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("건 저장")
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                Rectangle()
+                    .fill(Color(uiColor: .separator).opacity(0.4))
+                    .frame(width: 1, height: 32)
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Color.myPageSectionGreen)
+                    Text("\(recommendedCount)")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("건 추천")
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, 18)
+            .padding(.horizontal, 20)
+            .background(Color(uiColor: .tertiarySystemGroupedBackground))
+            .cornerRadius(12)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
         .sectionContainer()
     }
 }

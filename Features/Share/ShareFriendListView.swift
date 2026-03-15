@@ -72,6 +72,8 @@ struct ShareFriendListView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
             .alert("친구 삭제", isPresented: $showDeleteConfirm, presenting: friendToDelete) { friend in
                 Button("취소", role: .cancel) { }
                 Button("삭제", role: .destructive) {
@@ -80,70 +82,52 @@ struct ShareFriendListView: View {
             } message: { friend in
                 Text("\(friend.name)님을 친구 목록에서 삭제하시겠습니까?")
             }
-            .sheet(isPresented: $showAdd) {
-                // ✅ (수정) ShareFriendSearchSheet에 vm을 전달
-                ShareFriendSearchSheet(vm: vm)
-            }
-            
-            // 플로팅 친구 추가 버튼
-            VStack {
+        }
+        .sheet(isPresented: $showAdd) {
+            // 친구 추가 시트
+            ShareFriendSearchSheet(vm: vm)
+        }
+        // 하단 탭바와 겹치지 않도록 safeAreaInset으로 버튼 배치
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack {
                 Spacer()
-                HStack {
-                    Spacer()
-                    Button {
-                        showAdd = true
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(
-                                Circle()
-                                    .fill(Color.blue)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                            )
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 20)
+                Button {
+                    showAdd = true
+                } label: {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 60, height: 60)
+                        .background(
+                            Circle()
+                                .fill(Color.myPageSectionGreen)
+                                .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                        )
                 }
+                .padding(.trailing, 20)
+                .padding(.bottom, 12)
             }
+            .padding(.top, 4)
         }
     }
     
-    /// 개인 채팅 시작
+    /// 개인 채팅 시작 (1:1 — 서버에 채팅방 생성 후 진입)
     private func startChat(with friend: Friend) async {
-        // 기존 채팅방 찾기 (1:1 채팅방)
-        if let existingThread = vm.threads.first(where: { thread in
-            thread.participantIds.count == 2 &&
-            thread.participantIds.contains(friend.id) &&
-            thread.participantIds.contains("me")
-        }) {
-            // 기존 채팅방으로 이동
-            print("💬 기존 채팅방으로 이동: \(friend.name)")
+        // 기존 채팅방이 있으면 이동 (서버 목록 기준: 제목이 해당 친구 이름인 1:1 방)
+        if let existingThread = vm.threads.first(where: { $0.title == friend.name && $0.participantIds.count <= 2 }) {
             selectedThread = existingThread
-        } else {
-            // 새 채팅방 생성
-            print("💬 \(friend.name)님과 새 채팅 시작")
-            let newThread = ChatThread(
-                id: "new_\(friend.id)_\(UUID().uuidString)",
-                title: friend.name,
-                participantIds: ["me", friend.id],
-                lastMessageText: nil,
-                lastMessageAt: Date(),
-                unreadCount: 0
-            )
-            
-            // ViewModel에 새 스레드 추가
-            await vm.addNewThread(newThread)
-            
-            selectedThread = newThread
+            return
+        }
+        // 서버에 1:1 채팅방 생성 후 진입
+        if let thread = await vm.createAndEnterChat(participantUserIds: [friend.id], title: friend.name) {
+            selectedThread = thread
         }
     }
     
     /// 친구 삭제
     private func deleteFriend(_ friend: Friend) {
-        // ✅ (수정) ID 타입을 String으로 변경
-        FriendManager.shared.removeFriend(id: friend.id)
+        // ViewModel 쪽에서도 동기화
+        vm.removeFriend(id: friend.id)
         print("🗑️ \(friend.name)님 삭제 완료")
     }
 }
