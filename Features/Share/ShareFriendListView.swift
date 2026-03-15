@@ -87,7 +87,7 @@ struct ShareFriendListView: View {
             // 친구 추가 시트
             ShareFriendSearchSheet(vm: vm)
         }
-        // 하단 탭바와 겹치지 않도록 safeAreaInset으로 버튼 배치
+        // 하단 탭바와 겹치지 않도록 safeAreaInset + 탭바 높이만큼 여백
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()
@@ -105,9 +105,9 @@ struct ShareFriendListView: View {
                         )
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, 12)
             }
-            .padding(.top, 4)
+            .padding(.top, 8)
+            .padding(.bottom, 72) // 탭바(64) + 여유
         }
     }
     
