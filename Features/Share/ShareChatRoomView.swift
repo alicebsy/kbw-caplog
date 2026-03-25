@@ -7,7 +7,10 @@ struct ChatRoomView: View {
     
     @State private var inputText = ""
     @Environment(\.dismiss) var dismiss
-    private let meId = "me"
+    // 현재 로그인한 유저의 userId (UserDefaults에 저장된 값 사용)
+    private let meId: String = {
+        UserDefaults.standard.string(forKey: "userProfile_userId") ?? ""
+    }()
     
     @State private var showCardSelection = false
     @State private var showLeaveConfirm = false
@@ -42,6 +45,8 @@ struct ChatRoomView: View {
                         }
                     }
                     .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    .background(Color(uiColor: .systemGroupedBackground))
                 }
                 
                 // 1) 메시지가 추가될 때마다 최신 메시지로 이동
@@ -87,28 +92,47 @@ struct ChatRoomView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 16, weight: .semibold))
-                        .frame(width: 36, height: 36)
-                        .background(Color.gray.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                        .background(Color.homeGreenLight.opacity(0.5))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
                 
                 TextField("메시지 입력", text: $inputText)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(uiColor: .systemGroupedBackground))
+                    )
                     .submitLabel(.send)
                     .onSubmit { send() }
                 
                 Button("보내기") { send() }
                     .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
         }
-        .navigationTitle(thread.title)
-        .navigationBarTitleDisplayMode(.inline)
-        
-        // 상단 툴바
+        // 카톡처럼 전체를 연한 회색 배경으로
+        .background(Color(uiColor: .systemGroupedBackground))
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            // 좌측: 커스텀 뒤로가기 버튼
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("뒤로")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                }
+            }
+            // 중앙: 제목
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 4) {
                     Text(thread.title)
@@ -120,16 +144,18 @@ struct ChatRoomView: View {
                     }
                 }
             }
-            
+            // 우측: 나가기
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showLeaveConfirm = true
                 } label: {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.homeGreenDark.opacity(0.7))
                 }
             }
         }
+        // 채팅방 전체에 초록 계열 틴트 적용 (뒤로가기/보내기 등 기본 파랑 제거)
+        .tint(Color.homeGreenDark)
         
         // 카드 선택 시트
         .sheet(isPresented: $showCardSelection) {
@@ -244,10 +270,10 @@ struct DateHeaderView: View {
     var body: some View {
         Text(date)
             .font(.system(size: 13))
-            .foregroundColor(.white)
+            .foregroundColor(Color.homeGreenDark)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color.gray.opacity(0.5)))
+            .background(Capsule().fill(Color.homeGreenLight.opacity(0.4)))
     }
 }
 
@@ -315,8 +341,15 @@ struct MessageRow: View {
                         Text(text)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(isMine ? Color.blue.opacity(0.2) : Color.gray.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(isMine ? Color.homeGreenDark : Color.white)
+                            )
+                            .foregroundColor(isMine ? .white : .primary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(isMine ? Color.clear : Color.homeGreenLight, lineWidth: 1)
+                            )
                         
                         if !isMine {
                             Text(timeText)
@@ -332,6 +365,7 @@ struct MessageRow: View {
                 Spacer(minLength: 60)
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
     }
 }

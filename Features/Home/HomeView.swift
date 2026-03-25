@@ -30,20 +30,30 @@ struct HomeView: View {
 
                 if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
                     VStack(spacing: 12) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.system(size: 36))
+                            .foregroundStyle(Color.myPageSectionGreen.opacity(0.6))
                         Text("아직 카드가 없어요")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Text("마이페이지 → 스크린샷에서 카드를 가져올 수 있어요.")
-                            .font(.caption)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                        Text("마이페이지에서 스크린샷을 가져와 보세요.")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
+                    .padding(.horizontal, 24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+                    )
+                    .padding(.horizontal, 20)
                     Spacer().frame(height: S)
                 }
 
-                HomeSection(title: "⏳ Expiring Soon") {
+                HomeSection(title: "⏳ Expiring Soon", wrapInCard: false) {
                     if vm.coupons.isEmpty {
                         Text("마감 임박한 스크린샷이 아직 없어요")
                             .font(.subheadline)
@@ -68,7 +78,7 @@ struct HomeView: View {
                                     isHomeScreen: true
                                 )
                                 .frame(height: couponH)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 16)
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
@@ -92,7 +102,7 @@ struct HomeView: View {
                                     }
                                 )
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 4)
                             }
                         }
                         .frame(height: 180)
@@ -118,13 +128,18 @@ struct HomeView: View {
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 4)
                     }
                     Spacer().frame(height: S)
                 }
             }
         }
-        .background(Color(uiColor: .systemBackground))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // 하단 탭바(커스텀) 높이만큼 여백을 줘서 콘텐츠가 가리지 않도록
+            Color.clear
+                .frame(height: 76)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

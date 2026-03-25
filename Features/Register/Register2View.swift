@@ -56,11 +56,11 @@ struct Register2View: View {
                         .textContentType(.username)
 
                     UnderlineTextField(placeholder: "Password", text: $password, isSecure: true)
-                        .textContentType(.newPassword)
+                        .textContentType(.password)
                         .privacySensitive(true)
 
                     UnderlineTextField(placeholder: "Password Confirm", text: $confirmPassword, isSecure: true)
-                        .textContentType(.newPassword)
+                        .textContentType(.password)
                         .privacySensitive(true)
                 }
                 .padding(.horizontal, 40)

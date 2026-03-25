@@ -26,6 +26,11 @@ struct FolderView: View {
                     }
                 }
         }
+        // 하단 커스텀 탭바 높이만큼 여백을 둬서 폴더 콘텐츠가 가려지지 않도록 처리
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear
+                .frame(height: 76)
+        }
         .onAppear {
             Task {
                 await manager.loadAllCards()
@@ -201,10 +206,10 @@ struct FolderItemListView: View {
                             CardManager.shared.markCardAsViewed(item)
                         }
                     )
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        .background(Color.clear)
-                        .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                    .listRowBackground(Color.clear)
+                    .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
                 }
             }
         }
@@ -246,16 +251,26 @@ struct FolderItemListView: View {
     }
     
     private var emptyState: some View {
-        VStack(alignment: .center, spacing: 8) {
-            Image(systemName: "tray")
-                .font(.system(size: 30, weight: .regular))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 14) {
+            Image(systemName: "folder.badge.questionmark")
+                .font(.system(size: 44))
+                .foregroundStyle(Color.myPageSectionGreen.opacity(0.5))
             Text("아직 \(subcategory) 항목이 없어요")
-                .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.primary)
+            Text("스크린샷을 저장하면 여기에 쌓여요")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 48)
+        .padding(.horizontal, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+        )
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20))
     }
 }
 
@@ -273,17 +288,27 @@ struct FolderRecentCardsView: View {
     var body: some View {
         List {
             if recentCards.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: 14) {
                     Image(systemName: "photo.on.rectangle.angled")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 44))
+                        .foregroundStyle(Color.myPageSectionGreen.opacity(0.5))
                     Text("인식된 카드가 없어요")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+                    Text("마이페이지에서 스크린샷을 가져와 보세요")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
+                .padding(.vertical, 48)
+                .padding(.horizontal, 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                )
                 .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20))
             } else {
                 ForEach(recentCards) { item in
                     UnifiedCardView(
@@ -301,8 +326,8 @@ struct FolderRecentCardsView: View {
                         }
                     )
                     .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .background(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                    .listRowBackground(Color.clear)
                     .id("\(item.id)-\(item.updatedAt.timeIntervalSince1970)")
                 }
             }

@@ -500,6 +500,11 @@ final class ShareViewModel: ObservableObject {
         await loadThreads()
     }
 
+    /// 친구 목록에서 채팅 진입 전 서버에 이미 있는 1:1 방을 찾기 위해 스레드만 갱신
+    func refreshThreads() async {
+        await loadThreads()
+    }
+
     private func loadFriends() async {
         do {
             var fs = try await repo.fetchFriends()
@@ -634,6 +639,8 @@ final class ShareViewModel: ObservableObject {
             }
         }
         catch {
+            // 서버 전송에 실패하면 로컬에만 쌓지 않고 에러만 표시 (계정/DB 기준 일관성 유지)
+            print("❌ Chat send failed: \(error.localizedDescription)")
             self.errorMessage = error.localizedDescription
         }
     }

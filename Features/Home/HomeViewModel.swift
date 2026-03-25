@@ -166,10 +166,8 @@ final class HomeViewModel: ObservableObject {
         recommended = Self.deduplicateByID(cardManager.recommendedCards(limit: 10).filter { !expiringIds.contains($0.id) })
             .prefix(5).map { $0 }
 
-        // Recently viewed: 마감 임박·추천에 이미 나온 카드 제외
-        let recommendedIds = Set(recommended.map(\.id))
-        let excludeIds = expiringIds.union(recommendedIds)
-        recent = Self.deduplicateByID(cardManager.recentlyViewedCards(limit: 5).filter { !excludeIds.contains($0.id) })
+        // Recently viewed: 사용자가 최근에 본 카드 3개 (쿠폰/추천과 중복 허용)
+        recent = Self.deduplicateByID(cardManager.recentlyViewedCards(limit: 10))
             .prefix(3).map { $0 }
         
         print("""

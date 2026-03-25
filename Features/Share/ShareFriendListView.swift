@@ -8,6 +8,7 @@ struct ShareFriendListView: View {
     @State private var showAdd = false
     @State private var friendToDelete: Friend?
     @State private var showDeleteConfirm = false
+    @State private var chatOpenError: String?
 
     var body: some View {
         ZStack {
@@ -32,7 +33,7 @@ struct ShareFriendListView: View {
                             Spacer()
                             
                             HStack(spacing: 26) {
-                                // 채팅 버튼 (심플한 아이콘)
+                                // 채팅 버튼 → 대화창으로 이동
                                 Button {
                                     Task {
                                         await startChat(with: friend)
@@ -40,9 +41,11 @@ struct ShareFriendListView: View {
                                 } label: {
                                     Image(systemName: "bubble.left.and.bubble.right")
                                         .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(Color.blue.opacity(0.8))
+                                        .foregroundColor(Color.myPageSectionGreen)
+                                        .frame(minWidth: 44, minHeight: 44)
+                                        .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.borderless)
                                 
                                 // 삭제 버튼 (심플한 아이콘)
                                 Button {
@@ -52,8 +55,10 @@ struct ShareFriendListView: View {
                                     Image(systemName: "trash")
                                         .font(.system(size: 16, weight: .regular))
                                         .foregroundColor(Color.registerRed.opacity(0.75))
+                                        .frame(minWidth: 44, minHeight: 44)
+                                        .contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.borderless)
                             }
                             
                             // 오른쪽 여백 추가 (버튼 왼쪽으로 이동)
@@ -81,6 +86,14 @@ struct ShareFriendListView: View {
                 }
             } message: { friend in
                 Text("\(friend.name)님을 친구 목록에서 삭제하시겠습니까?")
+            }
+            .alert("채팅을 열 수 없어요", isPresented: Binding(
+                get: { chatOpenError != nil },
+                set: { if !$0 { chatOpenError = nil } }
+            )) {
+                Button("확인", role: .cancel) { chatOpenError = nil }
+            } message: {
+                Text(chatOpenError ?? "")
             }
         }
         .sheet(isPresented: $showAdd) {
@@ -111,17 +124,30 @@ struct ShareFriendListView: View {
         }
     }
     
-    /// 개인 채팅 시작 (1:1 — 서버에 채팅방 생성 후 진입)
+    /// 개인 채팅 시작 (1:1) — 서버 스레드 목록 갱신 후 기존 방 우선, 없으면 생성
     private func startChat(with friend: Friend) async {
-        // 기존 채팅방이 있으면 이동 (서버 목록 기준: 제목이 해당 친구 이름인 1:1 방)
-        if let existingThread = vm.threads.first(where: { $0.title == friend.name && $0.participantIds.count <= 2 }) {
-            selectedThread = existingThread
+        await vm.refreshThreads()
+        // 서버는 participantIds를 내려주지 않으므로 제목(상대 닉네임)으로 1:1 방 매칭
+        if let existing = vm.threads.first(where: { $0.title == friend.name }) {
+            await MainActor.run {
+                selectedThread = existing
+            }
             return
         }
-        // 서버에 1:1 채팅방 생성 후 진입
-        if let thread = await vm.createAndEnterChat(participantUserIds: [friend.id], title: friend.name) {
-            selectedThread = thread
+        if let serverThread = await vm.createAndEnterChat(participantUserIds: [friend.id], title: friend.name) {
+            await MainActor.run {
+                selectedThread = serverThread
+            }
+            return
         }
+        let msg = vm.errorMessage?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallback = (msg == nil || msg?.isEmpty == true)
+            ? "서버에 연결할 수 없거나 채팅방을 만들 수 없어요. 백엔드가 켜져 있는지 확인해 주세요."
+            : msg!
+        await MainActor.run {
+            chatOpenError = fallback
+        }
+        print("❌ createAndEnterChat 실패 – \(fallback)")
     }
     
     /// 친구 삭제

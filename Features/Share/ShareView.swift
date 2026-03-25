@@ -52,8 +52,11 @@ struct ShareView: View {
         }
         .navigationTitle("Share")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(item: $selectedThread) { thread in
-            ChatRoomView(vm: vm, thread: thread)
+        // 대화방은 전체 화면으로 띄워 하단 탭이 보이지 않도록 처리
+        .fullScreenCover(item: $selectedThread) { thread in
+            NavigationStack {
+                ChatRoomView(vm: vm, thread: thread)
+            }
         }
         .task { await vm.loadAll() }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 통합 카드 뷰 - 모든 탭에서 재사용 가능
 /// 3가지 스타일 지원: row, horizontal, compact
@@ -85,10 +86,10 @@ struct UnifiedCardView: View {
     
     // MARK: - Row Style (Recommended / Recently)
     private var rowStyle: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 10) {
             
             // LEFT: 텍스트 (카드 상세 보기)
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.category.rawValue + " - " + card.subcategory)
@@ -177,15 +178,16 @@ struct UnifiedCardView: View {
                 .frame(width: 80)
             }
         }
-        .padding(16)
-        .background(Color.brandCardBG)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
     
     // MARK: - Horizontal Style
     private var horizontalStyle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             CardThumbnailView(thumbnailId: card.thumbnailName)
                 .scaledToFill()
                 .frame(height: 160)
@@ -211,8 +213,9 @@ struct UnifiedCardView: View {
                 }
             }
         }
-        .padding(16)
-        .background(Color.brandCardBG)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 3, y: 2)
         .onTapGesture { onTap() }
@@ -314,109 +317,180 @@ struct UnifiedCardView: View {
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .padding(14)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
         )
         .onTapGesture { onTap() }
         .frame(maxWidth: 200)
     }
-    
-    
+    /// 스크린샷/에셋 평균색을 쿠폰 액센트로 사용 (너무 밝·어두우면 브랜드 색 폴백)
+    private static func couponAccentColor(thumbnailId: String, fallback: Color) -> Color {
+        let ui: UIImage?
+        if CardImageStore.isLocalScreenshot(id: thumbnailId) {
+            ui = CardImageStore.load(id: thumbnailId)
+        } else {
+            ui = UIImage(named: thumbnailId)
+        }
+        guard let img = ui, let uic = img.caplogAverageColor() else { return fallback }
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        if !uic.getRed(&r, green: &g, blue: &b, alpha: &a) {
+            return fallback
+        }
+        let brightness = (r + g + b) / 3
+        if brightness < 0.15 || brightness > 0.97 {
+            return fallback
+        }
+        return Color(uic)
+    }
+
     // MARK: - Coupon Style (이미지 카드 전용)
-    /// 홈 "마감 임박": 브랜드색만 배경, 브랜드 아이콘, 화살표 눌러야만 상세로 이동
+    /// 홈 "마감 임박": 스크린샷 톤 + 지갑형 카드 (밝은 면 + 썸네일 + 액센트 스트립)
     private var couponStyle: some View {
         let imageName = isHomeScreen ? card.homeThumbnailName : card.thumbnailName
         let brandName = card.fields["brand"] ?? card.fields["브랜드"] ?? ""
         let expiryText = card.fields["만료일"] ?? card.fields["valid_until"] ?? card.fields["deadline"] ?? card.contextualInfoText
         let benefitText = card.fields["benefit"] ?? card.fields["혜택 요약"] ?? card.title
         let extraLine = card.fields["conditions"] ?? card.fields["조건/제한"] ?? card.fields["상품"] ?? card.summary
-        let brandColor = Color.expiringCardBrandColor(brandName: brandName.isEmpty ? nil : brandName)
-        let textColor = Color.expiringCardTextColor(brandName: brandName.isEmpty ? nil : brandName)
+        let fallbackBrand = Color.expiringCardBrandColor(brandName: brandName.isEmpty ? nil : brandName)
+        let accent = Self.couponAccentColor(thumbnailId: imageName, fallback: fallbackBrand)
         let hasExpiry = expiryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
         let brandIconName = Color.expiringCardBrandIconName(brandName: brandName.isEmpty ? nil : brandName)
 
         return Group {
             if isHomeScreen {
-                let cardCorner: CGFloat = 28
-                ZStack(alignment: .topLeading) {
+                let cardCorner: CGFloat = 20
+                ZStack(alignment: .leading) {
+                    // 베이스: 밝은 카드 + 스크린샷 톤의 아주 옅은 틴트
                     RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
-                        .fill(brandColor)
-                        .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(uiColor: .secondarySystemGroupedBackground),
+                                    Color(uiColor: .systemBackground)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                .fill(accent.opacity(0.07))
+                        )
+                        .shadow(color: .black.opacity(0.07), radius: 12, x: 0, y: 4)
 
-                    // 왼쪽: 제목·마감일
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(benefitText)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(textColor)
-                            .lineLimit(2)
-                        if hasExpiry {
-                            Text(expiryText)
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(textColor)
-                                .lineLimit(1)
-                        }
-                        if !extraLine.isEmpty && (hasExpiry || benefitText != extraLine) {
-                            Text(extraLine)
-                                .font(.system(size: 13, weight: .regular))
-                                .foregroundColor(textColor.opacity(0.9))
-                                .lineLimit(1)
-                        }
+                    // 왼쪽 액센트 스트립 (카드 모서리는 바깥 clipShape가 맞춤)
+                    HStack(spacing: 0) {
+                        LinearGradient(
+                            colors: [accent, accent.opacity(0.65)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(width: 5)
+                        Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                    .padding(.leading, 20)
-                    .padding(.top, 20)
 
-                    // 오른쪽 상단: 브랜드 아이콘 (스타벅스/이마트/배스킨 등) + 브랜드명
-                    VStack(alignment: .trailing, spacing: 6) {
-                        if let iconName = brandIconName {
-                            Image(iconName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 44, height: 44)
-                        } else if !brandName.isEmpty && (brandName.lowercased().contains("배스킨") || brandName.lowercased().contains("baskin") || brandName.lowercased().contains("베라")) {
-                            Image(systemName: "gift.fill")
-                                .font(.system(size: 28))
-                                .foregroundColor(textColor.opacity(0.9))
+                    HStack(alignment: .center, spacing: 14) {
+                        // 스크린샷 미리보기 (실제 앱처럼 왼쪽 비주얼)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+                            CardThumbnailView(thumbnailId: imageName)
+                                .scaledToFill()
+                                .frame(width: 92, height: 112)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
-                        if !brandName.isEmpty {
-                            Text(brandName)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(textColor.opacity(0.95))
-                                .lineLimit(1)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(.trailing, 20)
-                    .padding(.top, 20)
+                        .frame(width: 96, height: 116)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Color.black.opacity(0.06), lineWidth: 1)
+                        )
 
-                    // 우하단: 화살표만 누르면 상세로 (카드 영역 탭은 이동 안 함)
-                    HStack(spacing: 10) {
-                        Button(action: { isShareSheetPresented = true }) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 14))
-                                .foregroundColor(textColor.opacity(0.9))
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 6) {
+                                Text("쿠폰")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        Capsule()
+                                            .fill(accent.opacity(0.12))
+                                    )
+                                if !brandName.isEmpty {
+                                    Text(brandName)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+
+                            Text(benefitText)
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            if hasExpiry {
+                                Text(expiryText)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(accent.opacity(0.95))
+                                    .lineLimit(1)
+                            }
+
+                            if !extraLine.isEmpty && extraLine != benefitText {
+                                Text(extraLine)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(.tertiary)
+                                    .lineLimit(1)
+                            }
+
+                            Spacer(minLength: 0)
+
+                            HStack {
+                                if let iconName = brandIconName {
+                                    Image(iconName)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 28, height: 28)
+                                        .opacity(0.9)
+                                } else if !brandName.isEmpty && (brandName.lowercased().contains("배스킨") || brandName.lowercased().contains("baskin") || brandName.lowercased().contains("베라")) {
+                                    Image(systemName: "gift.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(accent.opacity(0.85))
+                                }
+                                Spacer()
+                                HStack(spacing: 4) {
+                                    Button(action: { isShareSheetPresented = true }) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundStyle(Color.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button(action: { onMore() }) {
+                                        Image(systemName: "ellipsis")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundStyle(Color.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button(action: { onTap() }) {
+                                        Image(systemName: "chevron.right.circle.fill")
+                                            .font(.system(size: 26))
+                                            .symbolRenderingMode(.palette)
+                                            .foregroundStyle(accent, Color(uiColor: .secondarySystemGroupedBackground))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
-                        Button(action: { onMore() }) {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 14))
-                                .foregroundColor(textColor.opacity(0.9))
-                        }
-                        .buttonStyle(.plain)
-                        Button(action: { onTap() }) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(textColor)
-                                .frame(width: 48, height: 48)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.leading, 14)
                     .padding(.trailing, 16)
-                    .padding(.bottom, 16)
+                    .padding(.vertical, 14)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: cardCorner, style: .continuous))
             } else {

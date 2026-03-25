@@ -70,20 +70,21 @@ extension Color {
     // === 마감 임박 카드: 브랜드별 색상 (원래 톤) ===
     static func expiringCardBrandColor(brandName: String?) -> Color {
         guard let name = brandName?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
-            return Color(hex: "#00704A")
+            return Color(hex: "#46A68E") // 기본 민트그린
         }
-        if name.contains("스타벅스") || name.contains("starbucks") { return Color(hex: "#00704A") }
-        if name.contains("이마트") || name.contains("emart") { return Color(hex: "#F4A934") }
-        if name.contains("메가") || name.contains("megacoffee") || name.contains("mgc") { return Color(hex: "#6B4423") }
-        if name.contains("카카오") || name.contains("kakao") { return Color(hex: "#FFE812") }
-        if name.contains("gs25") || name.contains("gs 25") { return Color(hex: "#6BBD32") }
-        if name.contains("cu") || name.contains("씨유") { return Color(hex: "#8B1538") }
-        if name.contains("투썸") || name.contains("twosome") { return Color(hex: "#C41E3A") }
-        if name.contains("빽다방") || name.contains("baek") { return Color(hex: "#2C2C2C") }
-        if name.contains("할리스") || name.contains("hollys") { return Color(hex: "#5B2E62") }
-        if name.contains("던킨") || name.contains("dunkin") { return Color(hex: "#E31837") }
-        if name.contains("배스킨") || name.contains("baskin") { return Color(hex: "#D4145A") }
-        return Color(hex: "#00704A")
+        if name.contains("스타벅스") || name.contains("starbucks") { return Color(hex: "#46A68E") }      // 기존 초록을 조금 밝게
+        if name.contains("이마트") || name.contains("emart")       { return Color(hex: "#F7BF5B") }      // 부드러운 머스터드
+        if name.contains("메가") || name.contains("megacoffee") ||
+           name.contains("mgc")                                     { return Color(hex: "#A8744F") }      // 연한 브라운
+        if name.contains("카카오") || name.contains("kakao")       { return Color(hex: "#FFEFA3") }      // 연한 옐로우
+        if name.contains("gs25") || name.contains("gs 25")         { return Color(hex: "#9CD279") }      // 연한 그린
+        if name.contains("cu") || name.contains("씨유")            { return Color(hex: "#C86B7B") }      // 약간 톤 다운된 레드/와인
+        if name.contains("투썸") || name.contains("twosome")       { return Color(hex: "#D46C71") }      // 소프트 레드
+        if name.contains("빽다방") || name.contains("baek")        { return Color(hex: "#4A4A4A") }      // 진한 그레이
+        if name.contains("할리스") || name.contains("hollys")      { return Color(hex: "#7A567F") }      // 톤 다운 퍼플
+        if name.contains("던킨") || name.contains("dunkin")        { return Color(hex: "#F48A7D") }      // 코랄 계열
+        if name.contains("배스킨") || name.contains("baskin")      { return Color(hex: "#E97CA3") }      // 부드러운 핑크
+        return Color(hex: "#46A68E")
     }
 
     /// 마감 임박 카드에서 브랜드 배경에 맞는 글자색 (밝은 배경이면 검정, 아니면 흰색)
