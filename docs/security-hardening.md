@@ -60,6 +60,14 @@
 - Release 빌드에서는 HTTPS 주소만 허용해 로컬 IP나 일반 HTTP 주소로 잘못 배포되는 것을 차단합니다.
 - 운영 서버 주소를 소스 코드에 하드코딩하지 않고 Xcode 빌드 설정으로 주입할 수 있습니다.
 
+### 8. Google Vision API 키 보호
+
+- iOS 앱의 Google Vision API 키와 Google 직접 호출 코드를 제거했습니다.
+- 인증이 필요한 백엔드 엔드포인트 `/api/ai/vision/text`, `/api/ai/vision/labels`를 추가했습니다.
+- `GOOGLE_VISION_API_KEY`는 서버 환경변수에서만 읽도록 변경했습니다.
+- 전달 이미지는 JPEG/PNG 형식과 최대 10MB 제한을 검증합니다.
+- Google Vision 오류 본문과 API 키가 클라이언트 로그나 응답에 노출되지 않도록 했습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -68,6 +76,7 @@
 export JWT_SECRET="32바이트 이상의 무작위 값"
 export SPRING_DATASOURCE_PASSWORD="데이터베이스 비밀번호"
 export OPENAI_API_KEY="OpenAI API 키"
+export GOOGLE_VISION_API_KEY="Google Vision API 키"
 export KAKAO_REST_API_KEY="Kakao REST API 키"
 
 # 선택 설정
@@ -94,20 +103,24 @@ xcodebuild \
   - 해당 스크린샷의 소유자만 이미지 원본을 조회할 수 있습니다.
 - `POST /api/ai/classify`
   - 인증된 사용자의 분류 요청을 백엔드가 OpenAI로 전달합니다.
+- `POST /api/ai/vision/text`
+  - 인증된 사용자의 OCR 요청을 백엔드가 Google Vision으로 전달합니다.
+- `POST /api/ai/vision/labels`
+  - 인증된 사용자의 이미지 레이블 요청을 백엔드가 Google Vision으로 전달합니다.
 - `screenshot_file` 테이블
   - `storage_key`, `content_type`, `size_bytes` 컬럼을 사용합니다.
 
 ## 검증 결과
 
-- 백엔드 Gradle 테스트 10개 통과
+- 백엔드 Gradle 테스트 13개 통과
 - iOS 시뮬레이터 대상 Xcode 빌드 성공
-- 실제 OpenAI 네트워크 호출은 API 키를 입력하지 않은 상태라 수행하지 않았습니다.
+- 실제 OpenAI 및 Google Vision 네트워크 호출은 API 키를 입력하지 않은 상태라 수행하지 않았습니다.
 
 ## 아직 남은 보안 작업
 
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
-- iOS 앱에 남아 있는 Google Vision API 키를 백엔드로 이전
+- iOS에 하드코딩된 Kakao 네이티브 앱 키를 빌드 설정으로 분리하고 플랫폼 제한 적용
 - 로그인, 업로드, AI 요청 API에 사용자별 요청 횟수 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
 - 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리

@@ -45,6 +45,10 @@ openai:
   api-key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
 
+google:
+  vision:
+    api-key: ${GOOGLE_VISION_API_KEY:}
+
 caplog:
   storage:
     upload-dir: ${CAPLOG_UPLOAD_DIR:./data/uploads}

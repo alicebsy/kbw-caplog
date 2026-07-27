@@ -4,8 +4,6 @@
 <dict>
 	<key>CAPLOG_API_BASE_URL</key>
 	<string>$(CAPLOG_API_BASE_URL)</string>
-	<key>GOOGLE_VISION_API_KEY</key>
-	<string></string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
