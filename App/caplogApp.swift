@@ -12,7 +12,15 @@ struct CaplogApp: App {
     @StateObject private var appState = AppState()
 
     init() {
-        KakaoSDK.initSDK(appKey: "81b506b612e5cc41201bc15a145764cb")
+        guard let appKey = KakaoConfiguration.nativeAppKey else {
+            #if DEBUG
+            assertionFailure("Secrets.local.xcconfig에 KAKAO_NATIVE_APP_KEY를 설정하세요.")
+            return
+            #else
+            preconditionFailure("Release 빌드에 KAKAO_NATIVE_APP_KEY가 설정되지 않았습니다.")
+            #endif
+        }
+        KakaoSDK.initSDK(appKey: appKey)
     }
 
     var body: some Scene {
@@ -55,6 +63,20 @@ struct CaplogApp: App {
         } else {
             print("⚠️ 사진 권한 없음 - 스크린샷 자동 분류 비활성화")
         }
+    }
+}
+
+private enum KakaoConfiguration {
+    static var nativeAppKey: String? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "KAKAO_NATIVE_APP_KEY") as? String else {
+            return nil
+        }
+
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.contains("$(") else {
+            return nil
+        }
+        return trimmed
     }
 }
 

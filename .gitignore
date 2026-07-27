@@ -48,6 +48,7 @@ DerivedData/
 
 ### iOS secrets / local ###
 caplog/Info.plist
+/Secrets.local.xcconfig
 
 ### local env files ###
 .env.db

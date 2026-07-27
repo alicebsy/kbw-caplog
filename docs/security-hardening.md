@@ -68,6 +68,21 @@
 - 전달 이미지는 JPEG/PNG 형식과 최대 10MB 제한을 검증합니다.
 - Google Vision 오류 본문과 API 키가 클라이언트 로그나 응답에 노출되지 않도록 했습니다.
 
+### 9. Kakao 네이티브 앱 키 설정 분리
+
+- Swift 소스에 하드코딩돼 있던 Kakao 네이티브 앱 키를 제거했습니다.
+- 앱 키는 Git에서 제외되는 `Secrets.local.xcconfig`로 주입합니다.
+- 키가 누락된 Release 빌드는 실행을 중단해 잘못 설정된 앱이 배포되지 않도록 했습니다.
+- 카카오 로그인 SDK와 로그인 화면 및 콜백 코드는 그대로 유지했습니다.
+
+새 개발 환경에서는 예제 파일을 복사한 뒤 본인의 Kakao 네이티브 앱 키를 입력해야 합니다.
+
+```bash
+cp Secrets.local.xcconfig.example Secrets.local.xcconfig
+```
+
+네이티브 앱 키는 최종 앱 바이너리에 포함되는 식별자이므로 Kakao Developers 콘솔에서 iOS 번들 ID를 제한해야 합니다. 기존 키가 Git 기록에 남아 있으므로 배포 전 키 재발급도 권장합니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -120,7 +135,7 @@ xcodebuild \
 
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
-- iOS에 하드코딩된 Kakao 네이티브 앱 키를 빌드 설정으로 분리하고 플랫폼 제한 적용
+- Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
 - 로그인, 업로드, AI 요청 API에 사용자별 요청 횟수 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
 - 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리
