@@ -42,8 +42,16 @@
 ### 5. 서버 설정 보안
 
 - 데이터베이스 비밀번호 기본값을 제거하고 `SPRING_DATASOURCE_PASSWORD`를 필수로 변경했습니다.
+- Kakao REST API 키는 `KAKAO_REST_API_KEY` 환경변수로만 주입하도록 구성돼 있습니다.
 - 서버 주소는 `APP_BASE_URL` 환경변수로 변경할 수 있도록 했습니다.
 - 운영 중 민감한 정보가 노출될 수 있는 상세 로그 수준을 낮췄습니다.
+
+### 6. iOS 네트워크 및 설정 파일 보호
+
+- 모든 비보안 네트워크 연결을 허용하던 `NSAllowsArbitraryLoads` 설정을 제거했습니다.
+- 로컬 개발 서버 통신에 필요한 로컬 네트워크만 허용하도록 범위를 축소했습니다.
+- 더 이상 iOS에서 직접 호출하지 않는 OpenAI 도메인 예외와 `GPT_API_KEY` 설정을 제거했습니다.
+- `Secrets.xcconfig`가 앱 리소스에 복사되지 않도록 빌드 설정에서 제외했습니다.
 
 ## 필요한 환경변수
 
@@ -53,6 +61,7 @@
 export JWT_SECRET="32바이트 이상의 무작위 값"
 export SPRING_DATASOURCE_PASSWORD="데이터베이스 비밀번호"
 export OPENAI_API_KEY="OpenAI API 키"
+export KAKAO_REST_API_KEY="Kakao REST API 키"
 
 # 선택 설정
 export OPENAI_MODEL="gpt-4o-mini"
@@ -82,9 +91,7 @@ export APP_BASE_URL="http://localhost:8080"
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - iOS 앱에 남아 있는 Google Vision API 키를 백엔드로 이전
-- 하드코딩된 Kakao API 키를 안전한 설정으로 이전
 - 개발 장비 IP 주소 등 환경별 서버 주소 설정 분리
-- `Secrets.xcconfig`의 앱 번들 포함 여부와 `Info.plist`의 임의 네트워크 허용 설정 재점검
 - 로그인, 업로드, AI 요청 API에 사용자별 요청 횟수 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
 - 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리

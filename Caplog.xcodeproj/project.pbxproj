@@ -12,7 +12,6 @@
 		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
 		CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108622E9CFECD00181F2D /* KakaoSDKCommon */; };
 		CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108652E9D009E00181F2D /* KakaoSDKUser */; };
-		CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = CEA428962ED529D2003457FC /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -171,7 +170,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEA428972ED529D2003457FC /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
