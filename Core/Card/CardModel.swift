@@ -178,10 +178,21 @@ struct Card: Identifiable, Hashable, Codable {
         Self.emoji(forSubcategory: subcategory)
     }
     
+    /// 서버와 OCR 결과에서 사용하는 만료일 필드 중 비어 있지 않은 첫 값을 반환합니다.
+    var expiryText: String {
+        for key in ["만료일", "valid_until", "deadline"] {
+            let value = fields[key]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !value.isEmpty {
+                return value
+            }
+        }
+        return ""
+    }
+
     // ✅ 쿠폰/공고/취업은 만료일·마감일, 그 외는 위치
     var contextualInfoText: String {
         if self.subcategory == "쿠폰" || self.subcategory == "공고" || self.subcategory == "취업" {
-            return fields["만료일"] ?? fields["valid_until"] ?? fields["deadline"] ?? ""
+            return expiryText
         }
         return self.location
     }

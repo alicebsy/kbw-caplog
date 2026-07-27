@@ -116,13 +116,15 @@ final class HomeViewModel: ObservableObject {
     // ===================================================================
     /// 여러 날짜 형식 파싱 (yyyy.MM.dd., yyyy-MM-dd, yy.MM.dd 등)
     private static func parseDate(_ s: String) -> Date? {
-        let trimmed = s.trimmingCharacters(in: .whitespaces)
+        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
         let formatters: [DateFormatter] = {
             let formats = ["yyyy. MM. dd.", "yyyy.MM.dd", "yyyy-MM-dd", "yy. MM. dd.", "yy.MM.dd", "MM/dd/yyyy", "yyyy/MM/dd"]
             return formats.map { f in
                 let df = DateFormatter()
                 df.dateFormat = f
                 df.locale = Locale(identifier: "en_US_POSIX")
+                df.calendar = Calendar(identifier: .gregorian)
+                df.isLenient = false
                 return df
             }
         }()
@@ -140,18 +142,20 @@ final class HomeViewModel: ObservableObject {
 
     func reloadHomeContent() async {
         // 마감 임박: 쿠폰·공고·취업 등 만료일 있는 카드(미래 기준) + 만료일 없는 쿠폰도 포함, 날짜 순 후 만료일 없는 건 맨 뒤
-        let now = Date()
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
         let expiringCandidate: [Card] = cardManager.allCards.filter { card in
             let isCouponOrDeadlineType = card.subcategory == "쿠폰" || card.subcategory == "공고" || card.subcategory == "취업"
             guard isCouponOrDeadlineType else { return false }
-            let dateString = card.fields["만료일"] ?? card.fields["valid_until"] ?? card.fields["deadline"] ?? ""
+            let dateString = card.expiryText
             if dateString.isEmpty { return card.subcategory == "쿠폰" } // 쿠폰은 만료일 없어도 표시
             guard let date = Self.parseDate(dateString) else { return card.subcategory == "쿠폰" }
-            return date >= now
+            // 날짜만 있는 만료 정보는 해당 날짜가 끝날 때까지 유효한 것으로 처리합니다.
+            return calendar.startOfDay(for: date) >= today
         }
-        var expiringSorted = expiringCandidate.sorted { c1, c2 in
-            let s1 = c1.fields["만료일"] ?? c1.fields["valid_until"] ?? c1.fields["deadline"] ?? ""
-            let s2 = c2.fields["만료일"] ?? c2.fields["valid_until"] ?? c2.fields["deadline"] ?? ""
+        let expiringSorted = expiringCandidate.sorted { c1, c2 in
+            let s1 = c1.expiryText
+            let s2 = c2.expiryText
             let hasDate1 = !s1.isEmpty && Self.parseDate(s1) != nil
             let hasDate2 = !s2.isEmpty && Self.parseDate(s2) != nil
             if hasDate1, hasDate2, let d1 = Self.parseDate(s1), let d2 = Self.parseDate(s2) { return d1 < d2 }
