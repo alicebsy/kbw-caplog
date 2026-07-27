@@ -124,7 +124,10 @@ struct ShareChatListView: View {
         let title: String
         if friends.count == 1 {
             title = friends[0].name
-            if let existing = vm.threads.first(where: { $0.title == title }) {
+            if let existing = vm.threads.first(where: {
+                ($0.participantIds.count == 2 && $0.participantIds.contains(friends[0].id))
+                    || ($0.participantIds.isEmpty && $0.title == title)
+            }) {
                 selectedThread = existing
                 return
             }

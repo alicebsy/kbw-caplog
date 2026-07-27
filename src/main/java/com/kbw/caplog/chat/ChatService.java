@@ -37,6 +37,19 @@ public class ChatService {
             throw new IllegalArgumentException("At least 2 participants required");
         }
 
+        if (participantUserNos.size() == 2) {
+            Optional<ChatRoom> existingRoom = chatRoomRepository.findRoomsByParticipantUserNo(currentUserNo)
+                    .stream()
+                    .filter(room -> room.getParticipants().stream()
+                            .map(ChatRoomParticipant::getUserNo)
+                            .collect(Collectors.toSet())
+                            .equals(participantUserNos))
+                    .findFirst();
+            if (existingRoom.isPresent()) {
+                return toSummaryDto(existingRoom.get(), currentUserNo);
+            }
+        }
+
         ChatRoom room = ChatRoom.builder()
                 .createdAt(Instant.now())
                 .build();
@@ -51,34 +64,14 @@ public class ChatService {
         }
         chatRoomRepository.save(room);
 
-        String title = buildRoomTitle(room, currentUserNo);
-        return ChatSummaryDto.builder()
-                .id(String.valueOf(room.getId()))
-                .title(title)
-                .lastMessage("")
-                .updatedAt(room.getCreatedAt())
-                .unreadCount(0)
-                .avatarUrl(null)
-                .build();
+        return toSummaryDto(room, currentUserNo);
     }
 
     public List<ChatSummaryDto> listRooms(Long currentUserNo) {
         List<ChatRoom> rooms = chatRoomRepository.findRoomsByParticipantUserNo(currentUserNo);
-        List<ChatSummaryDto> result = new ArrayList<>();
-        for (ChatRoom room : rooms) {
-            ChatMessage lastMsg = messageRepository.findByChatRoomIdOrderByCreatedAtAsc(room.getId())
-                    .stream().reduce((a, b) -> b).orElse(null);
-            String title = buildRoomTitle(room, currentUserNo);
-            int unread = countUnread(room, currentUserNo, lastMsg);
-            result.add(ChatSummaryDto.builder()
-                    .id(String.valueOf(room.getId()))
-                    .title(title)
-                    .lastMessage(lastMsg != null ? (lastMsg.getText() != null ? lastMsg.getText() : "") : "")
-                    .updatedAt(lastMsg != null ? lastMsg.getCreatedAt() : room.getCreatedAt())
-                    .unreadCount(unread)
-                    .avatarUrl(null)
-                    .build());
-        }
+        List<ChatSummaryDto> result = rooms.stream()
+                .map(room -> toSummaryDto(room, currentUserNo))
+                .collect(Collectors.toCollection(ArrayList::new));
         result.sort(Comparator.comparing(ChatSummaryDto::getUpdatedAt).reversed());
         return result;
     }
@@ -137,6 +130,29 @@ public class ChatService {
                 .findFirst();
         if (myLastRead.isEmpty()) return 1;
         return lastMessage.getCreatedAt().isAfter(myLastRead.get()) ? 1 : 0;
+    }
+
+    private ChatSummaryDto toSummaryDto(ChatRoom room, Long currentUserNo) {
+        ChatMessage lastMessage = messageRepository.findByChatRoomIdOrderByCreatedAtAsc(room.getId())
+                .stream()
+                .reduce((first, second) -> second)
+                .orElse(null);
+        List<String> participantIds = room.getParticipants().stream()
+                .map(ChatRoomParticipant::getUserNo)
+                .map(userNo -> userRepository.findById(userNo)
+                        .map(User::getUserId)
+                        .orElse(String.valueOf(userNo)))
+                .toList();
+
+        return ChatSummaryDto.builder()
+                .id(String.valueOf(room.getId()))
+                .title(buildRoomTitle(room, currentUserNo))
+                .lastMessage(lastMessage != null && lastMessage.getText() != null ? lastMessage.getText() : "")
+                .updatedAt(lastMessage != null ? lastMessage.getCreatedAt() : room.getCreatedAt())
+                .unreadCount(countUnread(room, currentUserNo, lastMessage))
+                .participantIds(participantIds)
+                .avatarUrl(null)
+                .build();
     }
 
     private ChatMessageDto toMessageDto(ChatMessage m, Long roomId) {

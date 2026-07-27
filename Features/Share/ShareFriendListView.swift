@@ -127,8 +127,10 @@ struct ShareFriendListView: View {
     /// 개인 채팅 시작 (1:1) — 서버 스레드 목록 갱신 후 기존 방 우선, 없으면 생성
     private func startChat(with friend: Friend) async {
         await vm.refreshThreads()
-        // 서버는 participantIds를 내려주지 않으므로 제목(상대 닉네임)으로 1:1 방 매칭
-        if let existing = vm.threads.first(where: { $0.title == friend.name }) {
+        if let existing = vm.threads.first(where: {
+            ($0.participantIds.count == 2 && $0.participantIds.contains(friend.id))
+                || ($0.participantIds.isEmpty && $0.title == friend.name)
+        }) {
             await MainActor.run {
                 selectedThread = existing
             }

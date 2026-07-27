@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Builder
@@ -19,6 +20,7 @@ public class ChatSummaryDto {
     private String lastMessage;
     private Instant updatedAt;
     private int unreadCount;
+    private List<String> participantIds;
 
     @JsonProperty("avatar_url")
     private String avatarUrl;

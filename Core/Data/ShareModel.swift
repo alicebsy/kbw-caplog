@@ -50,6 +50,7 @@ public struct ChatSummary: Identifiable, Codable, Hashable {
     public let lastMessage: String
     public let updatedAt: Date
     public let unreadCount: Int
+    public let participantIds: [String]?
     public let avatarURL: URL?
 }
 

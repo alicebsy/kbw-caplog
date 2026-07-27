@@ -61,16 +61,12 @@ struct UnifiedCardView: View {
                         }) {
                             targetThreadId = existingThread.id
                         } else {
-                            let newThread = ChatThread(
-                                id: "new_\(friend.id)_\(UUID().uuidString)",
-                                title: friend.name,
-                                participantIds: ["me", friend.id],
-                                lastMessageText: nil,
-                                lastMessageAt: Date(),
-                                unreadCount: 0,
-                                lastMessageCardTitle: nil
-                            )
-                            await vm.addNewThread(newThread)
+                            guard let newThread = await vm.createAndEnterChat(
+                                participantUserIds: [friend.id],
+                                title: friend.name
+                            ) else {
+                                continue
+                            }
                             targetThreadId = newThread.id
                         }
                         

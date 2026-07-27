@@ -370,7 +370,7 @@ final class RealShareRepository: ShareRepository {
             ChatThread(
                 id: summary.id,
                 title: summary.title,
-                participantIds: [],
+                participantIds: summary.participantIds ?? [],
                 lastMessageText: summary.lastMessage,
                 lastMessageAt: summary.updatedAt,
                 unreadCount: summary.unreadCount,
@@ -385,7 +385,7 @@ final class RealShareRepository: ShareRepository {
         return ChatThread(
             id: summary.id,
             title: summary.title.isEmpty ? title : summary.title,
-            participantIds: [],
+            participantIds: summary.participantIds ?? (["me"] + participantUserIds),
             lastMessageText: summary.lastMessage,
             lastMessageAt: summary.updatedAt,
             unreadCount: summary.unreadCount,
