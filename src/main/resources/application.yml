@@ -8,16 +8,15 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
-    # 로컬 MySQL 계정이 다르면 환경변수로 지정: export SPRING_DATASOURCE_USERNAME=root SPRING_DATASOURCE_PASSWORD=비밀번호
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8}
+    username: ${SPRING_DATASOURCE_USERNAME:caplog}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -26,24 +25,26 @@ spring:
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
-    org.springframework.web: DEBUG
-    org.springframework.http.converter: DEBUG
+    org.hibernate.SQL: info
+    org.hibernate.type.descriptor.sql.BasicBinder: info
+    org.springframework.web: info
+    org.springframework.http.converter: info
 server:
   port: 8080
 
 # API base URL (스크린샷 등 리소스 절대 URL 생성용)
 app:
-  baseUrl: http://localhost:8080
+  baseUrl: ${APP_BASE_URL:http://localhost:8080}
 
-# JWT 설정 (임시 값, 나중에 환경변수로 분리 권장)
 jwt:
-  secret: "change-this-to-a-long-random-secret-please-please"
-  access-hours: 1        # Access 토큰 1시간
-  refresh-days: 14       # Refresh 토큰 14일
+  secret: ${JWT_SECRET}
+  access-hours: ${JWT_ACCESS_HOURS:1}
+  refresh-days: ${JWT_REFRESH_DAYS:14}
 
 caplog:
+  storage:
+    upload-dir: ${CAPLOG_UPLOAD_DIR:./data/uploads}
+    max-file-size: ${CAPLOG_UPLOAD_MAX_BYTES:10485760}
   geocode:
     provider: kakao
     throttleMillis: 250      # 호출 간 최소 간격(밀리초)

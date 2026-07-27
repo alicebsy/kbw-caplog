@@ -15,7 +15,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security 전역 설정
  * - /api/auth/**: 인증 없이 허용 (로그인, 회원가입, refresh 등)
- * - /api/screenshots/upload: 인증 없이 허용 (테스트용, 추후 JWT 검증 추가 권장)
  * - 그 외: JWT Bearer 토큰 필요
  */
 @Configuration
@@ -33,7 +32,7 @@ public class SecurityConfig {
         http
                 // REST API 기본 설정
                 .csrf(csrf -> csrf.disable()) // 세션/폼로그인 안 쓰므로 CSFR 비활성
-                .cors(Customizer.withDefaults())    // 필요시 별도 CORS Bean으로 허용 출처 지정 가능
+                .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 세션을 생성/사용하지 않겠다는 Stateless
                 .httpBasic(basic -> basic.disable()) // 브라우저 기본 인증 팝업 비활성
@@ -43,9 +42,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.PUT, "/api/auth/password").authenticated() // 비밀번호 변경은 JWT 필요
                         .requestMatchers("/api/auth/**").permitAll() // 로그인/회원가입/refresh/logout은 인증 없이 허용
-
-                        // 테스트용: 스크린샷 업로드 API는 인증 없이 접근 허용 (JWT 없이 테스트 가능)
-                        .requestMatchers("/api/screenshots/upload").permitAll()
 
                         .anyRequest().authenticated()   // 그 외는 인증 필요
                 )

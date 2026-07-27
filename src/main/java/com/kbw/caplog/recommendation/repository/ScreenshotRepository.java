@@ -6,11 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
 
     /** 현재 유저의 스크린샷 목록 조회 (최신순) */
     List<Screenshot> findByUserNoOrderByIdDesc(Long userNo);
+
+    Optional<Screenshot> findByIdAndUserNo(Long id, Long userNo);
 
     @Query(value = """
     SELECT
@@ -30,7 +33,8 @@ public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
         ))
       ))                 AS distanceMeters
     FROM screenshot s
-    WHERE s.geocode_status = 1
+    WHERE s.user_no = :userNo
+      AND s.geocode_status = 1
       AND s.lat IS NOT NULL AND s.lng IS NOT NULL
       -- 빠른 후보 필터용 바운딩 박스
       AND s.lat BETWEEN (:lat - (:radius/111320.0)) AND (:lat + (:radius/111320.0))
@@ -40,6 +44,7 @@ public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
     LIMIT :limit
   """, nativeQuery = true)
     List<NearbyProjection> findNearby(
+            @Param("userNo") Long userNo,
             @Param("lat") double lat,
             @Param("lng") double lng,
             @Param("radius") int radiusMeters,

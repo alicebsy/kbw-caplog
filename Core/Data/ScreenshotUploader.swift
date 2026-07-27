@@ -5,7 +5,7 @@ import UIKit
 /// - APIConfig.baseURL 사용 (시뮬레이터: localhost, 실기기: 맥북 IP)
 class ScreenshotUploader {
 
-    static func upload(image: UIImage, userId: Int, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+    static func upload(image: UIImage, completion: @escaping (Result<[String: Any], Error>) -> Void) {
         let uploadURL = APIConfig.baseURL
             .appendingPathComponent(APIConfig.apiPrefix.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
             .appendingPathComponent("screenshots")
@@ -13,16 +13,16 @@ class ScreenshotUploader {
 
         var request = URLRequest(url: uploadURL)
         request.httpMethod = "POST"
+        guard let token = SessionStore.readJWT(), !token.isEmpty else {
+            completion(.failure(APIError.unauthorized))
+            return
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let boundary = UUID().uuidString
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
         var body = Data()
-
-        // userId 필드
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"userId\"\r\n\r\n".data(using: .utf8)!)
-        body.append("\(userId)\r\n".data(using: .utf8)!)
 
         // file 필드
         if let imageData = image.jpegData(compressionQuality: 0.8) {
@@ -49,7 +49,14 @@ class ScreenshotUploader {
                 return
             }
 
-            print("📡 상태코드:", httpResponse.statusCode)
+            guard (200..<300).contains(httpResponse.statusCode) else {
+                if httpResponse.statusCode == 401 {
+                    completion(.failure(APIError.unauthorized))
+                } else {
+                    completion(.failure(APIError.server("스크린샷 업로드 실패 (\(httpResponse.statusCode))")))
+                }
+                return
+            }
 
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {

@@ -162,10 +162,8 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
     
     /// 스크린샷을 서버에 업로드 (POST /api/screenshots/upload) → DB 저장 후 마이페이지 목록에 반영
     private func uploadScreenshotToServer(image: UIImage) async {
-        guard let userNo = try? await UserService().fetchMe().userNo else { return }
-        let no = userNo
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            ScreenshotUploader.upload(image: image, userId: no) { _ in
+            ScreenshotUploader.upload(image: image) { _ in
                 continuation.resume()
             }
         }

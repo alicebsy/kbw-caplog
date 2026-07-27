@@ -4,6 +4,7 @@ import com.kbw.caplog.auth.dto.LoginRequest;
 import com.kbw.caplog.auth.dto.RefreshRequest;
 import com.kbw.caplog.auth.dto.SignupRequest;
 import com.kbw.caplog.auth.dto.TokenResponse;
+import com.kbw.caplog.auth.dto.ChangePasswordRequest;
 import com.kbw.caplog.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,14 +50,9 @@ public class AuthController {
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(
             org.springframework.security.core.Authentication auth,
-            @RequestBody Map<String, String> body
+            @Valid @RequestBody ChangePasswordRequest body
     ) {
-        String currentPassword = body != null ? body.get("currentPassword") : null;
-        String newPassword = body != null ? body.get("newPassword") : null;
-        if (currentPassword == null || newPassword == null || newPassword.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        authService.changePassword(auth.getName(), currentPassword, newPassword);
+        authService.changePassword(auth.getName(), body.getCurrentPassword(), body.getNewPassword());
         return ResponseEntity.ok().build();
     }
 

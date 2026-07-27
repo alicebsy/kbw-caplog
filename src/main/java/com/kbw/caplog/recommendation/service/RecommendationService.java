@@ -23,7 +23,7 @@ public class RecommendationService {
      * - 최대 3개 카드 추천
      */
     @Transactional(readOnly = true)
-    public List<NearbyResponse> findNearby(double lat, double lng, int radiusMeters, int limit) {
+    public List<NearbyResponse> findNearby(Long userNo, double lat, double lng, int radiusMeters, int limit) {
         int need = Math.min(limit, 3);
         List<NearbyProjection> acc = new ArrayList<>();
 
@@ -32,7 +32,7 @@ public class RecommendationService {
 
         for (int r : radii) {
             if (acc.size() >= need) break;
-            var rows = repo.findNearby(lat, lng, r, need * 5);
+            var rows = repo.findNearby(userNo, lat, lng, r, need * 5);
             acc.addAll(rows);
         }
 

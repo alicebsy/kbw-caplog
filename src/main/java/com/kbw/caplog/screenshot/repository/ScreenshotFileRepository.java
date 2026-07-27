@@ -4,6 +4,7 @@ import com.kbw.caplog.screenshot.domain.ScreenshotFile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ScreenshotFileRepository
@@ -14,5 +15,7 @@ import java.util.List;
 public interface ScreenshotFileRepository extends JpaRepository<ScreenshotFile, Long> {
 
     // userId로 스크린샷 조회 (최신순 정렬 등은 나중에 추가 가능)
-    List<ScreenshotFile> findByUserId(Long userId);
+    List<ScreenshotFile> findByUserIdOrderByUploadedAtDesc(Long userId);
+
+    Optional<ScreenshotFile> findByIdAndUserId(Long id, Long userId);
 }

@@ -228,9 +228,8 @@ final class ScreenshotIndexer {
 
     /// 스크린샷 서버 업로드 (DB 저장 → 마이페이지 목록 반영)
     private func uploadScreenshotToServer(image: UIImage) async {
-        guard let userNo = try? await UserService().fetchMe().userNo else { return }
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            ScreenshotUploader.upload(image: image, userId: userNo) { _ in cont.resume() }
+            ScreenshotUploader.upload(image: image) { _ in cont.resume() }
         }
     }
 }

@@ -18,8 +18,8 @@ public class GeocodeService {
 
     /** 단건 지오코딩: 주소 먼저, 안되면 place_name 사용 */
     @Transactional
-    public boolean geocodeOne(Long screenshotId) {
-        Screenshot s = repo.findById(screenshotId).orElseThrow();
+    public boolean geocodeOne(Long screenshotId, Long userNo) {
+        Screenshot s = repo.findByIdAndUserNo(screenshotId, userNo).orElseThrow();
 
         if (s.getLat() != null && s.getLng() != null) return true;
 

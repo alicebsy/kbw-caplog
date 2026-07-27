@@ -13,28 +13,35 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    private static final int MIN_SECRET_BYTES = 32;
+    private static final String INSECURE_DEFAULT = "change-this-to-a-long-random-secret-please-please";
+
     private final SecretKey secretKey;
     private final long accessExpirationMs;
     private final long refreshExpirationMs;
 
     public JwtUtil(
-            @Value("${jwt.secret:change-this-to-a-long-random-secret-please-please}") String secret,
+            @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-hours:1}") int accessHours,
             @Value("${jwt.refresh-days:14}") int refreshDays
     ) {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            byte[] padded = new byte[32];
-            System.arraycopy(keyBytes, 0, padded, 0, keyBytes.length);
-            this.secretKey = Keys.hmacShaKeyFor(padded);
-        } else {
-            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        if (secret == null || secret.isBlank() || INSECURE_DEFAULT.equals(secret)) {
+            throw new IllegalStateException("JWT_SECRET must be set to a unique random value");
         }
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT_SECRET must be at least 32 bytes");
+        }
+        if (accessHours <= 0 || refreshDays <= 0) {
+            throw new IllegalStateException("JWT expiration values must be positive");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessExpirationMs = accessHours * 3600L * 1000;
         this.refreshExpirationMs = refreshDays * 24L * 3600 * 1000;
     }
 
     public String generateAccessToken(String email) {
+        requireSubject(email);
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
@@ -44,6 +51,7 @@ public class JwtUtil {
     }
 
     public String generateRefreshToken(String email) {
+        requireSubject(email);
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
@@ -68,5 +76,11 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token);
         return jws.getBody().getSubject();
+    }
+
+    private static void requireSubject(String subject) {
+        if (subject == null || subject.isBlank()) {
+            throw new IllegalArgumentException("JWT subject must not be blank");
+        }
     }
 }

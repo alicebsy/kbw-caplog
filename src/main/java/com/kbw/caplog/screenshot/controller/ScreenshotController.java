@@ -8,18 +8,25 @@ import com.kbw.caplog.screenshot.service.ScreenshotService;
 import com.kbw.caplog.user.User;
 import com.kbw.caplog.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 스크린샷 API
- * - POST /api/screenshots/upload: 업로드 (인증 없음, 테스트용)
+ * - POST /api/screenshots/upload: 인증 사용자의 이미지 업로드
  * - GET /api/screenshots: 내 스크린샷 목록 (JWT Bearer 필요)
  */
 @RestController
@@ -36,44 +43,50 @@ public class ScreenshotController {
     /**
      * 스크린샷 업로드 엔드포인트
      * @param file 업로드된 이미지 파일
-     * @param userId 사용자 ID
      * @return 업로드 결과 DTO
      */
     @PostMapping("/upload")
     public ResponseEntity<UploadResponseDto> uploadScreenshot(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("userId") Long userId
+            Authentication auth,
+            @RequestParam("file") MultipartFile file
     ) {
-        // ✅ [추가] 업로드 요청 로그
-        System.out.println("[DEBUG] 업로드 요청 도착: userId=" + userId + ", file=" + file.getOriginalFilename());
-        System.out.println("[DEBUG] ContentType: " + file.getContentType());
-
+        User user = resolveUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
         try {
-            // 1. 파일 이름 추출
-            String fileName = file.getOriginalFilename();
-
-            // 2. 실제 업로드 경로 설정 (현재는 임시 값)
-            //    나중에 AWS S3나 Firebase Storage로 교체 가능
-            String fileUrl = "/uploads/" + fileName;
-
-            // 3. DB에 스크린샷 메타데이터 저장
-            ScreenshotFile saved = screenshotService.saveScreenshot(userId, fileName, fileUrl);
-
-            // 4. 응답 DTO 생성
-            UploadResponseDto response = new UploadResponseDto(saved.getId(), saved.getFileUrl());
-
-            // ✅ [추가] 성공 로그
-            System.out.println("[DEBUG] 업로드 완료: id=" + saved.getId() + ", url=" + saved.getFileUrl());
-
-            // 5. 결과 반환
+            ScreenshotFile saved = screenshotService.storeScreenshot(user.getUserNo(), file);
+            String fileUrl = baseUrl.replaceAll("/$", "") + saved.getFileUrl();
+            UploadResponseDto response = new UploadResponseDto(saved.getId(), fileUrl);
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
+    @GetMapping("/{id}/content")
+    public ResponseEntity<Resource> getScreenshotContent(
+            Authentication auth,
+            @PathVariable Long id
+    ) {
+        User user = resolveUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        try {
+            ScreenshotService.ScreenshotContent content =
+                    screenshotService.loadOwnedScreenshot(id, user.getUserNo());
+            MediaType mediaType = MediaType.parseMediaType(content.metadata().getContentType());
+            ContentDisposition disposition = ContentDisposition.inline()
+                    .filename(content.metadata().getFileName(), StandardCharsets.UTF_8)
+                    .build();
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.noStore())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                    .contentType(mediaType)
+                    .contentLength(content.metadata().getSizeBytes())
+                    .body(content.resource());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            // ✅ [추가] 예외 발생 시 콘솔 확인
-            System.err.println("[ERROR] 업로드 실패: " + e.getMessage());
-            e.printStackTrace();
-
-            // 500 내부 서버 에러 반환
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -87,11 +100,7 @@ public class ScreenshotController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        String email = auth != null ? auth.getName() : null;
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.status(401).build();
-        }
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = resolveUser(auth);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
@@ -100,5 +109,11 @@ public class ScreenshotController {
                 .map(f -> ScreenshotItemDto.from(f, baseUrl))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(new PagedScreenshotResponse(items, null));
+    }
+
+    private User resolveUser(Authentication auth) {
+        String email = auth != null ? auth.getName() : null;
+        if (email == null || email.isBlank()) return null;
+        return userRepository.findByEmail(email).orElse(null);
     }
 }
