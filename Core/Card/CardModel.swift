@@ -107,7 +107,9 @@ struct Card: Identifiable, Hashable, Codable {
         tags.isEmpty ? "" : tags.map { "#\($0)" }.joined(separator: " ")
     }
     var location: String {
-        fields["주소"] ?? fields["위치"] ?? fields["장소명"] ?? fields["가게명"] ?? ""
+        let place = fields["주소"] ?? fields["위치"] ?? fields["장소명"] ?? fields["가게명"] ?? ""
+        guard let distance = fields["거리"], !distance.isEmpty else { return place }
+        return place.isEmpty ? distance : "\(distance) · \(place)"
     }
     var dateString: String {
         let formatter = DateFormatter()

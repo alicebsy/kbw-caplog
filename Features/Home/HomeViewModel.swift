@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import CoreLocation
 
 // MARK: - ViewModel
 @MainActor
@@ -17,13 +18,17 @@ final class HomeViewModel: ObservableObject {
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
+    @Published var recommendationTitle: String = "💡 Recommended Contents"
     
     private let friendManager = FriendManager.shared
     var friends: [Friend] { friendManager.friends }
     
     private let cardManager: CardManager
+    private let cardService = CardService()
+    private let locationPermission = LocationPermission()
     private let userService = UserService()
     private var cancellables = Set<AnyCancellable>()
+    private var nearbyRecommended: [Card] = []
     
     // MARK: - Init
     init() {
@@ -83,13 +88,44 @@ final class HomeViewModel: ObservableObject {
         
         // 3) 홈 화면 내용 채우기 (최근 본 카드까지 포함)
         await reloadHomeContent()
+
+        // 4) 권한이 이미 허용된 경우 현재 위치 주변의 내 장소 카드를 추천
+        await refreshNearbyRecommendations()
         
-        // 4) 기존 스크린샷 최근 20장 한 번만 AI 분류 (폰 갤러리 연동)
+        // 5) 기존 스크린샷 최근 20장 한 번만 AI 분류 (폰 갤러리 연동)
         Task {
             await ScreenshotIndexer.shared.importRecentScreenshotsIfNeeded(limit: 20)
         }
         
         print("🏠 HomeViewModel: 홈 초기 로드 완료")
+    }
+
+    func refreshNearbyRecommendations() async {
+        guard let location = await locationPermission.currentLocation() else {
+            nearbyRecommended = []
+            await reloadHomeContent()
+            return
+        }
+
+        do {
+            let nearby = try await cardService.fetchNearbyCards(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            )
+            nearbyRecommended = nearby.map { nearbyCard in
+                guard var fullCard = cardManager.allCards.first(where: { $0.id == nearbyCard.id }) else {
+                    return nearbyCard
+                }
+                if let distance = nearbyCard.fields["거리"] {
+                    fullCard.fields["거리"] = distance
+                }
+                return fullCard
+            }
+        } catch {
+            nearbyRecommended = []
+            print("⚠️ HomeViewModel: 위치 기반 추천 실패 - \(error.localizedDescription)")
+        }
+        await reloadHomeContent()
     }
 
     /// 갤러리 스크린샷 앨범에서 최근 20장을 가져와서 카드로 만듦 (이미 처리된 건 스킵)
@@ -167,7 +203,13 @@ final class HomeViewModel: ObservableObject {
 
         // Recommended: 최근 생성 순, 마감 임박에 이미 나온 카드는 제외 (같은 것 여러 번 안 나오게)
         let expiringIds = Set(coupons.map(\.id))
-        recommended = Self.deduplicateByID(cardManager.recommendedCards(limit: 10).filter { !expiringIds.contains($0.id) })
+        let recommendationSource = nearbyRecommended.isEmpty
+            ? cardManager.recommendedCards(limit: 10)
+            : nearbyRecommended
+        recommendationTitle = nearbyRecommended.isEmpty
+            ? "💡 Recommended Contents"
+            : "📍 Nearby Recommendations"
+        recommended = Self.deduplicateByID(recommendationSource.filter { !expiringIds.contains($0.id) })
             .prefix(5).map { $0 }
 
         // Recently viewed: 사용자가 최근에 본 카드 3개 (쿠폰/추천과 중복 허용)

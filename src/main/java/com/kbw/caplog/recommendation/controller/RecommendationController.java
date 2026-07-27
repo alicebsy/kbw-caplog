@@ -28,6 +28,10 @@ public class RecommendationController {
             @RequestParam(defaultValue = "1000") int radiusMeters,
             @RequestParam(defaultValue = "3") int limit  // 기본 3
     ) {
+        if (!Double.isFinite(lat) || lat < -90 || lat > 90
+                || !Double.isFinite(lng) || lng < -180 || lng > 180) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid coordinates");
+        }
         // sanity clamp
         int r = Math.max(50, Math.min(radiusMeters, 20_000)); // 50m ~ 20km
         int l = Math.max(1, Math.min(limit, 200));

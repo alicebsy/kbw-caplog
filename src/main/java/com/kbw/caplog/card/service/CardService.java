@@ -4,6 +4,7 @@ import com.kbw.caplog.card.dto.CardDto;
 import com.kbw.caplog.card.dto.CreateCardRequest;
 import com.kbw.caplog.recommendation.domain.Screenshot;
 import com.kbw.caplog.recommendation.repository.ScreenshotRepository;
+import com.kbw.caplog.recommendation.service.GeocodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class CardService {
 
     private final ScreenshotRepository screenshotRepository;
+    private final GeocodeService geocodeService;
 
     @Value("${app.baseUrl:http://localhost:8080}")
     private String baseUrl;
@@ -34,8 +36,12 @@ public class CardService {
         s.setCategoryId(categoryNameToId(req.getCategory()));
         s.setTitle(req.getTitle() != null ? truncate(req.getTitle(), 120) : "제목 없음");
         s.setSummary(req.getSummary() != null ? truncate(req.getSummary(), 255) : null);
-        s.setPlaceName(req.getFields() != null ? truncate(req.getFields().get("장소명"), 120) : null);
-        s.setAddress(req.getFields() != null ? truncate(req.getFields().get("주소"), 255) : null);
+        s.setPlaceName(req.getFields() != null
+                ? truncate(firstNonBlank(req.getFields(), "장소명", "place_name", "가게명"), 120)
+                : null);
+        s.setAddress(req.getFields() != null
+                ? truncate(firstNonBlank(req.getFields(), "주소", "address"), 255)
+                : null);
         String imgUrl = req.getThumbnailURL();
         if ((imgUrl == null || imgUrl.isBlank()) && req.getScreenshotURLs() != null && !req.getScreenshotURLs().isEmpty()) {
             imgUrl = req.getScreenshotURLs().get(0);
@@ -45,12 +51,28 @@ public class CardService {
         s.setGeocodeAttempts(0);
         s.setGeocodeConfidence((short) 0);
         Screenshot saved = screenshotRepository.save(s);
+        if ((saved.getPlaceName() != null && !saved.getPlaceName().isBlank())
+                || (saved.getAddress() != null && !saved.getAddress().isBlank())) {
+            try {
+                geocodeService.geocodeOne(saved.getId(), userNo);
+            } catch (RuntimeException error) {
+                System.out.println("⚠️ 카드 위치 변환 예약 실패: " + error.getMessage());
+            }
+        }
         return toCardDto(saved);
     }
 
     private static String truncate(String value, int maxLen) {
         if (value == null) return null;
         return value.length() <= maxLen ? value : value.substring(0, maxLen);
+    }
+
+    private static String firstNonBlank(Map<String, String> fields, String... keys) {
+        for (String key : keys) {
+            String value = fields.get(key);
+            if (value != null && !value.isBlank()) return value.trim();
+        }
+        return null;
     }
 
     /** category 이름 → categoryId (toCardDto의 %6 매핑과 맞춤: 0=Info, 1=Contents, …) */

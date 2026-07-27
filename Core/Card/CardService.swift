@@ -45,6 +45,27 @@ struct CardService {
         return Array(all.prefix(limit))
     }
 
+    /// 현재 위치 주변의 내 장소 카드를 거리순으로 조회합니다.
+    func fetchNearbyCards(
+        latitude: Double,
+        longitude: Double,
+        radiusMeters: Int = 1_000,
+        limit: Int = 3
+    ) async throws -> [Card] {
+        let query = [
+            URLQueryItem(name: "lat", value: String(latitude)),
+            URLQueryItem(name: "lng", value: String(longitude)),
+            URLQueryItem(name: "radiusMeters", value: String(radiusMeters)),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+        let dtos: [NearbyCardResponseDto] = try await client.request(
+            "GET",
+            path: Endpoints.nearbyRecommendations,
+            query: query
+        )
+        return dtos.map { $0.toCard() }
+    }
+
     /// 최근 카드 조회 (최신순 limit개)
     func fetchRecentCards(limit: Int = 10) async throws -> [Card] {
         let all = try await fetchAllCards()
@@ -119,6 +140,38 @@ private struct CardResponseDto: Decodable {
             updatedAt: updatedAt ?? Date(),
             thumbnailURL: thumbnailURL,
             screenshotURLs: screenshotURLs ?? []
+        )
+    }
+}
+
+private struct NearbyCardResponseDto: Decodable {
+    let id: Int64
+    let title: String?
+    let summary: String?
+    let placeName: String?
+    let address: String?
+    let imageUrl: String?
+    let distanceMeters: Double?
+
+    func toCard() -> Card {
+        let uuidString = String(format: "00000000-0000-0000-0000-%012llx", id)
+        var fields: [String: String] = [:]
+        if let placeName, !placeName.isEmpty { fields["장소명"] = placeName }
+        if let address, !address.isEmpty { fields["주소"] = address }
+        if let distanceMeters {
+            fields["거리"] = distanceMeters < 1_000
+                ? "\(Int(distanceMeters.rounded()))m"
+                : String(format: "%.1fkm", distanceMeters / 1_000)
+        }
+        return Card(
+            id: UUID(uuidString: uuidString) ?? UUID(),
+            title: title ?? placeName ?? "주변 장소",
+            summary: summary ?? "",
+            category: .info,
+            subcategory: "맛집",
+            fields: fields,
+            thumbnailURL: imageUrl,
+            screenshotURLs: imageUrl.map { [$0] } ?? []
         )
     }
 }

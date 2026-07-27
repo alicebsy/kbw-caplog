@@ -27,6 +27,7 @@ enum Endpoints {
     static let cards            = "/cards"
     static let cardsRecommended = "/cards/recommended"
     static let cardsRecent      = "/cards/recent"
+    static let nearbyRecommendations = "/recommend/nearby"
 
     // MARK: - Folder
     static let folders          = "/folders"

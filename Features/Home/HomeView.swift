@@ -89,7 +89,7 @@ struct HomeView: View {
                 Spacer().frame(height: S)
 
                 if !vm.recommended.isEmpty {
-                    HomeSection(title: "💡 Recommended Contents") {
+                    HomeSection(title: vm.recommendationTitle) {
                         TabView {
                             ForEach(vm.recommended.prefix(3)) { card in
                                 UnifiedCardView(
@@ -183,7 +183,10 @@ struct HomeView: View {
             Task { await vm.reloadHomeContent() }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            Task { await vm.reloadHomeContent() }
+            Task {
+                await vm.reloadHomeContent()
+                await vm.refreshNearbyRecommendations()
+            }
         }
     }
 }
