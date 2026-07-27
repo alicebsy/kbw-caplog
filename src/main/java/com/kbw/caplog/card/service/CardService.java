@@ -80,6 +80,14 @@ public class CardService {
                 .collect(Collectors.toList());
     }
 
+    /** 채팅 공유용: 외부 UUID 형식 카드 ID를 현재 사용자의 카드로 검증하고 스냅샷을 반환합니다. */
+    public CardDto findOwnedCardByExternalId(Long userNo, String externalId) {
+        Long screenshotId = externalIdToLong(externalId);
+        Screenshot screenshot = screenshotRepository.findByIdAndUserNo(screenshotId, userNo)
+                .orElseThrow(() -> new IllegalArgumentException("Card not found"));
+        return toCardDto(screenshot);
+    }
+
     /**
      * Screenshot → CardDto 변환
      * - 프론트 Card 모델 필드에 맞춤
@@ -127,6 +135,19 @@ public class CardService {
     private static String longToUuidString(Long id) {
         if (id == null) return UUID.randomUUID().toString();
         return String.format("00000000-0000-0000-0000-%012x", id);
+    }
+
+    private static Long externalIdToLong(String externalId) {
+        try {
+            UUID uuid = UUID.fromString(externalId);
+            long id = uuid.getLeastSignificantBits();
+            if (uuid.getMostSignificantBits() != 0 || id <= 0) {
+                throw new IllegalArgumentException("Invalid card id");
+            }
+            return id;
+        } catch (IllegalArgumentException error) {
+            throw new IllegalArgumentException("Invalid card id", error);
+        }
     }
 
     /** categoryId → FolderCategory rawValue */

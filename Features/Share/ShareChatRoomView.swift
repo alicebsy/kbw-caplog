@@ -311,7 +311,8 @@ struct MessageRow: View {
                         .padding(.horizontal, 4)
                 }
                 
-                if let cardID = message.cardID, let card = vm.getCard(byId: cardID) {
+                if let card = message.sharedCard
+                    ?? message.cardID.flatMap({ vm.getCard(byId: $0) }) {
                     HStack(alignment: .bottom, spacing: 6) {
                         if isMine {
                             Text(timeText)

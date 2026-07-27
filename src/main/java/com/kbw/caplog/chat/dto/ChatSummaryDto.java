@@ -18,6 +18,7 @@ public class ChatSummaryDto {
     private String id;
     private String title;
     private String lastMessage;
+    private String lastMessageCardTitle;
     private Instant updatedAt;
     private int unreadCount;
     private List<String> participantIds;

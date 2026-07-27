@@ -3,6 +3,7 @@ package com.kbw.caplog.card.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
  */
 @Getter
 @Builder
+@Jacksonized
 public class CardDto {
 
     /** 카드 고유 ID (UUID 문자열 형식, 프론트 호환용) */

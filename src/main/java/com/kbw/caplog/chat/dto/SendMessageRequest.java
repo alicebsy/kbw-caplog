@@ -10,4 +10,5 @@ import lombok.Setter;
 public class SendMessageRequest {
 
     private String text;
+    private String cardId;
 }

@@ -10,16 +10,19 @@ struct ChatMessage: Identifiable, Codable, Equatable {
     let createdAt: Date
     let text: String?
     let cardID: UUID?
+    let sharedCard: Card?
 
     init(id: String = UUID().uuidString,
          senderId: String,
          text: String?,
          cardID: UUID?,
+         sharedCard: Card? = nil,
          createdAt: Date = Date()) {
         self.id = id
         self.senderId = senderId
         self.text = text
         self.cardID = cardID
+        self.sharedCard = sharedCard
         self.createdAt = createdAt
     }
 }
@@ -374,7 +377,7 @@ final class RealShareRepository: ShareRepository {
                 lastMessageText: summary.lastMessage,
                 lastMessageAt: summary.updatedAt,
                 unreadCount: summary.unreadCount,
-                lastMessageCardTitle: nil
+                lastMessageCardTitle: summary.lastMessageCardTitle
             )
         }
     }
@@ -389,7 +392,7 @@ final class RealShareRepository: ShareRepository {
             lastMessageText: summary.lastMessage,
             lastMessageAt: summary.updatedAt,
             unreadCount: summary.unreadCount,
-            lastMessageCardTitle: nil
+            lastMessageCardTitle: summary.lastMessageCardTitle
         )
     }
 
@@ -401,31 +404,26 @@ final class RealShareRepository: ShareRepository {
                 id: msg.id,
                 senderId: msg.senderId,
                 text: msg.text,
-                cardID: nil,
+                cardID: msg.card?.id,
+                sharedCard: msg.card,
                 createdAt: msg.createdAt
             )
         }
     }
     
-    // 텍스트 메시지는 서버로 전송, 카드 공유는 우선 로컬만 반영
+    // 텍스트와 카드 메시지를 모두 서버에 저장
     func sendMessage(threadId: String, text: String?, cardID: UUID?) async throws -> ChatMessage {
-        if let cardID {
-            // 서버 메시지 모델에 카드 정보가 아직 없어서,
-            // 우선 로컬용 메시지로만 추가한다.
-            return ChatMessage(
-                senderId: "me",
-                text: text,
-                cardID: cardID
-            )
-        }
-        
-        let bodyText = text ?? ""
-        let serverMsg = try await shareAPI.sendMessage(chatId: threadId, text: bodyText)
+        let serverMsg = try await shareAPI.sendMessage(
+            chatId: threadId,
+            text: text,
+            cardId: cardID?.uuidString
+        )
         return ChatMessage(
             id: serverMsg.id,
             senderId: serverMsg.senderId,
             text: serverMsg.text,
-            cardID: nil,
+            cardID: serverMsg.card?.id ?? cardID,
+            sharedCard: serverMsg.card,
             createdAt: serverMsg.createdAt
         )
     }

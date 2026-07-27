@@ -1,5 +1,9 @@
 package com.kbw.caplog.chat;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kbw.caplog.card.dto.CardDto;
+import com.kbw.caplog.card.service.CardService;
 import com.kbw.caplog.chat.dto.*;
 import com.kbw.caplog.user.User;
 import com.kbw.caplog.user.UserRepository;
@@ -18,6 +22,8 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository messageRepository;
     private final UserRepository userRepository;
+    private final CardService cardService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ChatSummaryDto createRoom(Long currentUserNo, CreateChatRequest request) {
@@ -91,10 +97,25 @@ public class ChatService {
         boolean isParticipant = room.getParticipants().stream().anyMatch(p -> p.getUserNo().equals(currentUserNo));
         if (!isParticipant) throw new IllegalArgumentException("Not a participant");
         String text = request.getText() != null ? request.getText().trim() : "";
+        if (text.isEmpty()) text = null;
+        String cardId = request.getCardId() != null ? request.getCardId().trim() : "";
+        if (cardId.isEmpty()) cardId = null;
+        if (text == null && cardId == null) {
+            throw new IllegalArgumentException("Message content required");
+        }
+
+        String cardSnapshot = null;
+        if (cardId != null) {
+            CardDto card = cardService.findOwnedCardByExternalId(currentUserNo, cardId);
+            cardSnapshot = serializeCard(card);
+        }
+
         ChatMessage msg = ChatMessage.builder()
                 .chatRoom(room)
                 .senderUserNo(currentUserNo)
                 .text(text)
+                .cardId(cardId)
+                .cardSnapshot(cardSnapshot)
                 .createdAt(Instant.now())
                 .build();
         msg = messageRepository.save(msg);
@@ -148,6 +169,7 @@ public class ChatService {
                 .id(String.valueOf(room.getId()))
                 .title(buildRoomTitle(room, currentUserNo))
                 .lastMessage(lastMessage != null && lastMessage.getText() != null ? lastMessage.getText() : "")
+                .lastMessageCardTitle(lastMessage != null ? cardTitle(lastMessage) : null)
                 .updatedAt(lastMessage != null ? lastMessage.getCreatedAt() : room.getCreatedAt())
                 .unreadCount(countUnread(room, currentUserNo, lastMessage))
                 .participantIds(participantIds)
@@ -168,7 +190,30 @@ public class ChatService {
                 .senderId(senderId)
                 .senderName(senderName != null ? senderName : senderId)
                 .text(m.getText() != null ? m.getText() : "")
+                .card(deserializeCard(m.getCardSnapshot()))
                 .createdAt(m.getCreatedAt())
                 .build();
+    }
+
+    private String serializeCard(CardDto card) {
+        try {
+            return objectMapper.writeValueAsString(card);
+        } catch (JsonProcessingException error) {
+            throw new IllegalStateException("Failed to serialize card", error);
+        }
+    }
+
+    private CardDto deserializeCard(String snapshot) {
+        if (snapshot == null || snapshot.isBlank()) return null;
+        try {
+            return objectMapper.readValue(snapshot, CardDto.class);
+        } catch (JsonProcessingException error) {
+            return null;
+        }
+    }
+
+    private String cardTitle(ChatMessage message) {
+        CardDto card = deserializeCard(message.getCardSnapshot());
+        return card != null ? card.getTitle() : null;
     }
 }

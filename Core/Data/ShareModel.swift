@@ -48,6 +48,7 @@ public struct ChatSummary: Identifiable, Codable, Hashable {
     public let id: String
     public let title: String
     public let lastMessage: String
+    public let lastMessageCardTitle: String?
     public let updatedAt: Date
     public let unreadCount: Int
     public let participantIds: [String]?
@@ -55,13 +56,14 @@ public struct ChatSummary: Identifiable, Codable, Hashable {
 }
 
 // 서버 메시지 모델
-public struct Message: Identifiable, Codable, Hashable {
-    public let id: String
-    public let chatId: String
-    public let senderId: String
-    public let senderName: String
-    public let text: String
-    public let createdAt: Date
+struct Message: Identifiable, Codable, Hashable {
+    let id: String
+    let chatId: String
+    let senderId: String
+    let senderName: String
+    let text: String
+    let card: Card?
+    let createdAt: Date
 }
 
 // MARK: - Share

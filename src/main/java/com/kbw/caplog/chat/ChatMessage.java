@@ -28,6 +28,12 @@ public class ChatMessage {
     @Column(length = 2000)
     private String text;
 
+    @Column(name = "card_id", length = 36)
+    private String cardId;
+
+    @Column(name = "card_snapshot", columnDefinition = "TEXT")
+    private String cardSnapshot;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

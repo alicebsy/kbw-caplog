@@ -1,5 +1,6 @@
 package com.kbw.caplog.chat.dto;
 
+import com.kbw.caplog.card.dto.CardDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,5 +19,6 @@ public class ChatMessageDto {
     private String senderId;
     private String senderName;
     private String text;
+    private CardDto card;
     private Instant createdAt;
 }

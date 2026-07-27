@@ -40,14 +40,15 @@ struct ShareAPI {
     }
     
     /// 메시지 전송
-    func sendMessage(chatId: String, text: String) async throws -> Message {
+    func sendMessage(chatId: String, text: String?, cardId: String? = nil) async throws -> Message {
         struct SendMessageBody: Encodable {
-            let text: String
+            let text: String?
+            let cardId: String?
         }
         return try await client.request(
             "POST",
             path: Endpoints.sendMessage(chatId: chatId),
-            body: SendMessageBody(text: text)
+            body: SendMessageBody(text: text, cardId: cardId)
         )
     }
     
