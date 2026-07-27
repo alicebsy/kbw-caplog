@@ -122,7 +122,8 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         let requestOptions = PHImageRequestOptions()
         requestOptions.deliveryMode = .highQualityFormat
         requestOptions.isSynchronous = false
-        requestOptions.isNetworkAccessAllowed = true
+        // iCloud 다운로드 없이 기기에 원본이 있는 사진만 처리합니다.
+        requestOptions.isNetworkAccessAllowed = false
         
         imageManager.requestImage(
             for: asset,
