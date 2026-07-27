@@ -92,6 +92,17 @@ cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 - 한도를 넘으면 `429 Too Many Requests`, `Retry-After`, `Cache-Control: no-store`를 반환합니다.
 - 기본적으로 직접 연결 IP만 신뢰하며, 검증된 리버스 프록시를 사용할 때만 전달 헤더를 활성화할 수 있습니다.
 
+### 11. Gradle Wrapper 복구 및 무결성 검증
+
+- 저장소에서 누락됐던 `gradle-wrapper.jar`를 Gradle 8.10 공식 Wrapper로 복구했습니다.
+- 모든 개발·CI 환경이 시스템 Gradle 대신 `./gradlew`로 동일한 Gradle 8.10을 사용하도록 했습니다.
+- Gradle 배포 ZIP의 공식 SHA-256 체크섬을 `gradle-wrapper.properties`에 고정했습니다.
+- 전역 `*.jar` 제외 규칙과 관계없이 공식 Wrapper JAR만 Git에 포함되도록 예외를 추가했습니다.
+
+```bash
+./gradlew test
+```
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -149,4 +160,3 @@ xcodebuild \
 
 - Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
-- 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리
