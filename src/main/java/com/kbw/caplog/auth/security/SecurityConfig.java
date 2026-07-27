@@ -22,9 +22,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RequestRateLimitFilter requestRateLimitFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(
+            JwtAuthFilter jwtAuthFilter,
+            RequestRateLimitFilter requestRateLimitFilter
+    ) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.requestRateLimitFilter = requestRateLimitFilter;
     }
 
     @Bean
@@ -48,7 +53,9 @@ public class SecurityConfig {
 
                 // 필터 체인에 JWT 필터 삽입
                 // UsernamePasswordAuthenticationFilter보다 앞에 둬야 헤더 토큰 먼저 검증
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // 사용자별 제한을 위해 JWT 인증 정보가 설정된 다음 실행
+                .addFilterAfter(requestRateLimitFilter, JwtAuthFilter.class);
 
 
         return http.build(); // 이 빌드 결과가 실제로 동작하는 보안 체인

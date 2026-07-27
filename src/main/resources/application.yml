@@ -50,6 +50,8 @@ google:
     api-key: ${GOOGLE_VISION_API_KEY:}
 
 caplog:
+  security:
+    trust-forwarded-headers: ${CAPLOG_TRUST_FORWARDED_HEADERS:false}
   storage:
     upload-dir: ${CAPLOG_UPLOAD_DIR:./data/uploads}
     max-file-size: ${CAPLOG_UPLOAD_MAX_BYTES:10485760}

@@ -83,6 +83,15 @@ cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 
 네이티브 앱 키는 최종 앱 바이너리에 포함되는 식별자이므로 Kakao Developers 콘솔에서 iOS 번들 ID를 제한해야 합니다. 기존 키가 Git 기록에 남아 있으므로 배포 전 키 재발급도 권장합니다.
 
+### 10. 주요 API 요청 횟수 제한
+
+- 로그인은 IP당 분당 5회, 회원가입은 IP당 10분에 3회로 제한했습니다.
+- 토큰 갱신은 IP당 분당 10회로 제한했습니다.
+- 스크린샷 업로드는 사용자당 분당 10회로 제한했습니다.
+- OpenAI 분류는 사용자당 분당 20회, Google Vision 분석은 사용자당 분당 10회로 제한했습니다.
+- 한도를 넘으면 `429 Too Many Requests`, `Retry-After`, `Cache-Control: no-store`를 반환합니다.
+- 기본적으로 직접 연결 IP만 신뢰하며, 검증된 리버스 프록시를 사용할 때만 전달 헤더를 활성화할 수 있습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -97,6 +106,9 @@ export KAKAO_REST_API_KEY="Kakao REST API 키"
 # 선택 설정
 export OPENAI_MODEL="gpt-4o-mini"
 export APP_BASE_URL="http://localhost:8080"
+
+# 신뢰할 수 있는 리버스 프록시가 X-Forwarded-For를 덮어쓰는 환경에서만 사용
+export CAPLOG_TRUST_FORWARDED_HEADERS="true"
 ```
 
 iOS Release 빌드에는 운영 백엔드 주소를 Xcode 빌드 설정으로 전달해야 합니다.
@@ -127,7 +139,7 @@ xcodebuild \
 
 ## 검증 결과
 
-- 백엔드 Gradle 테스트 13개 통과
+- 백엔드 Gradle 테스트 16개 통과
 - iOS 시뮬레이터 대상 Xcode 빌드 성공
 - 실제 OpenAI 및 Google Vision 네트워크 호출은 API 키를 입력하지 않은 상태라 수행하지 않았습니다.
 
@@ -136,6 +148,5 @@ xcodebuild \
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
-- 로그인, 업로드, AI 요청 API에 사용자별 요청 횟수 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
 - 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리
