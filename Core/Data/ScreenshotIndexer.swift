@@ -109,16 +109,16 @@ final class ScreenshotIndexer {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
             let msg = "사진 권한 없음. 설정 → Caplog → 사진에서 허용해 주세요."
-            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: msg)
+            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: msg)
             return
         }
         if UserDefaults.standard.bool(forKey: initialImportDoneKey) {
-            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "이미 초기 인덱싱 완료됨. '스크린샷에서 카드 가져오기'로 다시 시도 가능.")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "이미 초기 인덱싱 완료됨. '스크린샷에서 카드 가져오기'로 다시 시도 가능.")
             return
         }
 
         guard let collection = ScreenshotMonitor.findScreenshotCollection() else {
-            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "사진 앨범을 찾을 수 없음 (권한 확인)")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "사진 앨범을 찾을 수 없음 (권한 확인)")
             return
         }
 
@@ -132,12 +132,12 @@ final class ScreenshotIndexer {
             if toProcess.count >= limit { return }
         }
         guard !toProcess.isEmpty else {
-            await ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "처리할 새 스크린샷 없음 (이미 카드로 만든 것만 있음). 새 스크린샷을 찍은 뒤 다시 시도.")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "처리할 새 스크린샷 없음 (이미 카드로 만든 것만 있음). 새 스크린샷을 찍은 뒤 다시 시도.")
             UserDefaults.standard.set(true, forKey: initialImportDoneKey)
             return
         }
 
-        await ScreenshotPipelineStatus.shared.setFindingScreenshots(count: toProcess.count)
+        ScreenshotPipelineStatus.shared.setFindingScreenshots(count: toProcess.count)
         for (i, asset) in toProcess.enumerated() {
             await processOne(asset: asset, index: i + 1, total: toProcess.count)
         }
@@ -157,7 +157,7 @@ final class ScreenshotIndexer {
                     return
                 }
                 Task { @MainActor in
-                    await ScreenshotPipelineStatus.shared.setImageLoaded(index: index, total: total)
+                    ScreenshotPipelineStatus.shared.setImageLoaded(index: index, total: total)
                 }
                 self.processingService.processScreenshot(image: uiImage) { result in
                     Task { @MainActor in
@@ -169,12 +169,12 @@ final class ScreenshotIndexer {
                             if let id = card.thumbnailURL ?? card.screenshotURLs.first {
                                 CardImageStore.save(image: uiImage, id: id)
                             }
-                            await ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
+                            ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
                             await self.cardManager.createCard(card)
                             self.markAssetAsProcessed(asset)
                             await self.uploadScreenshotToServer(image: uiImage)
                         case .failure(let err):
-                            await ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
+                            ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
                         }
                         cont.resume()
                     }

@@ -116,6 +116,12 @@ cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 - 개발용 친구 데이터는 불변 `Sendable` 값으로 명시해 MainActor 상태와 분리했습니다.
 - Swift 6에서 오류로 강화될 공유 화면의 actor isolation 경고를 해소했습니다.
 
+### 14. 스크린샷 파이프라인 상태 업데이트 정리
+
+- 스크린샷 인덱서와 진행 상태 객체가 같은 MainActor에서 실행됨을 코드에 명확히 반영했습니다.
+- 실제 비동기 작업이 없는 상태 변경에서 불필요한 `await`를 제거했습니다.
+- 사진 탐색, 이미지 로드, OCR·GPT 성공 및 실패 상태 표시 동작은 그대로 유지했습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -172,4 +178,4 @@ xcodebuild \
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
-- 스크린샷 인덱서 등 나머지 Swift 6 동시성(actor isolation) 경고 정리
+- 나머지 Swift 컴파일러 경고 정리
