@@ -41,6 +41,10 @@ jwt:
   access-hours: ${JWT_ACCESS_HOURS:1}
   refresh-days: ${JWT_REFRESH_DAYS:14}
 
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+
 caplog:
   storage:
     upload-dir: ${CAPLOG_UPLOAD_DIR:./data/uploads}

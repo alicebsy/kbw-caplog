@@ -169,16 +169,9 @@ class ScreenshotProcessingService {
     ) {
         print("🤖 Step 2: GPT-4 분류 시작")
         
-        guard let raw = Bundle.main.infoDictionary?["GPT_API_KEY"] as? String, !raw.isEmpty else {
-            print("❌ GPT_API_KEY가 Info.plist에 없거나 비어 있습니다. caplog/Info.plist에 OpenAI API 키를 넣어주세요.")
-            completion(.failure(.gptFailed("GPT API Key가 없습니다. Info.plist의 GPT_API_KEY를 설정하세요.")))
-            return
-        }
-        let apiKey = raw
-        
         let prompt = makeGPTPrompt(from: ocrText, visionLabels: visionLabels)
         
-        classifyTextWithGPT_stable(prompt: prompt, apiKey: apiKey) { [weak self] gptResult, usage in
+        classifyTextWithGPT_stable(prompt: prompt) { [weak self] gptResult, usage in
             guard let self = self else { return }
             
             print("✅ GPT-4 분류 완료: \(gptResult.prefix(100))...")

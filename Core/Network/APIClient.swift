@@ -56,7 +56,8 @@ struct APIClient {
         path: String,
         query: [URLQueryItem]? = nil,
         body: B? = Optional<B>.none,
-        authorized: Bool = true
+        authorized: Bool = true,
+        timeoutInterval: TimeInterval = 30
     ) async throws -> T {
         var url = APIConfig.baseURL
         url.append(path: APIConfig.apiPrefix + path)
@@ -66,7 +67,7 @@ struct APIClient {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         // ✅ 타임아웃 명시적 설정
-        req.timeoutInterval = 30
+        req.timeoutInterval = timeoutInterval
 
         if let body = body {
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
