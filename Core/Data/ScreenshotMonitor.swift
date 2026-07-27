@@ -1,5 +1,5 @@
 import Foundation
-import Photos
+@preconcurrency import Photos
 import UIKit
 
 @MainActor
@@ -68,43 +68,47 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
     
     // MARK: - PHPhotoLibraryChangeObserver
     
-    func photoLibraryDidChange(_ changeInstance: PHChange) {
-        // 콜백이 백그라운드 스레드에서 올 수 있으므로 MainActor에서 처리
-        Task { @MainActor in
-            if screenshotCollection == nil {
-                screenshotCollection = Self.findScreenshotCollection()
+    nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
+        // Photos 콜백은 임의 스레드에서 오므로 MainActor 상태에 직접 접근하지 않습니다.
+        Task { @MainActor [weak self] in
+            self?.handlePhotoLibraryChange(changeInstance)
+        }
+    }
+
+    private func handlePhotoLibraryChange(_ changeInstance: PHChange) {
+        if screenshotCollection == nil {
+            screenshotCollection = Self.findScreenshotCollection()
+        }
+        guard let collection = screenshotCollection else { return }
+
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        let screenshots = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+
+        guard let changeDetails = changeInstance.changeDetails(for: screenshots),
+              changeDetails.hasIncrementalChanges else {
+            return
+        }
+
+        guard let insertedIndexes = changeDetails.insertedIndexes,
+              !insertedIndexes.isEmpty else {
+            return
+        }
+
+        print("📸 새 스크린샷 감지: \(insertedIndexes.count)개")
+
+        for index in insertedIndexes {
+            let asset = changeDetails.fetchResultAfterChanges.object(at: index)
+            if ScreenshotIndexer.shared.isAssetProcessed(asset) {
+                print("⏭️ 이미 카드로 만든 스크린샷 스킵: \(asset.localIdentifier)")
+                continue
             }
-            guard let collection = screenshotCollection else { return }
-            
-            let fetchOptions = PHFetchOptions()
-            fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-            let screenshots = PHAsset.fetchAssets(in: collection, options: fetchOptions)
-            
-            guard let changeDetails = changeInstance.changeDetails(for: screenshots),
-                  changeDetails.hasIncrementalChanges else {
-                return
+            if lastProcessedAssetIdentifier == asset.localIdentifier {
+                print("⏭️ 동일 세션에서 이미 처리한 스크린샷 스킵")
+                continue
             }
-            
-            let insertedIndexes = changeDetails.insertedIndexes
-            guard let insertedIndexes = insertedIndexes, !insertedIndexes.isEmpty else {
-                return
-            }
-            
-            print("📸 새 스크린샷 감지: \(insertedIndexes.count)개")
-            
-            for index in insertedIndexes {
-                let asset = changeDetails.fetchResultAfterChanges.object(at: index) as! PHAsset
-                if ScreenshotIndexer.shared.isAssetProcessed(asset) {
-                    print("⏭️ 이미 카드로 만든 스크린샷 스킵: \(asset.localIdentifier)")
-                    continue
-                }
-                if lastProcessedAssetIdentifier == asset.localIdentifier {
-                    print("⏭️ 동일 세션에서 이미 처리한 스크린샷 스킵")
-                    continue
-                }
-                lastProcessedAssetIdentifier = asset.localIdentifier
-                processNewScreenshot(asset: asset)
-            }
+            lastProcessedAssetIdentifier = asset.localIdentifier
+            processNewScreenshot(asset: asset)
         }
     }
     

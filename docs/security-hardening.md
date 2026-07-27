@@ -103,6 +103,13 @@ cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 ./gradlew test
 ```
 
+### 12. 스크린샷 자동 감지 동시성 안전성
+
+- Photos 프레임워크의 변경 콜백을 `nonisolated` 진입점으로 분리했습니다.
+- 백그라운드에서 전달되는 콜백이 앱 상태에 직접 접근하지 않고 MainActor로 전환된 뒤 처리되도록 했습니다.
+- 불필요한 `PHAsset` 강제 형변환을 제거했습니다.
+- Swift 6에서 오류로 강화될 사진 라이브러리 콜백의 actor isolation 경고를 해소했습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -159,4 +166,4 @@ xcodebuild \
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
-- Swift 6 동시성(actor isolation) 경고 정리
+- 공유 화면 등 나머지 Swift 6 동시성(actor isolation) 경고 정리
