@@ -151,32 +151,46 @@ final class ScreenshotIndexer {
             let requestOptions = PHImageRequestOptions()
             requestOptions.deliveryMode = .highQualityFormat
             requestOptions.isSynchronous = false
-            imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFit, options: requestOptions) { [weak self] image, _ in
-                guard let self, let uiImage = image else {
-                    cont.resume()
+            requestOptions.isNetworkAccessAllowed = true
+            imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFit, options: requestOptions) { [weak self] image, info in
+                let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool ?? false
+                guard !isDegraded else { return }
+
+                let isCancelled = info?[PHImageCancelledKey] as? Bool ?? false
+                let imageError = info?[PHImageErrorKey] as? Error
+                guard let self, !isCancelled, imageError == nil, let uiImage = image else {
+                    Task { @MainActor in
+                        let reason = imageError?.localizedDescription
+                            ?? (isCancelled ? "사진 요청이 취소되었습니다." : "사진 데이터를 불러오지 못했습니다.")
+                        ScreenshotPipelineStatus.shared.setPipelineFailed(
+                            step: "이미지 로드",
+                            errorDescription: reason
+                        )
+                        cont.resume()
+                    }
                     return
                 }
                 Task { @MainActor in
                     ScreenshotPipelineStatus.shared.setImageLoaded(index: index, total: total)
-                }
-                self.processingService.processScreenshot(image: uiImage) { result in
-                    Task { @MainActor in
-                        switch result {
-                        case .success(let processingResult):
-                            var card = processingResult.card
-                            card.sourceScreenshotAssetId = asset.localIdentifier
-                            print("[Caplog 스크린샷] OCR·GPT 성공 → 카드 생성 단계: \(card.title)")
-                            if let id = card.thumbnailURL ?? card.screenshotURLs.first {
-                                CardImageStore.save(image: uiImage, id: id)
+                    self.processingService.processScreenshot(image: uiImage) { result in
+                        Task { @MainActor in
+                            switch result {
+                            case .success(let processingResult):
+                                var card = processingResult.card
+                                card.sourceScreenshotAssetId = asset.localIdentifier
+                                print("[Caplog 스크린샷] OCR·GPT 성공 → 카드 생성 단계: \(card.title)")
+                                if let id = card.thumbnailURL ?? card.screenshotURLs.first {
+                                    CardImageStore.save(image: uiImage, id: id)
+                                }
+                                ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
+                                await self.cardManager.createCard(card)
+                                self.markAssetAsProcessed(asset)
+                                await self.uploadScreenshotToServer(image: uiImage)
+                            case .failure(let err):
+                                ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
                             }
-                            ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
-                            await self.cardManager.createCard(card)
-                            self.markAssetAsProcessed(asset)
-                            await self.uploadScreenshotToServer(image: uiImage)
-                        case .failure(let err):
-                            ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
+                            cont.resume()
                         }
-                        cont.resume()
                     }
                 }
             }
@@ -191,15 +205,23 @@ final class ScreenshotIndexer {
         let requestOptions = PHImageRequestOptions()
         requestOptions.deliveryMode = .highQualityFormat
         requestOptions.isSynchronous = false
+        requestOptions.isNetworkAccessAllowed = true
         
         imageManager.requestImage(
             for: asset,
             targetSize: targetSize,
             contentMode: .aspectFit,
             options: requestOptions
-        ) { [weak self] image, _ in
-            guard let self, let uiImage = image else {
-                print("❌ ScreenshotIndexer: 이미지 로드 실패")
+        ) { [weak self] image, info in
+            let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool ?? false
+            guard !isDegraded else { return }
+
+            let isCancelled = info?[PHImageCancelledKey] as? Bool ?? false
+            let imageError = info?[PHImageErrorKey] as? Error
+            guard let self, !isCancelled, imageError == nil, let uiImage = image else {
+                let reason = imageError?.localizedDescription
+                    ?? (isCancelled ? "사진 요청 취소" : "사진 데이터 없음")
+                print("❌ ScreenshotIndexer: 이미지 로드 실패 - \(reason)")
                 return
             }
             print("📸 ScreenshotIndexer: 스크린샷 분석 시작")

@@ -130,13 +130,24 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
             contentMode: .aspectFit,
             options: requestOptions
         ) { [weak self] image, info in
-            guard let self, let uiImage = image else {
-                print("❌ 이미지 로드 실패")
-                return
-            }
-            
-            // 다운로드 중인 경우 스킵
-            if let downloading = info?[PHImageResultIsDegradedKey] as? Bool, downloading {
+            let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool ?? false
+            guard !isDegraded else { return }
+
+            let isCancelled = info?[PHImageCancelledKey] as? Bool ?? false
+            let imageError = info?[PHImageErrorKey] as? Error
+            guard let self, !isCancelled, imageError == nil, let uiImage = image else {
+                let reason = imageError?.localizedDescription
+                    ?? (isCancelled ? "사진 요청이 취소되었습니다." : "사진 데이터를 불러오지 못했습니다.")
+                Task { @MainActor [weak self] in
+                    if self?.lastProcessedAssetIdentifier == asset.localIdentifier {
+                        self?.lastProcessedAssetIdentifier = nil
+                    }
+                    ScreenshotPipelineStatus.shared.setPipelineFailed(
+                        step: "자동 이미지 로드",
+                        errorDescription: reason
+                    )
+                }
+                print("❌ ScreenshotMonitor: 이미지 로드 실패 - \(reason)")
                 return
             }
             
