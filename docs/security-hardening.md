@@ -53,6 +53,13 @@
 - 더 이상 iOS에서 직접 호출하지 않는 OpenAI 도메인 예외와 `GPT_API_KEY` 설정을 제거했습니다.
 - `Secrets.xcconfig`가 앱 리소스에 복사되지 않도록 빌드 설정에서 제외했습니다.
 
+### 7. 개발·배포 API 서버 주소 분리
+
+- Debug 빌드는 설정값이 없을 때 기존 로컬 개발 서버 주소를 사용합니다.
+- Release 빌드는 `CAPLOG_API_BASE_URL`에 운영 서버 주소가 반드시 설정돼 있어야 합니다.
+- Release 빌드에서는 HTTPS 주소만 허용해 로컬 IP나 일반 HTTP 주소로 잘못 배포되는 것을 차단합니다.
+- 운영 서버 주소를 소스 코드에 하드코딩하지 않고 Xcode 빌드 설정으로 주입할 수 있습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -66,6 +73,16 @@ export KAKAO_REST_API_KEY="Kakao REST API 키"
 # 선택 설정
 export OPENAI_MODEL="gpt-4o-mini"
 export APP_BASE_URL="http://localhost:8080"
+```
+
+iOS Release 빌드에는 운영 백엔드 주소를 Xcode 빌드 설정으로 전달해야 합니다.
+
+```bash
+xcodebuild \
+  -project Caplog.xcodeproj \
+  -scheme Caplog \
+  -configuration Release \
+  CAPLOG_API_BASE_URL="https://api.example.com"
 ```
 
 ## API 및 데이터 변경사항
@@ -91,7 +108,6 @@ export APP_BASE_URL="http://localhost:8080"
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - iOS 앱에 남아 있는 Google Vision API 키를 백엔드로 이전
-- 개발 장비 IP 주소 등 환경별 서버 주소 설정 분리
 - 로그인, 업로드, AI 요청 API에 사용자별 요청 횟수 제한 적용
 - Swift 6 동시성(actor isolation) 경고 정리
 - 저장소에서 누락된 Gradle Wrapper JAR 관리 방식 정리
