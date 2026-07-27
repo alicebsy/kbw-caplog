@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Friend
-public struct Friend: Identifiable, Codable, Hashable {
+public struct Friend: Identifiable, Codable, Hashable, Sendable {
     public let id: String
     public let name: String
     public let avatarURL: URL?

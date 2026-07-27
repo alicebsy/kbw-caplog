@@ -450,7 +450,7 @@ final class RealShareRepository: ShareRepository {
 final class ShareViewModel: ObservableObject {
     
     // 싱글톤
-    nonisolated static let shared = ShareViewModel()
+    static let shared = ShareViewModel()
 
     // Published
     @Published var friends: [Friend] = []
@@ -464,15 +464,15 @@ final class ShareViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     // 저장소 (Mock or 실제 API)
-    private nonisolated let repo: ShareRepository
-    private nonisolated let cardManager = CardManager.shared
+    private let repo: ShareRepository
+    private let cardManager = CardManager.shared
 
 
     // --------------------------------------------------
     // MARK: - init()
     // --------------------------------------------------
     /// 기본값을 RealShareRepository로 두고, 필요 시 인자로 Mock을 주입해서 사용할 수 있다.
-    private nonisolated init(repo: ShareRepository = RealShareRepository()) {
+    private init(repo: ShareRepository = RealShareRepository()) {
         self.repo = repo
         
         // 🔥 (4번 기능) 프로필 변경 감지 — nickname, profileImageName 모두 반영

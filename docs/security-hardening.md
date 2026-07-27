@@ -110,6 +110,12 @@ cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 - 불필요한 `PHAsset` 강제 형변환을 제거했습니다.
 - Swift 6에서 오류로 강화될 사진 라이브러리 콜백의 actor isolation 경고를 해소했습니다.
 
+### 13. 공유 화면 상태의 MainActor 격리
+
+- `ShareViewModel`의 저장소, 카드 관리자, 싱글톤 초기화를 MainActor 안에서 수행하도록 통일했습니다.
+- 개발용 친구 데이터는 불변 `Sendable` 값으로 명시해 MainActor 상태와 분리했습니다.
+- Swift 6에서 오류로 강화될 공유 화면의 actor isolation 경고를 해소했습니다.
+
 ## 필요한 환경변수
 
 실제 비밀값은 소스 코드나 Git 저장소에 커밋하지 말고, 실행 환경에서 주입해야 합니다.
@@ -166,4 +172,4 @@ xcodebuild \
 다음 항목은 이번 변경에 포함되지 않았으며 후속 작업이 필요합니다.
 
 - Kakao Developers 콘솔에서 네이티브 앱 키 재발급 및 iOS 플랫폼 제한 적용
-- 공유 화면 등 나머지 Swift 6 동시성(actor isolation) 경고 정리
+- 스크린샷 인덱서 등 나머지 Swift 6 동시성(actor isolation) 경고 정리

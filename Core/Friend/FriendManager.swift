@@ -8,7 +8,7 @@ import Combine
 final class FriendManager: ObservableObject {
     
     // ✅ Mock 데이터 (개발용 - Friend로 통일)
-    static let mockFriends: [Friend] = [
+    nonisolated static let mockFriends: [Friend] = [
         Friend(id: "2276003", name: "강다혜", avatarURL: nil, profileImage: "avatar1"),
         Friend(id: "alicebsy", name: "배서연", avatarURL: nil, profileImage: "avatar3"),
         Friend(id: "minha2469", name: "우민하", avatarURL: nil, profileImage: "avatar2"),
