@@ -607,21 +607,49 @@ final class ShareViewModel: ObservableObject {
     // --------------------------------------------------
 
     func openThread(_ threadId: String) async {
+        await refreshThreadMessages(threadId, forceMarkRead: true)
+    }
+
+    /// 열려 있는 채팅방의 새 메시지를 서버에서 가져와 기존 목록과 중복 없이 합친다.
+    /// 전송 직후의 응답과 자동 갱신 요청이 겹쳐도 같은 메시지가 두 번 표시되지 않는다.
+    func refreshThreadMessages(
+        _ threadId: String,
+        forceMarkRead: Bool = false
+    ) async {
         do {
-            let msgs = try await repo.fetchMessages(threadId: threadId)
-            messagesByThread[threadId] = msgs
+            let fetchedMessages = try await repo.fetchMessages(threadId: threadId)
+            let existingMessages = messagesByThread[threadId, default: []]
+            let existingIds = Set(existingMessages.map(\.id))
+            let hasNewMessages = fetchedMessages.contains {
+                !existingIds.contains($0.id)
+            }
+            var messagesById: [String: ChatMessage] = [:]
+            for message in existingMessages {
+                messagesById[message.id] = message
+            }
+            for message in fetchedMessages {
+                messagesById[message.id] = message
+            }
+            messagesByThread[threadId] = messagesById.values.sorted {
+                if $0.createdAt == $1.createdAt {
+                    return $0.id < $1.id
+                }
+                return $0.createdAt < $1.createdAt
+            }
 
-            // 읽음 처리
-            try await repo.markRead(threadId: threadId)
+            if forceMarkRead || hasNewMessages {
+                try await repo.markRead(threadId: threadId)
 
-            // thread unreadCount = 0
-            if let idx = threads.firstIndex(where: { $0.id == threadId }) {
-                var t = threads[idx]
-                t.unreadCount = 0
-                threads[idx] = t
+                // thread unreadCount = 0
+                if let idx = threads.firstIndex(where: { $0.id == threadId }) {
+                    var t = threads[idx]
+                    t.unreadCount = 0
+                    threads[idx] = t
+                }
             }
         }
         catch {
+            guard !Task.isCancelled else { return }
             self.errorMessage = error.localizedDescription
         }
     }

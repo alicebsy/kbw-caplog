@@ -58,6 +58,16 @@ struct ShareView: View {
                 ChatRoomView(vm: vm, thread: thread)
             }
         }
-        .task { await vm.loadAll() }
+        .task {
+            await vm.loadAll()
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .seconds(10))
+                } catch {
+                    break
+                }
+                await vm.refreshThreads()
+            }
+        }
     }
 }

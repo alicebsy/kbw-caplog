@@ -73,7 +73,7 @@ struct ChatRoomView: View {
                 }
                 
                 // 3) ChatRoom 진입 시 메시지 로드 → 최신 메시지로 이동
-                .task {
+                .task(id: thread.id) {
                     await vm.openThread(thread.id)
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
@@ -81,6 +81,15 @@ struct ChatRoomView: View {
                             proxy.scrollTo(lastId, anchor: .bottom)
                         }
                         hasInitialScrolled = true
+                    }
+
+                    while !Task.isCancelled {
+                        do {
+                            try await Task.sleep(for: .seconds(3))
+                        } catch {
+                            break
+                        }
+                        await vm.refreshThreadMessages(thread.id)
                     }
                 }
             }
