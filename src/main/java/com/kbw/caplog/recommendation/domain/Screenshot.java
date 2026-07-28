@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "screenshot")
 @Getter @Setter
@@ -26,6 +28,17 @@ public class Screenshot {
     @Column(length = 255)
     private String summary;
 
+    @Column(length = 80)
+    private String subcategory;
+
+    @Lob
+    @Column(name = "tags_json", columnDefinition = "TEXT")
+    private String tagsJson;
+
+    @Lob
+    @Column(name = "fields_json", columnDefinition = "TEXT")
+    private String fieldsJson;
+
     @Column(name = "place_name", length = 120)
     private String placeName;
 
@@ -46,4 +59,22 @@ public class Screenshot {
 
     @Column(name = "geocode_confidence")
     private Short geocodeConfidence;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @PrePersist
+    void onCreate() {
+        Instant now = Instant.now();
+        if (createdAt == null) createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }

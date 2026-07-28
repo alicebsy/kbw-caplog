@@ -183,6 +183,8 @@ struct CardDetailView: View {
     @State private var tagToDelete: String? = nil
     @State private var showDeleteConfirm = false
     @State private var showCardDeleteConfirm = false
+    @State private var showCardDeleteError = false
+    @State private var cardDeleteErrorMessage = ""
 
     init(card: Card) {
         self.cardID = card.id
@@ -472,8 +474,13 @@ struct CardDetailView: View {
             Button("삭제", role: .destructive) {
                 if let currentCard = self.card {
                     Task {
-                        await CardManager.shared.deleteCard(id: currentCard.id)
-                        dismiss()
+                        let succeeded = await CardManager.shared.deleteCard(id: currentCard.id)
+                        if succeeded {
+                            dismiss()
+                        } else {
+                            cardDeleteErrorMessage = CardManager.shared.errorMessage ?? "카드를 삭제하지 못했습니다."
+                            showCardDeleteError = true
+                        }
                     }
                 }
             }
@@ -481,6 +488,11 @@ struct CardDetailView: View {
             if let currentCard = self.card {
                 Text("'\(currentCard.title)' 카드를 삭제하시겠습니까?\n삭제된 카드는 복구할 수 없습니다.")
             }
+        }
+        .alert("삭제 실패", isPresented: $showCardDeleteError) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            Text(cardDeleteErrorMessage)
         }
     }
 

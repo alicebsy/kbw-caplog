@@ -25,6 +25,7 @@ enum Endpoints {
 
     // MARK: - Cards (카드 목록, 추천 등)
     static let cards            = "/cards"
+    static func card(_ id: UUID) -> String { "/cards/\(id.uuidString)" }
     static let cardsRecommended = "/cards/recommended"
     static let cardsRecent      = "/cards/recent"
     static let nearbyRecommendations = "/recommend/nearby"

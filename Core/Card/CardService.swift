@@ -74,29 +74,25 @@ struct CardService {
     
     /// 카드 생성 (POST /api/cards → DB 저장 후 응답 카드 반환)
     func createCard(_ card: Card) async throws -> Card {
-        let body = CreateCardRequestBody(
-            title: card.title,
-            summary: card.summary,
-            category: card.category.rawValue,
-            subcategory: card.subcategory,
-            tags: card.tags,
-            fields: card.fields,
-            thumbnailURL: card.thumbnailURL,
-            screenshotURLs: card.screenshotURLs.isEmpty ? nil : card.screenshotURLs
-        )
+        let body = CreateCardRequestBody(card: card)
         let dto: CardResponseDto = try await client.request("POST", path: Endpoints.cards, body: body)
         return dto.toCard()
     }
 
-    /// 카드 수정 (백엔드 API 미구현 시 로컬만)
+    /// 카드 수정 (PUT /api/cards/{id})
     func updateCard(_ card: Card) async throws -> Card {
-        // TODO: PUT /api/cards/{id} 구현 시 연동
-        return card
+        let body = CreateCardRequestBody(card: card)
+        let dto: CardResponseDto = try await client.request(
+            "PUT",
+            path: Endpoints.card(card.id),
+            body: body
+        )
+        return dto.toCard()
     }
 
-    /// 카드 삭제 (백엔드 API 미구현 시 로컬만)
+    /// 카드 삭제 (DELETE /api/cards/{id})
     func deleteCard(id: UUID) async throws {
-        // TODO: DELETE /api/cards/{id} 구현 시 연동
+        try await client.requestVoid("DELETE", path: Endpoints.card(id))
     }
 }
 
@@ -110,6 +106,17 @@ private struct CreateCardRequestBody: Encodable {
     let fields: [String: String]
     let thumbnailURL: String?
     let screenshotURLs: [String]?
+
+    init(card: Card) {
+        title = card.title
+        summary = card.summary
+        category = card.category.rawValue
+        subcategory = card.subcategory
+        tags = card.tags
+        fields = card.fields
+        thumbnailURL = card.thumbnailURL
+        screenshotURLs = card.screenshotURLs.isEmpty ? nil : card.screenshotURLs
+    }
 }
 
 // MARK: - API 응답 DTO (백엔드 CardDto와 매핑)

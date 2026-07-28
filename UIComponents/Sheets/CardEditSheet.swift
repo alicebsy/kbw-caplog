@@ -14,6 +14,8 @@ struct CardEditSheet: View {
     @State private var customFields: [String: String]
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var saveSucceeded = false
+    @State private var isSaving = false
     
     init(card: Card, onSave: @escaping () -> Void = { }) {
         self.card = card
@@ -190,12 +192,12 @@ struct CardEditSheet: View {
                     }
                     .foregroundColor(Color.myPageActionBlue)
                     .fontWeight(.semibold)
-                    .disabled(title.isEmpty)
+                    .disabled(title.isEmpty || isSaving)
                 }
             }
             .alert("안내", isPresented: $showAlert) {
                 Button("확인") {
-                    if alertMessage.contains("저장되었습니다") {
+                    if saveSucceeded {
                         onSave()
                         dismiss()
                     }
@@ -211,6 +213,7 @@ struct CardEditSheet: View {
     private func saveCard() {
         guard !title.isEmpty else {
             alertMessage = "제목을 입력해주세요."
+            saveSucceeded = false
             showAlert = true
             return
         }
@@ -225,15 +228,16 @@ struct CardEditSheet: View {
         updatedCard.updatedAt = Date()
         
         // CardManager를 통해 저장
+        isSaving = true
         Task {
-            await CardManager.shared.updateCard(updatedCard)
-            await MainActor.run {
-                alertMessage = "카드가 저장되었습니다."
-                showAlert = true
-            }
+            let succeeded = await CardManager.shared.updateCard(updatedCard)
+            saveSucceeded = succeeded
+            isSaving = false
+            alertMessage = succeeded
+                ? "카드가 저장되었습니다."
+                : CardManager.shared.errorMessage ?? "카드를 저장하지 못했습니다."
+            showAlert = true
         }
-        
-        print("✅ 카드 수정됨: \(title)")
     }
 }
 

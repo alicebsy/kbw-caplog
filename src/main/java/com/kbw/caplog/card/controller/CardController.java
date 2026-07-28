@@ -18,6 +18,8 @@ import java.util.List;
  * 카드 API (프론트엔드 Home/Folder/Search 연동)
  * - GET /api/cards: 내 카드 목록 (Screenshot 기반)
  * - POST /api/cards: 카드 생성 (스크린샷 AI 분류 결과 저장)
+ * - PUT /api/cards/{id}: 내 카드 수정
+ * - DELETE /api/cards/{id}: 내 카드 삭제
  */
 @RestController
 @RequestMapping("/api/cards")
@@ -66,5 +68,41 @@ public class CardController {
         CardDto created = cardService.createCard(user.getUserNo(), body);
         log.info("카드 저장 완료 (userNo={}, title={})", user.getUserNo(), created.getTitle());
         return ResponseEntity.ok(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CardDto> updateCard(
+            Authentication auth,
+            @PathVariable String id,
+            @RequestBody CreateCardRequest body
+    ) {
+        User user = authenticatedUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        try {
+            CardDto updated = cardService.updateCard(user.getUserNo(), id, body);
+            log.info("카드 수정 완료 (userNo={}, cardId={})", user.getUserNo(), id);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCard(Authentication auth, @PathVariable String id) {
+        User user = authenticatedUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        try {
+            cardService.deleteCard(user.getUserNo(), id);
+            log.info("카드 삭제 완료 (userNo={}, cardId={})", user.getUserNo(), id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    private User authenticatedUser(Authentication auth) {
+        String email = auth != null ? auth.getName() : null;
+        if (email == null || email.isBlank()) return null;
+        return userRepository.findByEmail(email).orElse(null);
     }
 }

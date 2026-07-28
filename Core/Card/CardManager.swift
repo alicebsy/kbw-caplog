@@ -189,7 +189,7 @@ final class CardManager: ObservableObject {
                 sourceScreenshotAssetId: card.sourceScreenshotAssetId
             )
             allCards.append(toAppend)
-            localOnlyCardIds.insert(toAppend.id)
+            localOnlyCardIds.remove(toAppend.id)
             savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
             ScreenshotPipelineStatus.shared.setPostSuccess(cardTitle: newCard.title)
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
@@ -204,85 +204,66 @@ final class CardManager: ObservableObject {
         }
     }
     
-    /// 카드 수정
-    func updateCard(_ card: Card) async {
-        print("================================================================================")
-        print("🔧 CardManager.updateCard 호출됨")
-        print("🔧 수정하려는 카드:")
-        print("   - ID: \(card.id)")
-        print("   - Title: \(card.title)")
-        print("   - Category: \(card.category.rawValue)")
-        print("   - Subcategory: \(card.subcategory)")
-        print("================================================================================")
-        
-        print("🔧 현재 allCards 배열 상태:")
-        for (idx, c) in allCards.enumerated() {
-            print("   [\(idx)] id=\(c.id), title=\(c.title)")
+    /// 카드 수정. 서버 카드의 저장 실패 시 화면의 기존 값을 유지합니다.
+    @discardableResult
+    func updateCard(_ card: Card) async -> Bool {
+        guard let index = allCards.firstIndex(where: { $0.id == card.id }) else {
+            errorMessage = "수정할 카드를 찾을 수 없습니다."
+            return false
         }
-        
+
+        if localOnlyCardIds.contains(card.id) {
+            allCards[index] = card
+            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            return true
+        }
+
         do {
             let updated = try await service.updateCard(card)
-            print("✅ service.updateCard() 완료")
-            
-            if let index = allCards.firstIndex(where: { $0.id == card.id }) {
-                print("✅ allCards에서 인덱스 발견: \(index)")
-                print("🔧 업데이트 전:")
-                print("   allCards[\(index)].title = '\(allCards[index].title)'")
-                print("   allCards[\(index)].category = '\(allCards[index].category.rawValue)'")
-                print("   allCards[\(index)].subcategory = '\(allCards[index].subcategory)'")
-                
-                // 배열 전체를 새로 생성하여 재할당
-                var updatedCards = allCards
-                updatedCards[index] = updated
-                allCards = updatedCards
-                
-                print("✅ allCards 배열 업데이트 완료!")
-                print("🔧 업데이트 후:")
-                print("   allCards[\(index)].title = '\(allCards[index].title)'")
-                print("   allCards[\(index)].category = '\(allCards[index].category.rawValue)'")
-                print("   allCards[\(index)].subcategory = '\(allCards[index].subcategory)'")
-                
-                print("================================================================================")
-                print("🔧 최종 allCards 배열 상태:")
-                for (idx, c) in allCards.enumerated() {
-                    print("   [\(idx)] id=\(c.id), title=\(c.title)")
-                }
-                print("================================================================================")
-                
-                // 홈 화면 갱신을 위한 알림
-                NotificationCenter.default.post(name: .cardUpdated, object: nil)
-            } else {
-                print("❌ 오류: allCards에서 카드를 찾을 수 없음!")
-                print("   찾으려던 ID: \(card.id)")
-                print("   현재 allCards의 모든 ID들:")
-                for (idx, c) in allCards.enumerated() {
-                    print("   [\(idx)]: \(c.id)")
-                }
-            }
+            allCards[index] = updated
+            errorMessage = nil
+            NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            return true
         } catch {
             errorMessage = "카드 수정 실패: \(error.localizedDescription)"
             print("❌ CardManager 수정 에러: \(error)")
+            return false
         }
     }
     
-    /// 카드 삭제
-    func deleteCard(id: UUID) async {
+    /// 카드 삭제. 서버 삭제 실패 시 화면에서 먼저 제거하지 않습니다.
+    @discardableResult
+    func deleteCard(id: UUID) async -> Bool {
+        guard allCards.contains(where: { $0.id == id }) else {
+            errorMessage = "삭제할 카드를 찾을 수 없습니다."
+            return false
+        }
+
+        if localOnlyCardIds.contains(id) {
+            removeCardFromLocalState(id: id)
+            return true
+        }
+
         do {
             try await service.deleteCard(id: id)
-            allCards.removeAll { $0.id == id }
-            viewedCardIDs.removeAll { $0 == id }
-            localOnlyCardIds.remove(id)
-            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
-            print("✅ CardManager: 카드 삭제 완료")
-            NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            removeCardFromLocalState(id: id)
+            errorMessage = nil
+            return true
         } catch {
-            allCards.removeAll { $0.id == id }
-            viewedCardIDs.removeAll { $0 == id }
-            localOnlyCardIds.remove(id)
-            savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
-            print("✅ CardManager: 카드 로컬에서 삭제")
-            NotificationCenter.default.post(name: .cardUpdated, object: nil)
+            errorMessage = "카드 삭제 실패: \(error.localizedDescription)"
+            print("❌ CardManager 삭제 에러: \(error)")
+            return false
         }
+    }
+
+    private func removeCardFromLocalState(id: UUID) {
+        allCards.removeAll { $0.id == id }
+        viewedCardIDs.removeAll { $0 == id }
+        localOnlyCardIds.remove(id)
+        UserDefaults.standard.set(viewedCardIDs.map(\.uuidString), forKey: viewedCardsKey)
+        savePersistedLocalCards(allCards.filter { localOnlyCardIds.contains($0.id) })
+        NotificationCenter.default.post(name: .cardUpdated, object: nil)
     }
     
     /// 특정 카드 찾기
