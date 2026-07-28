@@ -9,11 +9,28 @@ struct ShareFriendListView: View {
     @State private var friendToDelete: Friend?
     @State private var showDeleteConfirm = false
     @State private var chatOpenError: String?
+    @State private var deletingFriendID: String?
+    @State private var friendDeleteError: String?
 
     var body: some View {
         ZStack {
-            List {
-                ForEach(vm.friends) { friend in // vm.friends는 이미 가나다순 정렬됨
+            if vm.isFriendsLoading && vm.friends.isEmpty {
+                ProgressView("친구 목록을 불러오는 중...")
+            } else if vm.friends.isEmpty {
+                ContentUnavailableView {
+                    Label("아직 친구가 없어요", systemImage: "person.2")
+                } description: {
+                    Text(vm.friendErrorMessage ?? "아래 버튼을 눌러 친구 ID로 추가해 보세요.")
+                } actions: {
+                    if vm.friendErrorMessage != nil {
+                        Button("다시 시도") {
+                            Task { await vm.reloadFriends() }
+                        }
+                    }
+                }
+            } else {
+                List {
+                    ForEach(vm.friends) { friend in // vm.friends는 이미 가나다순 정렬됨
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
                             
@@ -52,13 +69,20 @@ struct ShareFriendListView: View {
                                     friendToDelete = friend
                                     showDeleteConfirm = true
                                 } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 16, weight: .regular))
-                                        .foregroundColor(Color.registerRed.opacity(0.75))
-                                        .frame(minWidth: 44, minHeight: 44)
-                                        .contentShape(Rectangle())
+                                    Group {
+                                        if deletingFriendID == friend.id {
+                                            ProgressView()
+                                        } else {
+                                            Image(systemName: "trash")
+                                                .font(.system(size: 16, weight: .regular))
+                                                .foregroundColor(Color.registerRed.opacity(0.75))
+                                        }
+                                    }
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.borderless)
+                                .disabled(deletingFriendID != nil)
                             }
                             
                             // 오른쪽 여백 추가 (버튼 왼쪽으로 이동)
@@ -74,27 +98,36 @@ struct ShareFriendListView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .listRowSeparator(.hidden)
+                    }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color(uiColor: .systemGroupedBackground))
+                .alert("친구 삭제", isPresented: $showDeleteConfirm, presenting: friendToDelete) { friend in
+                    Button("취소", role: .cancel) { }
+                    Button("삭제", role: .destructive) {
+                        deleteFriend(friend)
+                    }
+                } message: { friend in
+                    Text("\(friend.name)님을 친구 목록에서 삭제하시겠습니까?")
+                }
+                .alert("채팅을 열 수 없어요", isPresented: Binding(
+                    get: { chatOpenError != nil },
+                    set: { if !$0 { chatOpenError = nil } }
+                )) {
+                    Button("확인", role: .cancel) { chatOpenError = nil }
+                } message: {
+                    Text(chatOpenError ?? "")
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color(uiColor: .systemGroupedBackground))
-            .alert("친구 삭제", isPresented: $showDeleteConfirm, presenting: friendToDelete) { friend in
-                Button("취소", role: .cancel) { }
-                Button("삭제", role: .destructive) {
-                    deleteFriend(friend)
-                }
-            } message: { friend in
-                Text("\(friend.name)님을 친구 목록에서 삭제하시겠습니까?")
-            }
-            .alert("채팅을 열 수 없어요", isPresented: Binding(
-                get: { chatOpenError != nil },
-                set: { if !$0 { chatOpenError = nil } }
-            )) {
-                Button("확인", role: .cancel) { chatOpenError = nil }
-            } message: {
-                Text(chatOpenError ?? "")
-            }
+        }
+        .alert("친구 삭제 실패", isPresented: Binding(
+            get: { friendDeleteError != nil },
+            set: { if !$0 { friendDeleteError = nil } }
+        )) {
+            Button("확인", role: .cancel) { friendDeleteError = nil }
+        } message: {
+            Text(friendDeleteError ?? "")
         }
         .sheet(isPresented: $showAdd) {
             // 친구 추가 시트
@@ -154,8 +187,15 @@ struct ShareFriendListView: View {
     
     /// 친구 삭제
     private func deleteFriend(_ friend: Friend) {
-        // ViewModel 쪽에서도 동기화
-        vm.removeFriend(id: friend.id)
-        print("🗑️ \(friend.name)님 삭제 완료")
+        deletingFriendID = friend.id
+        Task {
+            let removed = await vm.removeFriend(id: friend.id)
+            deletingFriendID = nil
+            if removed {
+                print("🗑️ \(friend.name)님 삭제 완료")
+            } else {
+                friendDeleteError = vm.friendErrorMessage ?? "친구를 삭제하지 못했습니다."
+            }
+        }
     }
 }

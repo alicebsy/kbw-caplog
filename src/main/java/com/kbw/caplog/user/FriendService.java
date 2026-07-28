@@ -21,6 +21,7 @@ public class FriendService {
                 .map(Friendship::getFriend)
                 .filter(f -> f != null)
                 .map(FriendDto::from)
+                .sorted((left, right) -> left.getName().compareToIgnoreCase(right.getName()))
                 .collect(Collectors.toList());
     }
 
@@ -37,15 +38,30 @@ public class FriendService {
         if (owner.getUserNo().equals(friendUser.getUserNo())) {
             throw new IllegalArgumentException("Cannot add yourself as friend");
         }
-        if (friendshipRepository.existsByOwnerUserNoAndFriendUserNo(ownerUserNo, friendUser.getUserNo())) {
+        boolean ownerHasFriend = friendshipRepository.existsByOwnerUserNoAndFriendUserNo(
+                ownerUserNo,
+                friendUser.getUserNo()
+        );
+        boolean friendHasOwner = friendshipRepository.existsByOwnerUserNoAndFriendUserNo(
+                friendUser.getUserNo(),
+                ownerUserNo
+        );
+        if (ownerHasFriend && friendHasOwner) {
             throw new IllegalArgumentException("Already friends");
         }
 
-        Friendship friendship = Friendship.builder()
-                .ownerUserNo(ownerUserNo)
-                .friendUserNo(friendUser.getUserNo())
-                .build();
-        friendshipRepository.save(friendship);
+        if (!ownerHasFriend) {
+            friendshipRepository.save(Friendship.builder()
+                    .ownerUserNo(ownerUserNo)
+                    .friendUserNo(friendUser.getUserNo())
+                    .build());
+        }
+        if (!friendHasOwner) {
+            friendshipRepository.save(Friendship.builder()
+                    .ownerUserNo(friendUser.getUserNo())
+                    .friendUserNo(ownerUserNo)
+                    .build());
+        }
         return FriendDto.from(friendUser);
     }
 
@@ -53,6 +69,10 @@ public class FriendService {
     public void removeFriend(Long ownerUserNo, String friendUserId) {
         User friendUser = userRepository.findByUserId(friendUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Friend user not found: " + friendUserId));
+        if (!friendshipRepository.existsByOwnerUserNoAndFriendUserNo(ownerUserNo, friendUser.getUserNo())) {
+            throw new IllegalArgumentException("Friendship not found");
+        }
         friendshipRepository.deleteByOwnerUserNoAndFriendUserNo(ownerUserNo, friendUser.getUserNo());
+        friendshipRepository.deleteByOwnerUserNoAndFriendUserNo(friendUser.getUserNo(), ownerUserNo);
     }
 }

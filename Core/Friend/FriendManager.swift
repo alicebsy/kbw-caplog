@@ -7,7 +7,7 @@ import Combine
 @MainActor
 final class FriendManager: ObservableObject {
     
-    // ✅ Mock 데이터 (개발용 - Friend로 통일)
+    // Preview와 명시적인 Mock 저장소에서만 사용하는 샘플 데이터
     nonisolated static let mockFriends: [Friend] = [
         Friend(id: "2276003", name: "강다혜", avatarURL: nil, profileImage: "avatar1"),
         Friend(id: "alicebsy", name: "배서연", avatarURL: nil, profileImage: "avatar3"),
@@ -27,9 +27,10 @@ final class FriendManager: ObservableObject {
     ]
     
     @Published private(set) var friends: [Friend] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var errorMessage: String?
     
-    private let shareAPI = ShareAPI()
-    private let useMockData = true  // 개발 중에는 true
+    private let friendAPI = FriendAPI()
     
     static let shared = FriendManager()
     
@@ -41,32 +42,28 @@ final class FriendManager: ObservableObject {
     
     /// 친구 목록 로드
     func loadFriends() async {
-        if useMockData {
-            friends = Self.mockFriends
-            print("✅ FriendManager: Mock 친구 \(friends.count)명 로드")
-        } else {
-            // 실제 API 호출
-            do {
-                let serverFriends = try await shareAPI.fetchFriends()
-                friends = serverFriends  // 이미 Friend 타입이므로 그대로 사용
-                print("✅ FriendManager: 서버에서 \(friends.count)명 친구 로드")
-            } catch {
-                print("⚠️ FriendManager: 친구 로드 실패 - \(error)")
-                friends = []
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            friends = try await friendAPI.list().sorted {
+                $0.name.localizedCompare($1.name) == .orderedAscending
             }
+            errorMessage = nil
+            print("✅ FriendManager: 서버에서 \(friends.count)명 친구 로드")
+        } catch {
+            errorMessage = error.localizedDescription
+            friends = []
+            print("⚠️ FriendManager: 친구 로드 실패 - \(error)")
         }
     }
     
-    /// 친구 추가
-    func addFriend(name: String, profileImage: String = "avatar_default") {
-        let newFriend = Friend(id: "temp_\(name)", name: name, avatarURL: nil, profileImage: profileImage)
-        friends.append(newFriend)
-        print("✅ FriendManager: 친구 추가됨 - \(name)")
+    func applyAddedFriend(_ friend: Friend) {
+        friends.removeAll { $0.id == friend.id }
+        friends.append(friend)
+        friends.sort { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
     
-    /// 친구 삭제
-    func removeFriend(id: String) {
+    func applyRemovedFriend(id: String) {
         friends.removeAll { $0.id == id }
-        print("✅ FriendManager: 친구 삭제됨")
     }
 }

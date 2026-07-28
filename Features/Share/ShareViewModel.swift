@@ -42,6 +42,7 @@ struct ChatThread: Identifiable, Codable, Equatable, Hashable {
 
 protocol ShareRepository {
     func fetchFriends() async throws -> [Friend]
+    func addFriend(userId: String) async throws -> Friend
     func fetchChatThreads() async throws -> [ChatThread]
     func createChatRoom(participantUserIds: [String], title: String) async throws -> ChatThread
     func fetchMessages(threadId: String) async throws -> [ChatMessage]
@@ -52,6 +53,9 @@ protocol ShareRepository {
 }
 
 extension ShareRepository {
+    func addFriend(userId: String) async throws -> Friend {
+        Friend(id: userId, name: userId, avatarURL: nil)
+    }
     func markRead(threadId: String) async throws { }
     func leaveChat(threadId: String) async throws { }
     func removeFriend(userId: String) async throws { }
@@ -288,6 +292,11 @@ final class MockShareRepository: ShareRepository {
         return FriendManager.mockFriends
     }
 
+    func addFriend(userId: String) async throws -> Friend {
+        FriendManager.mockFriends.first(where: { $0.id == userId })
+            ?? Friend(id: userId, name: userId, avatarURL: nil)
+    }
+
     func fetchChatThreads() async throws -> [ChatThread] {
         try? await Task.sleep(nanoseconds: 100_000_000)
         return _threads
@@ -364,6 +373,10 @@ final class RealShareRepository: ShareRepository {
     // 친구 목록은 `/users/friends`에서 그대로 가져온다.
     func fetchFriends() async throws -> [Friend] {
         try await shareAPI.fetchFriends()
+    }
+
+    func addFriend(userId: String) async throws -> Friend {
+        try await friendAPI.add(userId: userId)
     }
     
 // 채팅방 목록 → 서버 `ChatSummary`를 `ChatThread`로 매핑
@@ -456,7 +469,9 @@ final class ShareViewModel: ObservableObject {
     @Published var messagesByThread: [String: [ChatMessage]] = [:]
 
     @Published var isLoading: Bool = false
+    @Published var isFriendsLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var friendErrorMessage: String?
     @Published var searchKeyword: String = ""
 
     private var cancellables = Set<AnyCancellable>()
@@ -504,6 +519,8 @@ final class ShareViewModel: ObservableObject {
     }
 
     private func loadFriends() async {
+        isFriendsLoading = true
+        defer { isFriendsLoading = false }
         do {
             var fs = try await repo.fetchFriends()
 
@@ -511,10 +528,11 @@ final class ShareViewModel: ObservableObject {
             fs.sort { $0.name.localizedCompare($1.name) == .orderedAscending }
 
             self.friends = fs
+            self.friendErrorMessage = nil
             print("✅ ShareViewModel: \(fs.count)명 친구 로드 완료")
         }
         catch {
-            self.errorMessage = error.localizedDescription
+            self.friendErrorMessage = "친구 목록을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."
         }
     }
 
@@ -719,22 +737,50 @@ final class ShareViewModel: ObservableObject {
 
 
     // --------------------------------------------------
-    // MARK: - 친구 삭제
+    // MARK: - 친구 추가·삭제
     // --------------------------------------------------
-    
-    func removeFriend(id: String) {
-        Task {
-            do {
-                try await repo.removeFriend(userId: id)
-                await MainActor.run {
-                    friends.removeAll { $0.id == id }
-                    FriendManager.shared.removeFriend(id: id)
-                    print("🗑️ 친구 삭제 완료: \(id)")
-                }
-            } catch {
-                await MainActor.run { self.errorMessage = error.localizedDescription }
-            }
+
+    @discardableResult
+    func addFriend(userId: String) async -> Bool {
+        let trimmed = userId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            friendErrorMessage = "친구 ID를 입력해 주세요."
+            return false
         }
+        do {
+            let friend = try await repo.addFriend(userId: trimmed)
+            friends.removeAll { $0.id == friend.id }
+            friends.append(friend)
+            friends.sort { $0.name.localizedCompare($1.name) == .orderedAscending }
+            FriendManager.shared.applyAddedFriend(friend)
+            friendErrorMessage = nil
+            return true
+        } catch {
+            friendErrorMessage = friendActionMessage(for: error, action: "추가")
+            return false
+        }
+    }
+    
+    @discardableResult
+    func removeFriend(id: String) async -> Bool {
+        do {
+            try await repo.removeFriend(userId: id)
+            friends.removeAll { $0.id == id }
+            FriendManager.shared.applyRemovedFriend(id: id)
+            friendErrorMessage = nil
+            print("🗑️ 친구 삭제 완료: \(id)")
+            return true
+        } catch {
+            friendErrorMessage = friendActionMessage(for: error, action: "삭제")
+            return false
+        }
+    }
+
+    private func friendActionMessage(for error: Error, action: String) -> String {
+        if let apiError = error as? APIError, case .unauthorized = apiError {
+            return "로그인이 만료되었습니다. 다시 로그인해 주세요."
+        }
+        return "친구를 \(action)하지 못했습니다. ID와 네트워크 연결을 확인해 주세요."
     }
     
     

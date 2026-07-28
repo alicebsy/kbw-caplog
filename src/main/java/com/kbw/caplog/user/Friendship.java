@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * 친구 관계 (A-B 양방향 저장하지 않고, 요청한 사람 기준으로 한 방향만 저장)
+ * 친구 관계 (A-B를 각 사용자 관점의 두 행으로 저장)
  * - owner: 친구 목록을 가진 사용자
  * - friend: 추가된 친구
  */

@@ -78,15 +78,10 @@ struct ShareFriendSearchSheet: View {
         isLoading = true
         defer { isLoading = false }
         
-        do {
-            let api = FriendAPI()
-            _ = try await api.add(userId: trimmed)
-            
-            // 서버에서 성공적으로 추가되면 친구 목록을 다시 로드
-            await vm.reloadFriends()
+        if await vm.addFriend(userId: trimmed) {
             dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
+        } else {
+            errorMessage = vm.friendErrorMessage ?? "친구를 추가하지 못했습니다."
         }
     }
 }
