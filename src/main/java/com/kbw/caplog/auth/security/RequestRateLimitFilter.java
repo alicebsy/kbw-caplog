@@ -30,9 +30,7 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
             new Policy("login", "POST", "/api/auth/login", 5, 60, Subject.IP, false),
             new Policy("signup", "POST", "/api/auth/signup", 3, 600, Subject.IP, false),
             new Policy("refresh", "POST", "/api/auth/refresh", 10, 60, Subject.IP, false),
-            new Policy("upload", "POST", "/api/screenshots/upload", 10, 60, Subject.USER, false),
-            new Policy("ai-classify", "POST", "/api/ai/classify", 20, 60, Subject.USER, false),
-            new Policy("ai-vision", "POST", "/api/ai/vision/", 10, 60, Subject.USER, true)
+            new Policy("ai-classify", "POST", "/api/ai/classify", 20, 60, Subject.USER, false)
     );
 
     private final ConcurrentMap<LimitKey, WindowCounter> counters = new ConcurrentHashMap<>();

@@ -2,9 +2,8 @@ import SwiftUI
 import Combine
 import CoreLocation
 
-/// 마이페이지 VM: 프로필·스크린샷 목록 모두 DB(서버) 연동
+/// 마이페이지 VM: 프로필은 서버, 카드·이미지는 각각 서버 DB와 기기 저장소에서 관리
 /// - 프로필: GET/PUT /api/users/me
-/// - 스크린샷: GET /api/screenshots (screenshot_file 테이블)
 @MainActor
 final class MyPageViewModel: ObservableObject {
     enum Gender: String, CaseIterable, Identifiable {
@@ -34,16 +33,12 @@ final class MyPageViewModel: ObservableObject {
     @Published var savedCount: Int = 0
     @Published var recommendedCount: Int = 0
 
-    // 리스트/에러 상태
-    @Published var screenshots: [ScreenshotItem] = []
-    @Published var nextCursor: String? = nil
     @Published var isLoading = false
     
     @Published var errorMessage: String? = nil
     @Published var successMessage: String? = nil
 
     private let userService = UserService()
-    private let screenshotService = ScreenshotService()
     
     private let locationPermission = LocationPermission()
     private let notificationPermission = NotificationPermission()
@@ -86,10 +81,7 @@ final class MyPageViewModel: ObservableObject {
     }
 
     func refreshAll() async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.loadProfile() }
-            group.addTask { await self.refreshScreenshots() }
-        }
+        await loadProfile()
     }
 
     /// 프로필 로드: DB(서버) 우선, 성공 시 캐시 갱신. 실패 시 기존 캐시만 표시 (mock 기본값 없음)
@@ -218,36 +210,6 @@ final class MyPageViewModel: ObservableObject {
         }
     }
 
-    /// 스크린샷 목록 로드 (GET /api/screenshots → DB screenshot_file 기준)
-    func refreshScreenshots() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            let page = try await screenshotService.fetchMyScreenshots(cursor: nil)
-            screenshots = page.items
-            nextCursor = page.nextCursor
-            savedCount = page.items.count
-        } catch {
-            print("⚠️ 스크린샷 로드 실패 (DB): \(error)")
-        }
-    }
-
-    func fetchMoreIfNeeded(current item: ScreenshotItem) async {
-        guard let last = screenshots.last, last.id == item.id,
-              let cursor = nextCursor, !isLoading else { return }
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            let page = try await screenshotService.fetchMyScreenshots(cursor: cursor)
-            screenshots.append(contentsOf: page.items)
-            nextCursor = page.nextCursor
-            savedCount = screenshots.count
-        } catch {
-            print("⚠️ 추가 스크린샷 로드 실패: \(error)")
-            // ✅ 서버 연결 실패를 사용자에게 알리지 않음
-        }
-    }
-    
     // MARK: - 프로필 이미지 저장
     func saveProfileImage(_ image: UIImage?) {
         let defaults = UserDefaults.standard

@@ -13,14 +13,13 @@ public record NearbyResponse(
         String address,
         Double lat,
         Double lng,
-        String imageUrl,
         Double distanceMeters
 ) {
     public static NearbyResponse from(NearbyProjection p) {
         return new NearbyResponse(
                 p.getId(), p.getTitle(), p.getSummary(),
                 p.getPlaceName(), p.getAddress(),
-                p.getLat(), p.getLng(), p.getImageUrl(),
+                p.getLat(), p.getLng(),
                 p.getDistanceMeters()
         );
     }

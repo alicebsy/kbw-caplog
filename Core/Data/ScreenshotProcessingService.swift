@@ -2,11 +2,11 @@ import Foundation
 import UIKit
 import Vision
 
-/// VisionKit OCR -> Google Vision API (레이블) -> GPT-4 -> ProcessingResult 생성 통합 파이프라인
+/// Apple Vision OCR/이미지 분류 -> 개인정보 마스킹 -> GPT -> ProcessingResult 파이프라인
 class ScreenshotProcessingService {
     
     // MARK: - Services
-    private let googleVision = GoogleVisionService()
+    private let imageClassifier = OnDeviceImageClassifier()
     
     // MARK: - Processing Pipeline
     
@@ -20,7 +20,7 @@ class ScreenshotProcessingService {
     ) {
         print("🚀 스크린샷 처리 파이프라인 시작")
         
-        // Step 1: VisionKit OCR + Google Vision 레이블 병렬 처리
+        // Step 1: 외부 전송 없이 Apple Vision OCR + 이미지 분류를 병렬 처리
         processWithVisionKit(image: image, completion: completion)
     }
     
@@ -35,12 +35,12 @@ class ScreenshotProcessingService {
     
     // MARK: - Private Processing Methods
     
-    /// VisionKit OCR + Google Vision 레이블 병렬 처리
+    /// Apple Vision OCR + 온디바이스 이미지 분류 병렬 처리
     private func processWithVisionKit(
         image: UIImage,
         completion: @escaping (Result<ProcessingResult, ProcessingError>) -> Void
     ) {
-        print("📸 Step 1: VisionKit으로 OCR + Google Vision 레이블 탐지 시작")
+        print("📸 Step 1: Apple Vision 온디바이스 분석 시작")
         
         guard let cgImage = image.cgImage else {
             print("❌ CGImage 변환 실패")
@@ -52,7 +52,7 @@ class ScreenshotProcessingService {
         let group = DispatchGroup()
         var ocrText = ""
         var ocrTextLines: [String] = []
-        var visionLabels: [VisionLabel] = []
+        var imageLabels: [ImageLabel] = []
         var ocrError: Error?
         
         // 1️⃣ VisionKit OCR
@@ -81,13 +81,11 @@ class ScreenshotProcessingService {
                     .compactMap { $0.topCandidates(1).first?.string }
                 
                 print("📝 추출된 텍스트 라인 수: \(ocrTextLines.count)")
-                ocrTextLines.enumerated().forEach { idx, text in
-                    print("  [\(idx)] \(text.prefix(50))")
-                }
                 
                 ocrText = ocrTextLines.joined(separator: "\n")
                 
-                print("✅ VisionKit OCR 완료: \(ocrText.prefix(100))...")
+                // OCR 원문은 개인정보가 포함될 수 있으므로 로그에 출력하지 않는다.
+                print("✅ VisionKit OCR 완료")
             }
             
             request.recognitionLevel = .accurate
@@ -107,22 +105,19 @@ class ScreenshotProcessingService {
             }
         }
         
-        // 2️⃣ Google Vision 레이블 탐지
+        // 2️⃣ Apple Vision 온디바이스 이미지 분류
         group.enter()
-        print("🎯 Google Vision LABEL_DETECTION 요청 시작...")
-        googleVision.detectLabels(from: image) { result in
+        print("🎯 온디바이스 이미지 분류 시작...")
+        imageClassifier.classify(from: image) { result in
             defer { group.leave() }
             
             switch result {
             case .success(let labels):
-                visionLabels = labels
-                print("✅ Google Vision 레이블 탐지 완료: \(labels.count)개")
-                labels.forEach { label in
-                    print("  - \(label.description): \(label.confidencePercentage)")
-                }
+                imageLabels = labels
+                print("✅ 온디바이스 이미지 분류 완료: \(labels.count)개")
                 
             case .failure(let error):
-                print("⚠️ Google Vision 레이블 탐지 실패 (진행 계속): \(error.localizedDescription)")
+                print("⚠️ 온디바이스 이미지 분류 실패 (OCR로 계속): \(error.localizedDescription)")
             }
         }
         
@@ -132,7 +127,7 @@ class ScreenshotProcessingService {
             
             print("⏳ 모든 병렬 작업 완료, 다음 단계 진행 중...")
             
-            // OCR은 필수, 레이블은 선택
+            // OCR은 필수, 이미지 분류 레이블은 선택
             if let ocrError = ocrError {
                 print("[Caplog 스크린샷] ❌ 카드 생성 불가: OCR 에러 - \(ocrError.localizedDescription)")
                 completion(.failure(.ocrFailed(ocrError.localizedDescription)))
@@ -147,11 +142,11 @@ class ScreenshotProcessingService {
             
             print("✅ OCR 텍스트 유효함 (\(ocrTextLines.count) 라인)")
             
-            // Step 2: GPT-4 분류 (OCR 텍스트 + 레이블 정보 함께 전달)
+            // Step 2: 개인정보를 가린 OCR 텍스트 + 기기 내 레이블만 GPT에 전달
             self.classifyWithGPT(
                 ocrText: ocrText,
                 ocrTextLines: ocrTextLines,
-                visionLabels: visionLabels,
+                imageLabels: imageLabels,
                 originalImage: image,
                 completion: completion
             )
@@ -162,31 +157,31 @@ class ScreenshotProcessingService {
     private func classifyWithGPT(
         ocrText: String,
         ocrTextLines: [String],
-        visionLabels: [VisionLabel],
+        imageLabels: [ImageLabel],
         originalImage: UIImage,
         completion: @escaping (Result<ProcessingResult, ProcessingError>) -> Void
     ) {
         print("🤖 Step 2: GPT-4 분류 시작")
         
-        let prompt = makeGPTPrompt(from: ocrText, visionLabels: visionLabels)
+        let redactedText = OCRPrivacyRedactor.redact(ocrText)
+        let prompt = makeGPTPrompt(from: redactedText, imageLabels: imageLabels)
         
         classifyTextWithGPT_stable(prompt: prompt) { [weak self] gptResult, usage in
             guard let self = self else { return }
             
-            print("🤖 GPT-4 분류 응답: \(gptResult.prefix(100))...")
+            // AI 응답에는 카드 내용이 포함되므로 원문을 로그에 남기지 않는다.
+            print("🤖 GPT-4 분류 응답 수신")
             print("📊 Token 사용량: \(usage)")
             
             // Step 3: Card 생성
             let parsedCard = self.parseGPTResultToCard(
                 gptResult: gptResult,
-                extractedText: ocrText,
-                visionLabels: visionLabels,
-                image: originalImage
+                imageLabels: imageLabels
             )
             let card = parsedCard ?? self.makeOCRFallbackCard(
-                ocrText: ocrText,
-                ocrTextLines: ocrTextLines,
-                visionLabels: visionLabels
+                ocrText: redactedText,
+                ocrTextLines: redactedText.components(separatedBy: .newlines),
+                imageLabels: imageLabels
             )
             if parsedCard == nil {
                 print("[Caplog 스크린샷] ⚠️ AI 분류 실패 → OCR 기본 카드로 계속 진행")
@@ -196,15 +191,14 @@ class ScreenshotProcessingService {
             let processingResult = ProcessingResult(
                 card: card,
                 ocrText: ocrTextLines,
-                googleVisionLabels: visionLabels,
+                imageLabels: imageLabels,
                 preprocessedImage: originalImage,
                 apiUsage: usage
             )
             
             print("✅ ProcessingResult 생성 완료")
-            print("   - Card: \(card.title)")
             print("   - OCR 라인: \(ocrTextLines.count)")
-            print("   - Vision 레이블: \(visionLabels.count)")
+            print("   - 온디바이스 레이블: \(imageLabels.count)")
             
             // 카드 저장은 ScreenshotIndexer/ScreenshotMonitor의 CardManager에서 한 번만 수행한다.
             completion(.success(processingResult))
@@ -215,7 +209,7 @@ class ScreenshotProcessingService {
     private func makeOCRFallbackCard(
         ocrText: String,
         ocrTextLines: [String],
-        visionLabels: [VisionLabel]
+        imageLabels: [ImageLabel]
     ) -> Card {
         let normalizedLines = ocrTextLines
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -227,12 +221,14 @@ class ScreenshotProcessingService {
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
         let summary = String(normalizedText.prefix(150))
-        let labelTags = visionLabels
+        let labelTags = imageLabels
             .filter { $0.confidence > 0.5 }
             .map(\.description)
-        let imageName = UUID().uuidString
+        let cardId = UUID()
+        let imageName = cardId.uuidString
 
         return Card(
+            id: cardId,
             title: title,
             summary: summary,
             category: .etc,
@@ -245,22 +241,22 @@ class ScreenshotProcessingService {
     }
     
     /// GPT 프롬프트 생성 (Caplog 전용 - JSON only)
-    private func makeGPTPrompt(from text: String, visionLabels: [VisionLabel]) -> String {
+    private func makeGPTPrompt(from text: String, imageLabels: [ImageLabel]) -> String {
         // 만에 하나 OCR 텍스트에 """ 가 들어있을 경우 프롬프트가 깨지지 않도록 이스케이프
         let safe = text.replacingOccurrences(of: "\"\"\"", with: #"\"\"\""#)
         
-        // Google Vision 레이블 포맷팅
+        // Apple Vision 온디바이스 분류 레이블 포맷팅
         let labelsInfo: String
-        if visionLabels.isEmpty {
+        if imageLabels.isEmpty {
             labelsInfo = "없음"
         } else {
-            labelsInfo = visionLabels
+            labelsInfo = imageLabels
                 .map { "\($0.description) (\($0.confidencePercentage))" }
                 .joined(separator: ", ")
         }
         
         return """
-        당신은 OCR로 추출된 스크린샷 텍스트와 Google Vision이 탐지한 이미지 정보를 종합하여 분류하고, 핵심 정보를 구조화된 JSON으로 변환하는 역할을 합니다.
+        당신은 개인정보가 가려진 OCR 텍스트와 기기 내 Apple Vision 이미지 분류 정보를 종합하여 핵심 정보를 구조화된 JSON으로 변환하는 역할을 합니다.
         다음 지침을 반드시 지키세요.
         
         [출력 규칙]
@@ -331,7 +327,7 @@ class ScreenshotProcessingService {
         [태그 생성 규칙]
         태그는 자동으로 다음에서 추출됩니다:
         1. fields에서: place_name, brand, menu_or_keyword 등 주요 키워드
-        2. Google Vision 레이블: 신뢰도 50% 이상인 객체/개념
+        2. Apple Vision 온디바이스 레이블: 신뢰도 50% 이상인 객체/개념
         3. 중복 제거: 같은 태그가 여러 번 나오면 하나만 사용
         
         예시:
@@ -359,7 +355,7 @@ class ScreenshotProcessingService {
         \(safe)
         \"\"\"
         
-        **Google Vision 이미지 분석 (객체/개념 탐지):**
+        **Apple Vision 온디바이스 이미지 분석 (객체/개념 분류):**
         \(labelsInfo)
         
         [출력 예시 - 쿠폰]
@@ -376,12 +372,10 @@ class ScreenshotProcessingService {
     /// GPT 결과를 Card 객체로 변환 (새 스키마)
     private func parseGPTResultToCard(
         gptResult: String,
-        extractedText: String,
-        visionLabels: [VisionLabel],
-        image: UIImage
+        imageLabels: [ImageLabel]
     ) -> Card? {
         let debug = "[Caplog GPT 디버그]"
-        print("\(debug) 1단계: GPT 원본 응답 수신, 길이=\(gptResult.count), 앞 200자: \(String(gptResult.prefix(200)))")
+        print("\(debug) 1단계: GPT 원본 응답 수신, 길이=\(gptResult.count)")
         
         if gptResult.hasPrefix("❌") {
             print("\(debug) 실패: GPT가 에러 문자열 반환 → \(gptResult.prefix(80))")
@@ -391,7 +385,7 @@ class ScreenshotProcessingService {
         var cleanedJSON = stripFences(gptResult)
         if cleanedJSON.hasPrefix("\u{FEFF}") { cleanedJSON = String(cleanedJSON.dropFirst()) }
         cleanedJSON = cleanedJSON.trimmingCharacters(in: .whitespacesAndNewlines)
-        print("\(debug) 2단계: stripFences 후 길이=\(cleanedJSON.count), 앞 150자: \(String(cleanedJSON.prefix(150)))")
+        print("\(debug) 2단계: stripFences 후 길이=\(cleanedJSON.count)")
         
         var json: [String: Any]?
         if let data = cleanedJSON.data(using: .utf8),
@@ -405,7 +399,7 @@ class ScreenshotProcessingService {
             print("\(debug) 3단계: JSON 파싱 성공 ({ } 구간 추출 후)")
         }
         guard let json = json else {
-            print("\(debug) 실패: JSON 파싱 불가. 원본 앞 300자: \(String(gptResult.prefix(300)))")
+            print("\(debug) 실패: JSON 파싱 불가")
             return nil
         }
         
@@ -415,11 +409,11 @@ class ScreenshotProcessingService {
         let titleVal = json["title"]
         guard let categoryMain = catMain as? String,
               let title = titleVal as? String, !title.isEmpty else {
-            print("\(debug) 실패: 필수 필드 누락. category_main 타입=\(type(of: catMain)), 값=\(String(describing: catMain)); title 타입=\(type(of: titleVal)), 값=\(String(describing: titleVal))")
+            print("\(debug) 실패: category_main 또는 title 필드 누락")
             return nil
         }
         
-        print("\(debug) 5단계: 필수 필드 확인 완료. category_main=\(categoryMain), title=\(title)")
+        print("\(debug) 5단계: 필수 필드 확인 완료. category_main=\(categoryMain)")
         
         // category_main -> FolderCategory 매핑
         let category = mapCategoryMain(categoryMain)
@@ -459,17 +453,17 @@ class ScreenshotProcessingService {
             tags.append(contentsOf: keywords)
         }
         
-        // Google Vision 레이블 태그 추가 (신뢰도 높은 것만)
-        let highConfidenceLabels = visionLabels
+        // 온디바이스 이미지 분류 레이블 태그 추가 (신뢰도 높은 것만)
+        let highConfidenceLabels = imageLabels
             .filter { $0.confidence > 0.5 }
             .map { $0.description }
         tags.append(contentsOf: highConfidenceLabels)
         
-        // 이미지 저장 (실제로는 서버에 업로드하거나 로컬 저장)
-        let imageName = UUID().uuidString
-        // TODO: 실제 이미지 저장 로직 구현
+        let cardId = UUID()
+        let imageName = cardId.uuidString
         
         return Card(
+            id: cardId,
             title: title,
             summary: summary,
             category: category,

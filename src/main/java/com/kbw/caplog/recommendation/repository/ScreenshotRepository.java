@@ -24,7 +24,6 @@ public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
       s.address          AS address,
       s.lat              AS lat,
       s.lng              AS lng,
-      s.image_url        AS imageUrl,
       (6371000 * ACOS(
         LEAST(1, GREATEST(-1,
           COS(RADIANS(:lat)) * COS(RADIANS(s.lat)) *

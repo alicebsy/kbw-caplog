@@ -188,7 +188,6 @@ final class ScreenshotIndexer {
                                 if savedToServer {
                                     self.markAssetAsProcessed(asset)
                                 }
-                                await self.uploadScreenshotToServer(image: uiImage)
                             case .failure(let err):
                                 ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
                             }
@@ -244,7 +243,6 @@ final class ScreenshotIndexer {
                             if savedToServer {
                                 self.markAssetAsProcessed(asset)
                             }
-                            await self.uploadScreenshotToServer(image: uiImage)
                         }
                     case .failure(let error):
                         print("❌ ScreenshotIndexer: 처리 실패 \(error)")
@@ -254,10 +252,4 @@ final class ScreenshotIndexer {
         }
     }
 
-    /// 스크린샷 서버 업로드 (DB 저장 → 마이페이지 목록 반영)
-    private func uploadScreenshotToServer(image: UIImage) async {
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            ScreenshotUploader.upload(image: image) { _ in cont.resume() }
-        }
-    }
 }

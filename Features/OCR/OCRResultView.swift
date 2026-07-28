@@ -5,7 +5,7 @@ struct OCRResultView: View {
     let image: UIImage?
     let recognizedText: [String]  // VisionKit OCR 결과
     let gptResult: String?
-    let googleVisionLabels: [VisionLabel]?  // Google Cloud Vision 레이블 탐지 결과
+    let imageLabels: [ImageLabel]?  // Apple Vision 온디바이스 이미지 분류 결과
 
     var body: some View {
         ScrollView {
@@ -54,10 +54,10 @@ struct OCRResultView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // ✅ 3️⃣ Google Cloud Vision 결과 (회색)
-                if let labels = googleVisionLabels, !labels.isEmpty {
+                // ✅ 3️⃣ Apple Vision 온디바이스 이미지 분류 결과
+                if let labels = imageLabels, !labels.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("🎯 Google Cloud Vision (객체/개념 탐지)")
+                        Text("🎯 기기 내 이미지 분류")
                             .font(.headline)
                             .foregroundColor(.gray)
                         
@@ -78,7 +78,7 @@ struct OCRResultView: View {
                     .frame(maxWidth: .infinity)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("🎯 Google Cloud Vision (객체/개념 탐지)")
+                        Text("🎯 기기 내 이미지 분류")
                             .font(.headline)
                             .foregroundColor(.gray)
                         

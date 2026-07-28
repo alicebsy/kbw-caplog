@@ -2,10 +2,12 @@
 
 ## OCR/GPT 결과가 DB에 들어가는 흐름
 
-1. **iOS**: 갤러리 스크린샷 → Vision OCR + Google Vision 레이블 → **GPT 프롬프트로 분류** → `Card` (title, summary, category, subcategory, fields 등)
+1. **iOS**: 갤러리 스크린샷 → Apple Vision 기기 내 OCR·이미지 분류 → 개인정보 마스킹 → **GPT 프롬프트로 분류** → `Card`
 2. **iOS**: `CardManager.createCard(card)` → **POST /api/cards** (JWT Bearer) 로 전송
 3. **백엔드**: `CardController` POST → `CardService.createCard(userNo, body)` → **screenshot 테이블에 INSERT**
 4. 이후 **GET /api/cards** 시 DB에서 조회해 카드 목록으로 반환
+
+원본 이미지는 서버로 전송하거나 DB에 저장하지 않습니다. 앱 전용 로컬 저장소에 파일 보호를 적용해 보관하며 iCloud 백업에서도 제외됩니다. 앱을 삭제하면 로컬 이미지는 사라지지만 서버의 카드 내용은 유지됩니다.
 
 - 서버 저장에 실패하면(네트워크/401 등) iOS는 로컬만 유지하고, 콘솔에 `❌ CardManager: 서버 저장 실패 → 로컬만 유지` 및 에러 메시지가 출력됩니다.
 - 백엔드에서 카드 저장 시 `카드 저장 완료 (userNo=..., title=...)` 로그가 찍힙니다.
@@ -25,12 +27,10 @@
 
 ## 1. API 키 설정 (필수)
 
-스크린샷을 GPT로 분류하려면 **OpenAI API 키**와 **Google Vision API 키**가 필요합니다.
+스크린샷을 GPT로 분류하려면 백엔드의 **OpenAI API 키**가 필요합니다. Google Vision API 키는 사용하지 않습니다.
 
-- **Xcode**에서 `caplog/Info.plist` 열기
-- 다음 키에 실제 값을 넣어주세요 (빈 문자열이면 카드가 생성되지 않습니다).
-  - `GPT_API_KEY` → [OpenAI API Keys](https://platform.openai.com/api-keys)에서 발급
-  - `GOOGLE_VISION_API_KEY` → [Google Cloud Console](https://console.cloud.google.com/)에서 Vision API 사용 설정 후 발급
+- 백엔드 로컬 비밀 설정 파일 또는 환경 변수의 `OPENAI_API_KEY`에 키를 입력합니다.
+- iOS 앱에는 외부 AI API 키를 넣지 않습니다.
 
 키가 없거나 비어 있으면 콘솔에  
 `❌ GPT_API_KEY가 Info.plist에 없거나 비어 있습니다`  
@@ -56,7 +56,7 @@
 
 ## 4. 확인 순서
 
-1. **Info.plist**에 `GPT_API_KEY`, `GOOGLE_VISION_API_KEY` 값이 들어 있는지 확인.
+1. 백엔드에 `OPENAI_API_KEY`가 설정됐는지 확인.
 2. **사진 권한**이 허용되어 있는지 확인 (설정 → Caplog → 사진).
 3. 시뮬레이터에서 **Cmd+S**로 스크린샷 1장 이상 찍기.
 4. 앱에서 **홈** 탭으로 이동 후, 필요하면 **당겨서 새로고침**.
@@ -78,16 +78,16 @@ Xcode 콘솔에서 아래 로그를 **순서대로** 확인하면, 어느 단계
 |----------------------|------|
 | `[Caplog GPT] content 타입:` | GPT API 응답의 본문을 문자열/배열 중 어떤 형태로 받았는지. 여기까지 나오면 API 호출은 성공. |
 | `[Caplog GPT] ❌ 빈 응답` | API는 200이었지만 `message.content`가 비어 있거나, 문자열·배열 둘 다 아님. (OpenAI 쪽 응답 형식 변경 가능성) |
-| `[Caplog GPT 디버그] 1단계:` | 파서가 받은 GPT 원본 텍스트 길이와 앞 200자. **❌로 시작하면** API에서 에러 메시지가 온 것(키 오류, 네트워크 등). |
+| `[Caplog GPT 디버그] 1단계:` | 파서가 받은 GPT 응답 길이. 개인정보 보호를 위해 응답 원문은 출력하지 않습니다. |
 | `[Caplog GPT 디버그] 실패: GPT가 에러 문자열 반환` | 위와 동일. GPT가 JSON이 아니라 "❌ ..." 문자열을 반환함. |
-| `[Caplog GPT 디버그] 2단계:` | 코드펜스(```) 제거 후 JSON 후보 문자열. 여기서 보이는 내용이 `{` 로 시작하는지 확인. |
+| `[Caplog GPT 디버그] 2단계:` | 코드펜스 제거 후 JSON 후보 문자열의 길이. |
 | `[Caplog GPT 디버그] 실패: JSON 파싱 불가` | 2단계 문자열이 유효한 JSON이 아님. (앞뒤에 설명문, 줄바꿈·따옴표 문제 등) |
 | `[Caplog GPT 디버그] 4단계: JSON 키 목록` | 파싱된 JSON의 키들. `category_main`, `title` 이 없으면 다음 단계에서 실패. |
 | `[Caplog GPT 디버그] 실패: 필수 필드 누락` | `category_main` 또는 `title` 이 없거나, 문자열이 아님. 4단계 키 목록과 함께 보면 원인 파악 가능. |
 
 **요약:**  
 - **1단계에서 이미 ❌** → API 키/네트워크/OpenAI 에러. `📦 HTTP ... body:` 로그에서 API 응답 본문 확인.  
-- **JSON 파싱 불가** → GPT가 JSON이 아닌 형태로 답한 것. 2단계 로그에 찍힌 "앞 150자"를 보면 형식 확인 가능.  
+- **JSON 파싱 불가** → GPT가 JSON이 아닌 형태로 답한 것입니다. 응답 원문은 개인정보 보호를 위해 로그에 남기지 않습니다.
 - **필수 필드 누락** → GPT가 `category_main`, `title` 을 안 넣었거나 다른 키 이름 사용. 4단계 키 목록과 프롬프트 스키마를 비교.
 
 ---

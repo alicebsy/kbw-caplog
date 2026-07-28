@@ -87,6 +87,9 @@ class CardServiceTest {
         assertEquals("새 장소", updated.getFields().get("장소명"));
         assertEquals("서울시 테스트로 2", updated.getFields().get("주소"));
         assertEquals(Instant.parse("2026-07-01T00:00:00Z"), updated.getCreatedAt());
+        assertEquals(null, screenshot.getImageUrl());
+        assertEquals(null, updated.getThumbnailURL());
+        assertEquals(List.of(), updated.getScreenshotURLs());
         verify(repository).save(screenshot);
         verify(geocodeService).geocodeOne(42L, 7L);
     }

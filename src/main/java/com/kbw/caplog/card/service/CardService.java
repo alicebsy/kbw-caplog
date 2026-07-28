@@ -9,7 +9,6 @@ import com.kbw.caplog.recommendation.domain.Screenshot;
 import com.kbw.caplog.recommendation.repository.ScreenshotRepository;
 import com.kbw.caplog.recommendation.service.GeocodeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -27,9 +26,6 @@ public class CardService {
     private final ScreenshotRepository screenshotRepository;
     private final GeocodeService geocodeService;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.baseUrl:http://localhost:8080}")
-    private String baseUrl;
 
     /**
      * 스크린샷 AI 분류 결과를 DB에 저장 (iOS에서 카드 생성 시 호출)
@@ -108,11 +104,8 @@ public class CardService {
         screenshot.setAddress(req.getFields() != null
                 ? truncate(firstNonBlank(req.getFields(), "주소", "address"), 255)
                 : null);
-        String imgUrl = req.getThumbnailURL();
-        if ((imgUrl == null || imgUrl.isBlank()) && req.getScreenshotURLs() != null && !req.getScreenshotURLs().isEmpty()) {
-            imgUrl = req.getScreenshotURLs().get(0);
-        }
-        screenshot.setImageUrl(imgUrl != null ? truncate(imgUrl, 255) : null);
+        // 개인정보가 포함될 수 있는 원본 이미지와 기기 전용 경로는 서버에 저장하지 않는다.
+        screenshot.setImageUrl(null);
     }
 
     private static boolean hasLocationText(Screenshot screenshot) {
@@ -218,12 +211,6 @@ public class CardService {
             }
         }
 
-        String imgUrl = s.getImageUrl();
-        if (imgUrl != null && imgUrl.startsWith("/")) {
-            imgUrl = baseUrl.replaceAll("/$", "") + imgUrl;
-        }
-        List<String> screenshotURLs = imgUrl != null ? List.of(imgUrl) : List.of();
-
         return CardDto.builder()
                 .id(uuidStr)
                 .title(s.getTitle() != null ? s.getTitle() : s.getPlaceName() != null ? s.getPlaceName() : "제목 없음")
@@ -234,8 +221,8 @@ public class CardService {
                 .fields(fields)
                 .createdAt(s.getCreatedAt() != null ? s.getCreatedAt() : Instant.now())
                 .updatedAt(s.getUpdatedAt() != null ? s.getUpdatedAt() : Instant.now())
-                .thumbnailURL(imgUrl)
-                .screenshotURLs(screenshotURLs)
+                .thumbnailURL(null)
+                .screenshotURLs(List.of())
                 .build();
     }
 

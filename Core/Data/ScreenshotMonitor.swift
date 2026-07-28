@@ -168,7 +168,6 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                         if savedToServer {
                             ScreenshotIndexer.shared.markAssetAsProcessed(asset)
                         }
-                        await self.uploadScreenshotToServer(image: uiImage)
                         self.showNotification(for: processingResult.card)
                     case .failure(let error):
                         print("❌ 자동 분류 실패: \(error.localizedDescription)")
@@ -178,15 +177,6 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         }
     }
     
-    /// 스크린샷을 서버에 업로드 (POST /api/screenshots/upload) → DB 저장 후 마이페이지 목록에 반영
-    private func uploadScreenshotToServer(image: UIImage) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            ScreenshotUploader.upload(image: image) { _ in
-                continuation.resume()
-            }
-        }
-    }
-
     /// 로컬 알림 표시 (선택사항)
     private func showNotification(for card: Card) {
         // UNUserNotificationCenter를 사용하여 알림 표시

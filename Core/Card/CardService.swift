@@ -104,8 +104,6 @@ private struct CreateCardRequestBody: Encodable {
     let subcategory: String
     let tags: [String]
     let fields: [String: String]
-    let thumbnailURL: String?
-    let screenshotURLs: [String]?
 
     init(card: Card) {
         title = card.title
@@ -114,8 +112,7 @@ private struct CreateCardRequestBody: Encodable {
         subcategory = card.subcategory
         tags = card.tags
         fields = card.fields
-        thumbnailURL = card.thumbnailURL
-        screenshotURLs = card.screenshotURLs.isEmpty ? nil : card.screenshotURLs
+        // 원본 이미지와 기기 전용 이미지 식별자는 서버로 전송하지 않는다.
     }
 }
 
@@ -135,8 +132,18 @@ private struct CardResponseDto: Decodable {
 
     func toCard() -> Card {
         let cat = FolderCategory(rawValue: category ?? "Etc.") ?? .etc
+        let cardId = UUID(uuidString: id) ?? UUID()
+        var localImageId = CardImageStore.fileURL(for: cardId.uuidString) == nil
+            ? nil : cardId.uuidString
+        if localImageId == nil,
+           let legacyId = thumbnailURL ?? screenshotURLs?.first,
+           CardImageStore.isLocalScreenshot(id: legacyId),
+           CardImageStore.fileURL(for: legacyId) != nil,
+           CardImageStore.move(from: legacyId, to: cardId.uuidString) {
+            localImageId = cardId.uuidString
+        }
         return Card(
-            id: UUID(uuidString: id) ?? UUID(),
+            id: cardId,
             title: title,
             summary: summary ?? "",
             category: cat,
@@ -145,8 +152,9 @@ private struct CardResponseDto: Decodable {
             fields: fields ?? [:],
             createdAt: createdAt ?? Date(),
             updatedAt: updatedAt ?? Date(),
-            thumbnailURL: thumbnailURL,
-            screenshotURLs: screenshotURLs ?? []
+            // 서버의 과거 이미지 URL은 더 이상 사용하지 않고 기기 내 이미지만 연결한다.
+            thumbnailURL: localImageId,
+            screenshotURLs: localImageId.map { [$0] } ?? []
         )
     }
 }

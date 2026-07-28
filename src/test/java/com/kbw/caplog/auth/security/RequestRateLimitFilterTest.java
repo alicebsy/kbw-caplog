@@ -70,31 +70,6 @@ class RequestRateLimitFilterTest {
         assertEquals(6, allowedRequests.get());
     }
 
-    @Test
-    void limitsVisionRequestsByAuthenticatedUser() throws Exception {
-        var filter = new RequestRateLimitFilter(false, clock);
-        var allowedRequests = new AtomicInteger();
-        FilterChain chain = (request, response) -> allowedRequests.incrementAndGet();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "alice@example.com",
-                        null,
-                        AuthorityUtils.createAuthorityList("ROLE_USER")
-                )
-        );
-
-        for (int i = 0; i < 10; i++) {
-            execute(filter, chain, "POST", "/api/ai/vision/labels", "203.0.113.30");
-        }
-
-        var rejected = execute(
-                filter, chain, "POST", "/api/ai/vision/text", "203.0.113.31"
-        );
-
-        assertEquals(10, allowedRequests.get());
-        assertEquals(429, rejected.getStatus());
-    }
-
     private static MockHttpServletResponse execute(
             RequestRateLimitFilter filter,
             FilterChain chain,

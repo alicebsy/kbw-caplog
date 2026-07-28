@@ -1,12 +1,6 @@
 spring:
   application:
     name: caplog
-  servlet:
-    multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
-      enabled: true
-
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/caplog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8}
     username: ${SPRING_DATASOURCE_USERNAME:caplog}
@@ -45,16 +39,9 @@ openai:
   api-key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
 
-google:
-  vision:
-    api-key: ${GOOGLE_VISION_API_KEY:}
-
 caplog:
   security:
     trust-forwarded-headers: ${CAPLOG_TRUST_FORWARDED_HEADERS:false}
-  storage:
-    upload-dir: ${CAPLOG_UPLOAD_DIR:./data/uploads}
-    max-file-size: ${CAPLOG_UPLOAD_MAX_BYTES:10485760}
   geocode:
     provider: kakao
     throttleMillis: 250      # 호출 간 최소 간격(밀리초)

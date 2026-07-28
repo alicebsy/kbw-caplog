@@ -164,6 +164,7 @@ final class CardManager: ObservableObject {
         if let assetId = card.sourceScreenshotAssetId, !assetId.isEmpty {
             let existingIds = allCards.filter { $0.sourceScreenshotAssetId == assetId }.map(\.id)
             for oldId in existingIds {
+                CardImageStore.delete(id: oldId.uuidString)
                 allCards.removeAll { $0.id == oldId }
                 viewedCardIDs.removeAll { $0 == oldId }
                 localOnlyCardIds.remove(oldId)
@@ -175,6 +176,17 @@ final class CardManager: ObservableObject {
         ScreenshotPipelineStatus.shared.setPostSending()
         do {
             let newCard = try await service.createCard(card)
+            let serverImageId = newCard.id.uuidString
+            let sourceImageId = card.thumbnailURL ?? card.screenshotURLs.first
+            let hasLocalImage: Bool
+            if let sourceImageId {
+                hasLocalImage = CardImageStore.move(
+                    from: sourceImageId,
+                    to: serverImageId
+                )
+            } else {
+                hasLocalImage = CardImageStore.fileURL(for: serverImageId) != nil
+            }
             let toAppend = Card(
                 id: newCard.id,
                 title: newCard.title,
@@ -185,8 +197,8 @@ final class CardManager: ObservableObject {
                 fields: newCard.fields,
                 createdAt: newCard.createdAt,
                 updatedAt: newCard.updatedAt,
-                thumbnailURL: newCard.thumbnailURL ?? card.thumbnailURL,
-                screenshotURLs: newCard.screenshotURLs.isEmpty ? card.screenshotURLs : newCard.screenshotURLs,
+                thumbnailURL: hasLocalImage ? serverImageId : nil,
+                screenshotURLs: hasLocalImage ? [serverImageId] : [],
                 sourceScreenshotAssetId: card.sourceScreenshotAssetId
             )
             allCards.append(toAppend)
@@ -261,6 +273,12 @@ final class CardManager: ObservableObject {
     }
 
     private func removeCardFromLocalState(id: UUID) {
+        let localImageIds = allCards
+            .filter { $0.id == id }
+            .flatMap { card in
+                [card.thumbnailURL].compactMap { $0 } + card.screenshotURLs
+            }
+        Set(localImageIds + [id.uuidString]).forEach(CardImageStore.delete)
         allCards.removeAll { $0.id == id }
         viewedCardIDs.removeAll { $0 == id }
         localOnlyCardIds.remove(id)

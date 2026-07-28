@@ -24,6 +24,9 @@ public class CreateCardRequest {
     private String subcategory;
     private List<String> tags;
     private Map<String, String> fields;
+    /**
+     * 이전 앱과의 요청 호환용입니다. 개인정보 보호 정책에 따라 서버에서는 무시합니다.
+     */
     private String thumbnailURL;
     private List<String> screenshotURLs;
 }

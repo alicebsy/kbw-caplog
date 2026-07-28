@@ -2,7 +2,7 @@
 //  ScreenshotDebugView.swift
 //  Caplog
 //
-//  OCR, Google Vision, GPT-4 처리 결과 확인용 디버그 뷰
+//  온디바이스 OCR·이미지 분류, GPT 처리 결과 확인용 디버그 뷰
 //
 
 import SwiftUI
@@ -69,7 +69,7 @@ struct ScreenshotDebugView: View {
                                 .scaleEffect(1.5)
                             Text("처리 중...")
                                 .font(.headline)
-                            Text("OCR → Google Vision → GPT-4 분류")
+                            Text("기기 내 OCR·이미지 분석 → GPT 분류")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -171,18 +171,18 @@ struct ResultSections: View {
                 }
             }
             
-            // 3️⃣ Google Vision 결과
+            // 3️⃣ Apple Vision 온디바이스 이미지 분류 결과
             ResultSection(
-                title: "🎯 Google Vision 레이블 (\(result.googleVisionLabels.count)개)",
+                title: "🎯 기기 내 이미지 레이블 (\(result.imageLabels.count)개)",
                 color: .green
             ) {
-                if result.googleVisionLabels.isEmpty {
+                if result.imageLabels.isEmpty {
                     Text("탐지된 레이블이 없습니다")
                         .font(.body)
                         .foregroundColor(.secondary)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(result.googleVisionLabels) { label in
+                        ForEach(result.imageLabels) { label in
                             HStack {
                                 Text(label.description)
                                     .font(.body)

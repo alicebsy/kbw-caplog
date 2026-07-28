@@ -26,7 +26,7 @@ AI 기반으로 자동 정리하고, 실제 생활 맥락에 맞게 다시 제�
 기존 갤러리 및 메모 서비스는 스크린샷을 단순 저장하거나 이미지 단위로 분류하는 데 그치며,  
 유효기간·위치·일정과 같은 맥락 정보를 반영하지 못한다는 한계를 가진다.
 
-본 프로젝트는 VisionKit OCR, Google Vision API, GPT-4를 결합한 멀티모달 분석을 통해  
+본 프로젝트는 Apple Vision 온디바이스 OCR·이미지 분류와 GPT를 결합한 분석을 통해
 스크린샷 속 정보를 구조화하고, 사용자의 위치·시간·일정을 반영한 추천과 알림을 제공함으로써  
 스크린샷을 실제로 “다시 쓰이는 정보 자산”으로 전환하는 것을 목표로 한다.
 
@@ -34,8 +34,9 @@ AI 기반으로 자동 정리하고, 실제 생활 맥락에 맞게 다시 제�
 
 ## Key Features
 
-- VisionKit OCR 기반 스크린샷 텍스트 자동 추출
-- Google Vision API 기반 객체 인식 보조 분석
+- Apple Vision 기반 온디바이스 OCR 및 이미지 분류
+- 원본 스크린샷은 앱 전용 로컬 저장소에만 보관
+- GPT 전송 전 이메일·전화번호·주민번호·카드번호 자동 마스킹
 - GPT-4 기반 의미 분석 및 카테고리·메타데이터 자동 생성
 - 위치(CoreLocation)·일정(EventKit) 기반 개인화 추천
 - 유효기간 및 마감일 기반 알림
@@ -49,7 +50,7 @@ AI 기반으로 자동 정리하고, 실제 생활 맥락에 맞게 다시 제�
 ### Frontend
 - iOS (SwiftUI)
 - Photos Framework
-- VisionKit OCR
+- Apple Vision OCR / 이미지 분류
 - CoreLocation / EventKit
 
 ### Backend
@@ -63,8 +64,7 @@ AI 기반으로 자동 정리하고, 실제 생활 맥락에 맞게 다시 제�
 
 ### External APIs
 - GPT-4 API
-- Google Vision API
-- VisionKit OCR
+- Apple Vision (기기 내 처리)
 
 ---
 

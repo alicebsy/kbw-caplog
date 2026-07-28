@@ -1,7 +1,7 @@
 import SwiftUI
 import PhotosUI
 
-/// 통합 파이프라인을 사용하는 PhotoPicker (OCR -> Google Vision -> GPT -> Card 자동 생성)
+/// 통합 파이프라인을 사용하는 PhotoPicker (온디바이스 분석 -> GPT -> Card 자동 생성)
 struct PhotoPicker: UIViewControllerRepresentable {
     @Binding var isProcessing: Bool
     @Binding var resultCard: Card?
@@ -65,7 +65,7 @@ struct PhotoPicker: UIViewControllerRepresentable {
                         case .success(let processingResult):
                             print("✅ 처리 완료: \(processingResult.card.title)")
                             print("OCR 라인: \(processingResult.ocrText.count)개")
-                            print("Google Vision 레이블: \(processingResult.googleVisionLabels.count)개")
+                            print("온디바이스 이미지 레이블: \(processingResult.imageLabels.count)개")
                             
                             self.parent.resultCard = processingResult.card
                             self.parent.processingResult = processingResult
@@ -100,7 +100,7 @@ struct ScreenshotUploadView: View {
             if isProcessing {
                 ProgressView("처리 중...")
                     .progressViewStyle(.circular)
-                Text("OCR → Google Vision → GPT 분류 → 카드 생성")
+                Text("기기 내 OCR·이미지 분석 → GPT 분류 → 카드 생성")
                     .font(.caption)
                     .foregroundColor(.gray)
             } else {
@@ -178,7 +178,7 @@ struct ScreenshotUploadView: View {
             ) { result in
                 print("🔄 처리 완료: \(result.card.title)")
                 print("OCR 텍스트: \(result.ocrText.count)개 라인")
-                print("Google Vision 레이블: \(result.googleVisionLabels.count)개")
+                print("온디바이스 이미지 레이블: \(result.imageLabels.count)개")
             }
         }
         .sheet(isPresented: $showResult) {

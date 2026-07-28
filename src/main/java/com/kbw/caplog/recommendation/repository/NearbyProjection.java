@@ -12,6 +12,5 @@ public interface NearbyProjection {
     String getAddress();
     Double getLat();
     Double getLng();
-    String getImageUrl();
     Double getDistanceMeters();
 }

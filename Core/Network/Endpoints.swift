@@ -17,12 +17,6 @@ enum Endpoints {
     static let friendList       = "/users/friends"
     static let shareFriends     = "/users/friends"
 
-    // MARK: - Screenshot
-    static let screenshots      = "/screenshots"
-    static let screenshotById   = "/screenshots/{id}"
-    static let uploadScreenshot = "/screenshots/upload"
-    static let metadata         = "/screenshots/metadata"
-
     // MARK: - Cards (카드 목록, 추천 등)
     static let cards            = "/cards"
     static func card(_ id: UUID) -> String { "/cards/\(id.uuidString)" }

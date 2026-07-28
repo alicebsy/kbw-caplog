@@ -8,7 +8,7 @@ struct Register1View: View {
     // OCR + GPT 상태 관리
     @State private var selectedImage: UIImage?
     @State private var recognizedText: [String] = []
-    @State private var googleVisionLabels: [VisionLabel] = []
+    @State private var imageLabels: [ImageLabel] = []
     @State private var preprocessedImage: UIImage?
     @State private var gptResult: String?
     @State private var showPhotoPicker = false
@@ -94,7 +94,7 @@ struct Register1View: View {
                     image: selectedImage,
                     recognizedText: recognizedText,
                     gptResult: gptResult ?? "GPT 결과 없음 ❌",
-                    googleVisionLabels: googleVisionLabels.isEmpty ? nil : googleVisionLabels
+                    imageLabels: imageLabels.isEmpty ? nil : imageLabels
                 )
             }
         }
@@ -105,7 +105,7 @@ struct Register1View: View {
                 isPresented: $showPhotoPicker,
                 selectedImage: $selectedImage,
                 recognizedText: $recognizedText,
-                googleVisionLabels: $googleVisionLabels,
+                imageLabels: $imageLabels,
                 gptResult: $gptResult,
                 navigateToResult: $navigateToResult
             )
@@ -123,7 +123,7 @@ struct PhotoPickerWrapperView: View {
     @Binding var isPresented: Bool
     @Binding var selectedImage: UIImage?
     @Binding var recognizedText: [String]
-    @Binding var googleVisionLabels: [VisionLabel]
+    @Binding var imageLabels: [ImageLabel]
     @Binding var gptResult: String?
     @Binding var navigateToResult: Bool
     
@@ -142,7 +142,7 @@ struct PhotoPickerWrapperView: View {
             // ✅ ProcessingResult에서 모든 데이터 추출
             selectedImage = result.preprocessedImage
             recognizedText = result.ocrText
-            googleVisionLabels = result.googleVisionLabels
+            imageLabels = result.imageLabels
             gptResult = "카테고리: \(result.card.category.rawValue) - \(result.card.subcategory)\n제목: \(result.card.title)\n요약: \(result.card.summary)"
             
             navigateToResult = true
