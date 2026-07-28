@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 /**
  * Spring Security 전역 설정
@@ -59,6 +60,28 @@ public class SecurityConfig {
 
 
         return http.build(); // 이 빌드 결과가 실제로 동작하는 보안 체인
+    }
+
+    /**
+     * 두 인증 필터는 Spring Security 체인 안에서만 실행해야 한다.
+     * 서블릿 컨테이너가 자동 등록하면 필터가 두 번 실행되고 실행 순서도 달라진다.
+     */
+    @Bean
+    public FilterRegistrationBean<JwtAuthFilter> disableJwtFilterAutoRegistration(
+            JwtAuthFilter filter
+    ) {
+        FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RequestRateLimitFilter> disableRateLimitFilterAutoRegistration(
+            RequestRateLimitFilter filter
+    ) {
+        FilterRegistrationBean<RequestRateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     // BCrypt 해시 인코더: 비밀번호를 안전하게 저장(해시 + 솔트)

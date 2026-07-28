@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +40,7 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
     private final boolean trustForwardedHeaders;
     private final Clock clock;
 
+    @Autowired
     public RequestRateLimitFilter(
             @Value("${caplog.security.trust-forwarded-headers:false}") boolean trustForwardedHeaders
     ) {
