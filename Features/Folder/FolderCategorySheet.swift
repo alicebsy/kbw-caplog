@@ -12,7 +12,7 @@ struct FolderCategorySheet: View {
                     selectedCategory = cat
                     selectedSub = nil
                 } label: {
-                    Text(cat.rawValue)
+                    Text(cat.displayName)
                         .font(.headline)
                         .foregroundColor(selectedCategory == cat ? .white : .brandTextMain)
                         .padding(8)

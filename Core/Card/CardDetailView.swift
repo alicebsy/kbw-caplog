@@ -253,7 +253,7 @@ struct CardDetailView: View {
                         HStack {
                             Text(card.category.emoji)
                                 .font(.system(size: 20))
-                            Text(card.category.rawValue)
+                            Text(card.category.displayName)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             Text("•")

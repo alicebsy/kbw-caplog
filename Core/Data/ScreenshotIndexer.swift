@@ -113,12 +113,16 @@ final class ScreenshotIndexer {
             return
         }
         if UserDefaults.standard.bool(forKey: initialImportDoneKey) {
-            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "이미 초기 인덱싱 완료됨. '스크린샷에서 카드 가져오기'로 다시 시도 가능.")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(
+                reason: "새로운 스크린샷이 생기면 자동으로 확인할게요."
+            )
             return
         }
 
         guard let collection = ScreenshotMonitor.findScreenshotCollection() else {
-            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "사진 앨범을 찾을 수 없음 (권한 확인)")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(
+                reason: "스크린샷 앨범을 찾지 못했어요. 사진 접근 권한을 확인해주세요."
+            )
             return
         }
 
@@ -132,7 +136,9 @@ final class ScreenshotIndexer {
             if toProcess.count >= limit { return }
         }
         guard !toProcess.isEmpty else {
-            ScreenshotPipelineStatus.shared.setNoScreenshots(reason: "처리할 새 스크린샷 없음 (이미 카드로 만든 것만 있음). 새 스크린샷을 찍은 뒤 다시 시도.")
+            ScreenshotPipelineStatus.shared.setNoScreenshots(
+                reason: "새로 가져올 스크린샷이 없어요. 이미 만든 카드는 건너뛰었어요."
+            )
             UserDefaults.standard.set(true, forKey: initialImportDoneKey)
             return
         }
@@ -141,6 +147,7 @@ final class ScreenshotIndexer {
         for (i, asset) in toProcess.enumerated() {
             await processOne(asset: asset, index: i + 1, total: toProcess.count)
         }
+        ScreenshotPipelineStatus.shared.setCompleted()
         UserDefaults.standard.set(true, forKey: initialImportDoneKey)
     }
 
@@ -189,7 +196,10 @@ final class ScreenshotIndexer {
                                     self.markAssetAsProcessed(asset)
                                 }
                             case .failure(let err):
-                                ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
+                                ScreenshotPipelineStatus.shared.setPipelineFailed(
+                                    step: "내용 분석",
+                                    errorDescription: err.localizedDescription
+                                )
                             }
                             cont.resume()
                         }

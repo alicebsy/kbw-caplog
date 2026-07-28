@@ -10,6 +10,7 @@ final class HomeViewModel: ObservableObject {
     @Published var showNotificationView: Bool = false
     @Published var showMyPageView: Bool = false
     @Published var isImportingScreenshots: Bool = false
+    @Published var isLoading: Bool = false
     
     // MARK: - Data (서버/캐시 기반, mock 기본값 없음)
     @Published var userName: String = {
@@ -18,7 +19,7 @@ final class HomeViewModel: ObservableObject {
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
-    @Published var recommendationTitle: String = "💡 Recommended Contents"
+    @Published var recommendationTitle: String = "💡 추천 카드"
     
     private let friendManager = FriendManager.shared
     var friends: [Friend] { friendManager.friends }
@@ -63,6 +64,10 @@ final class HomeViewModel: ObservableObject {
     // MARK: - 초기 로드
     // ===================================================================
     func load() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+
         // 0) UserDefaults 기반 즉시 로드 (깜빡임 방지)
         let defaults = UserDefaults.standard
         if let savedNickname = defaults.string(forKey: "userProfile_nickname") {
@@ -207,8 +212,8 @@ final class HomeViewModel: ObservableObject {
             ? cardManager.recommendedCards(limit: 10)
             : nearbyRecommended
         recommendationTitle = nearbyRecommended.isEmpty
-            ? "💡 Recommended Contents"
-            : "📍 Nearby Recommendations"
+            ? "💡 추천 카드"
+            : "📍 내 주변 추천"
         recommended = Self.deduplicateByID(recommendationSource.filter { !expiringIds.contains($0.id) })
             .prefix(5).map { $0 }
 

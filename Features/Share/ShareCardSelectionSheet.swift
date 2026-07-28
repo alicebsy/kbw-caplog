@@ -63,7 +63,7 @@ struct ShareCardSelectionSheet: View {
 
                         ForEach(FolderCategory.allCases) { category in
                             Menu {
-                                Button("전체 \(category.rawValue)") {
+                                Button("전체 \(category.displayName)") {
                                     selectedCategory = category
                                     selectedSub = nil
                                 }
@@ -75,11 +75,11 @@ struct ShareCardSelectionSheet: View {
                                 }
                             } label: {
                                 if selectedCategory == category {
-                                    Text(selectedSub ?? category.rawValue)
+                                    Text(selectedSub ?? category.displayName)
                                         .font(.system(size: 14, weight: .semibold))
                                     Image(systemName: "chevron.down")
                                 } else {
-                                    Text(category.rawValue)
+                                    Text(category.displayName)
                                         .font(.system(size: 14))
                                 }
                             }

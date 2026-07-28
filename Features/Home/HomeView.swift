@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
     @StateObject private var appNotificationCenter = AppNotificationCenter.shared
+    @ObservedObject private var pipelineStatus = ScreenshotPipelineStatus.shared
 
     @State private var selectedCard: Card? = nil
     @State private var fullscreenImage: String? = nil
@@ -30,7 +31,16 @@ struct HomeView: View {
                 )
                 Spacer().frame(height: S)
 
-                if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
+                if vm.isLoading && vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("카드를 불러오고 있어요.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 42)
+                } else if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 36))
@@ -38,10 +48,38 @@ struct HomeView: View {
                         Text("아직 카드가 없어요")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
-                        Text("마이페이지에서 스크린샷을 가져와 보세요.")
+                        Text("스크린샷을 가져오면 중요한 내용을 카드로 정리해드려요.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
+                        Button {
+                            Task { await vm.importScreenshotsFromGallery() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if vm.isImportingScreenshots {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "photo.badge.plus")
+                                }
+                                Text(vm.isImportingScreenshots ? "카드 만드는 중..." : "스크린샷 가져오기")
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .frame(height: 42)
+                            .background(Color.myPageSectionGreen)
+                            .clipShape(Capsule())
+                        }
+                        .disabled(vm.isImportingScreenshots)
+                        if pipelineStatus.lastUpdated != nil {
+                            Text(pipelineStatus.lastMessage)
+                                .font(.system(size: 12))
+                                .foregroundStyle(
+                                    pipelineStatus.phase == .failure ? Color.red : Color.secondary
+                                )
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
@@ -55,9 +93,9 @@ struct HomeView: View {
                     Spacer().frame(height: S)
                 }
 
-                HomeSection(title: "⏳ Expiring Soon", wrapInCard: false) {
+                HomeSection(title: "⏳ 마감 임박", wrapInCard: false) {
                     if vm.coupons.isEmpty {
-                        Text("마감 임박한 스크린샷이 아직 없어요")
+                        Text("마감일이 가까운 카드가 없어요.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
@@ -114,7 +152,7 @@ struct HomeView: View {
                 }
 
                 if !vm.recent.isEmpty {
-                    HomeSection(title: "👀 Recently Viewed") {
+                    HomeSection(title: "👀 최근 본 카드") {
                         VStack(spacing: 12) {
                             ForEach(vm.recent.prefix(3)) { card in
                                 UnifiedCardView(

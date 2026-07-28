@@ -209,21 +209,19 @@ class ScreenshotProcessingService {
     private func makeOCRFallbackCard(
         ocrText: String,
         ocrTextLines: [String],
-        imageLabels: [ImageLabel]
+        imageLabels _: [ImageLabel]
     ) -> Card {
         let normalizedLines = ocrTextLines
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        let firstLine = normalizedLines.first ?? "스크린샷 메모"
+        let firstLine = normalizedLines.first(where: { !isTimeOnlyTitle($0) })
+            ?? "내용을 확인해주세요"
         let title = String(firstLine.prefix(50))
         let normalizedText = ocrText
             .replacingOccurrences(of: "\n", with: " ")
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
         let summary = String(normalizedText.prefix(150))
-        let labelTags = imageLabels
-            .filter { $0.confidence > 0.5 }
-            .map(\.description)
         let cardId = UUID()
         let imageName = cardId.uuidString
 
@@ -233,11 +231,16 @@ class ScreenshotProcessingService {
             summary: summary,
             category: .etc,
             subcategory: "기타",
-            tags: Array(Set(["OCR"] + labelTags)),
-            fields: ["분류 상태": "AI 분류 대기"],
+            tags: ["자동 생성"],
+            fields: ["분류 상태": "내용 확인 필요"],
             thumbnailURL: imageName,
             screenshotURLs: [imageName]
         )
+    }
+
+    private func isTimeOnlyTitle(_ text: String) -> Bool {
+        let pattern = #"^\s*(?:(?:[01]?\d|2[0-3]):[0-5]\d)(?:\s*(?:AM|PM|오전|오후))?\s*$"#
+        return text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
     
     /// GPT 프롬프트 생성 (Caplog 전용 - JSON only)
@@ -337,6 +340,7 @@ class ScreenshotProcessingService {
         
         [제목과 요약 생성 규칙]
         - 제목: 가장 중요한 정보 1줄. 가게/브랜드 이름이 있으면 반드시 포함 (예: "이마트24 5천원권", "목화반점 맛집", "스타벅스 아메리카노 1+1")
+        - 상태 표시줄의 시간(예: "4:24", "5:13 PM")만으로 제목을 만들지 마세요.
         - 요약: 사용자가 한눈에 이해할 수 있는 1~2문장 (예: "이마트24에서 사용할 수 있는 5천원 모바일금액권입니다.")
         
         [날짜·마감일 추출 규칙]

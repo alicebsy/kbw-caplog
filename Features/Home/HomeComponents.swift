@@ -64,7 +64,7 @@ struct HomeHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(userName.isEmpty ? "Hello 👋" : "Hello, \(userName) 👋")
+                Text(userName.isEmpty ? "안녕하세요 👋" : "\(userName)님, 안녕하세요 👋")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(Color.homeGreenDark)
                 Text("캡처한 로그를 한눈에 정리해요")

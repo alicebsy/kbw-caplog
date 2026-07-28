@@ -116,6 +116,7 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
     
     private func processNewScreenshot(asset: PHAsset) {
         print("🔍 스크린샷 처리 시작: \(asset.localIdentifier)")
+        ScreenshotPipelineStatus.shared.setFindingScreenshots(count: 1)
         
         let imageManager = PHImageManager.default()
         let targetSize = CGSize(width: 1080, height: 1920)
@@ -147,12 +148,14 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                         step: "자동 이미지 로드",
                         errorDescription: reason
                     )
+                    ScreenshotPipelineStatus.shared.setCompleted()
                 }
                 print("❌ ScreenshotMonitor: 이미지 로드 실패 - \(reason)")
                 return
             }
             
             print("📤 GPT 파이프라인 실행 중...")
+            ScreenshotPipelineStatus.shared.setImageLoaded(index: 1, total: 1)
             
             self.processingService.processScreenshot(image: uiImage) { result in
                 Task { @MainActor in
@@ -168,8 +171,14 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                         if savedToServer {
                             ScreenshotIndexer.shared.markAssetAsProcessed(asset)
                         }
+                        ScreenshotPipelineStatus.shared.setCompleted()
                         self.showNotification(for: processingResult.card)
                     case .failure(let error):
+                        ScreenshotPipelineStatus.shared.setPipelineFailed(
+                            step: "내용 분석",
+                            errorDescription: error.localizedDescription
+                        )
+                        ScreenshotPipelineStatus.shared.setCompleted()
                         print("❌ 자동 분류 실패: \(error.localizedDescription)")
                     }
                 }

@@ -83,7 +83,7 @@ struct FolderCategoryListView: View {
                                     .fill(selectedCategory == category ? Color.myPageSectionGreen : Color.clear)
                                     .frame(width: 4, height: 24)
 
-                                Text("\(category.emoji) \(category.rawValue)")
+                                Text("\(category.emoji) \(category.displayName)")
                                     .font(.system(size: 17, weight: .semibold))
                                     .foregroundColor(
                                         selectedCategory == category

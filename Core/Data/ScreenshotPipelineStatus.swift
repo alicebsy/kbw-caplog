@@ -8,79 +8,130 @@
 
 import Combine
 import Foundation
-import SwiftUI
 
-/// 스크린샷 파이프라인 마지막 실행 결과 (홈 화면에서 확인용)
+/// 스크린샷 카드 생성 진행 상태
 @MainActor
 final class ScreenshotPipelineStatus: ObservableObject {
     static let shared = ScreenshotPipelineStatus()
 
-    @Published var lastMessage: String = "아직 실행 안 함"
-    @Published var lastError: String? = nil
-    @Published var lastUpdated: Date? = nil
-    @Published var lastPostSuccess: Bool? = nil  // true=저장됨, false=실패, nil=미도달
+    enum Phase {
+        case idle
+        case running
+        case success
+        case warning
+        case failure
+    }
+
+    @Published private(set) var phase: Phase = .idle
+    @Published private(set) var lastMessage: String = "아직 실행하지 않았어요."
+    @Published private(set) var lastError: String?
+    @Published private(set) var lastUpdated: Date?
+    @Published private(set) var totalCount = 0
+    @Published private(set) var currentCount = 0
+    @Published private(set) var successCount = 0
+    @Published private(set) var failureCount = 0
+    @Published private(set) var syncWarningCount = 0
+
+    var isRunning: Bool { phase == .running }
+    var progress: Double {
+        guard totalCount > 0 else { return 0 }
+        return min(Double(currentCount) / Double(totalCount), 1)
+    }
 
     private init() {}
 
     func setFindingScreenshots(count: Int) {
-        lastMessage = "스크린샷 \(count)개 발견 → 처리 시작"
+        phase = .running
+        totalCount = count
+        currentCount = 0
+        successCount = 0
+        failureCount = 0
+        syncWarningCount = 0
+        lastMessage = "스크린샷 \(count)장으로 카드를 만들고 있어요."
         lastError = nil
         lastUpdated = Date()
-        lastPostSuccess = nil
         print("[Caplog 스크린샷] \(lastMessage)")
     }
 
     func setNoScreenshots(reason: String) {
+        phase = .idle
         lastMessage = reason
         lastError = nil
         lastUpdated = Date()
-        lastPostSuccess = nil
         print("[Caplog 스크린샷] \(lastMessage)")
     }
 
     func setImageLoaded(index: Int, total: Int) {
-        lastMessage = "이미지 로드 완료 (\(index)/\(total)) → OCR/GPT 진행 중..."
+        phase = .running
+        totalCount = total
+        currentCount = index
+        lastMessage = "\(index)/\(total)번째 스크린샷의 내용을 읽고 있어요."
         lastError = nil
         lastUpdated = Date()
         print("[Caplog 스크린샷] \(lastMessage)")
     }
 
     func setOcrGptSuccess(cardTitle: String) {
-        lastMessage = "OCR·GPT 완료: \"\(cardTitle)\" → DB 저장 시도(POST)..."
+        phase = .running
+        lastMessage = "‘\(cardTitle)’ 카드를 저장하고 있어요."
         lastError = nil
         lastUpdated = Date()
-        lastPostSuccess = nil
         print("[Caplog 스크린샷] \(lastMessage)")
     }
 
     func setPostSending() {
-        lastMessage = "POST /api/cards 전송 중..."
+        phase = .running
+        lastMessage = "카드를 안전하게 저장하고 있어요."
         lastError = nil
         lastUpdated = Date()
         print("[Caplog 스크린샷] \(lastMessage)")
     }
 
     func setPostSuccess(cardTitle: String) {
-        lastMessage = "DB 저장 완료: \"\(cardTitle)\""
+        phase = .running
+        successCount += 1
+        lastMessage = "‘\(cardTitle)’ 카드를 만들었어요."
         lastError = nil
         lastUpdated = Date()
-        lastPostSuccess = true
         print("[Caplog 스크린샷] ✅ \(lastMessage)")
     }
 
     func setPostFailed(errorDescription: String) {
-        lastMessage = "카드는 홈에 추가됨 (서버 동기화 실패)"
+        phase = .running
+        successCount += 1
+        syncWarningCount += 1
+        lastMessage = "카드는 기기에 저장했지만 서버 동기화에 실패했어요."
         lastError = errorDescription
         lastUpdated = Date()
-        lastPostSuccess = false
         print("[Caplog 스크린샷] ❌ POST 실패 → 로컬에는 반영됨: \(errorDescription)")
     }
 
     func setPipelineFailed(step: String, errorDescription: String) {
-        lastMessage = "파이프라인 중단: \(step)"
+        phase = .running
+        failureCount += 1
+        lastMessage = "\(step) 단계에서 카드 생성에 실패했어요."
         lastError = errorDescription
         lastUpdated = Date()
-        lastPostSuccess = nil
         print("[Caplog 스크린샷] ❌ \(lastMessage) - \(errorDescription)")
+    }
+
+    func setCompleted() {
+        lastUpdated = Date()
+        if failureCount == 0 && syncWarningCount == 0 {
+            phase = .success
+            lastMessage = "\(successCount)장의 카드 생성을 완료했어요."
+            lastError = nil
+        } else if successCount > 0 {
+            phase = .warning
+            if failureCount > 0 {
+                lastMessage = "\(successCount)장은 완료했고 \(failureCount)장은 만들지 못했어요."
+            } else {
+                lastMessage = "\(successCount)장은 기기에 저장했지만 서버 동기화가 필요해요."
+            }
+        } else {
+            phase = .failure
+            lastMessage = "카드를 만들지 못했어요. 다시 시도해주세요."
+        }
+        print("[Caplog 스크린샷] \(lastMessage)")
     }
 }

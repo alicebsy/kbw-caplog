@@ -88,7 +88,7 @@ struct UnifiedCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(card.category.rawValue + " - " + card.subcategory)
+                    Text(card.category.displayName + " · " + card.subcategory)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.brandTextSub)
                         .lineLimit(1)
@@ -192,7 +192,7 @@ struct UnifiedCardView: View {
                 .onTapGesture { onTapImage() }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(card.category.rawValue + " - " + card.subcategory)
+                Text(card.category.displayName + " · " + card.subcategory)
                     .font(.system(size: 13))
                     .foregroundStyle(Color.brandTextSub)
                 
@@ -223,7 +223,7 @@ struct UnifiedCardView: View {
         HStack(alignment: .top, spacing: 12) {
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(card.category.rawValue + " - " + card.subcategory)
+                Text(card.category.displayName + " · " + card.subcategory)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
@@ -275,7 +275,7 @@ struct UnifiedCardView: View {
         HStack(alignment: .top, spacing: 10) {
             
             VStack(alignment: .leading, spacing: 6) {
-                Text(card.category.rawValue + " - " + card.subcategory)
+                Text(card.category.displayName + " · " + card.subcategory)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 

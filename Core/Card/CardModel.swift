@@ -169,10 +169,10 @@ struct Card: Identifiable, Hashable, Codable {
         case "음악": return "🎧"
         case "미술": return "🎨" // 수정 (🖌️ -> 🎨)
         // Etc (🎸)
-        case "기타": return "❓"
+        case "기타": return "🗂️"
         // 그 외의 경우
         default:
-            return "❓"
+            return "📌"
         }
     }
     
@@ -211,6 +211,16 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
     case etc = "Etc."
 
     var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .info: return "정보"
+        case .contents: return "콘텐츠"
+        case .social: return "소셜"
+        case .log: return "기록"
+        case .musicArt: return "음악·예술"
+        case .etc: return "기타"
+        }
+    }
     var color: Color {
         switch self {
         case .info: return .homeGreen
@@ -228,7 +238,7 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
         case .social: return "👥" // ✅ 수정 (💬 -> 👥)
         case .log: return "🎮"
         case .musicArt: return "🎵"
-        case .etc: return "🎸"
+        case .etc: return "🗂️"
         }
     }
     var subcategories: [FolderSubcategory] {
