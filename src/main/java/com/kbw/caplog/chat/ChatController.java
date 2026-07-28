@@ -73,6 +73,19 @@ public class ChatController {
         }
     }
 
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<Void> leaveChat(Authentication auth, @PathVariable String chatId) {
+        Long userNo = resolveUserNo(auth);
+        if (userNo == null) return ResponseEntity.status(401).build();
+        try {
+            Long roomId = Long.parseLong(chatId);
+            chatService.leaveRoom(roomId, userNo);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     private Long resolveUserNo(Authentication auth) {
         if (auth == null || auth.getName() == null || auth.getName().isBlank()) return null;
         return userRepository.findByEmail(auth.getName()).map(User::getUserNo).orElse(null);

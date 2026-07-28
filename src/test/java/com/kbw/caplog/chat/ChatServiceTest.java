@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -137,5 +138,96 @@ class ChatServiceTest {
         assertEquals("공유 카드", result.getCard().getTitle());
         verify(cardService).findOwnedCardByExternalId(1L, card.getId());
         verify(messageRepository).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void leavingRoomRemovesOnlyCurrentParticipant() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        ChatMessageRepository messageRepository = mock(ChatMessageRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                messageRepository,
+                mock(UserRepository.class),
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        ChatRoom room = ChatRoom.builder()
+                .id(10L)
+                .createdAt(Instant.parse("2026-07-28T00:00:00Z"))
+                .build();
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(1L).build()
+        );
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(2L).build()
+        );
+        when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+
+        service.leaveRoom(10L, 1L);
+
+        assertEquals(1, room.getParticipants().size());
+        assertEquals(2L, room.getParticipants().get(0).getUserNo());
+        verify(roomRepository).save(room);
+        verify(roomRepository, never()).delete(any(ChatRoom.class));
+        verify(messageRepository, never()).deleteByChatRoomId(10L);
+    }
+
+    @Test
+    void leavingAsLastParticipantDeletesMessagesAndRoom() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        ChatMessageRepository messageRepository = mock(ChatMessageRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                messageRepository,
+                mock(UserRepository.class),
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        ChatRoom room = ChatRoom.builder()
+                .id(10L)
+                .createdAt(Instant.parse("2026-07-28T00:00:00Z"))
+                .build();
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(1L).build()
+        );
+        when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+
+        service.leaveRoom(10L, 1L);
+
+        assertTrue(room.getParticipants().isEmpty());
+        verify(messageRepository).deleteByChatRoomId(10L);
+        verify(roomRepository).delete(room);
+        verify(roomRepository, never()).save(any(ChatRoom.class));
+    }
+
+    @Test
+    void nonParticipantCannotLeaveRoom() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        ChatMessageRepository messageRepository = mock(ChatMessageRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                messageRepository,
+                mock(UserRepository.class),
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        ChatRoom room = ChatRoom.builder()
+                .id(10L)
+                .createdAt(Instant.parse("2026-07-28T00:00:00Z"))
+                .build();
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(2L).build()
+        );
+        when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.leaveRoom(10L, 1L)
+        );
+
+        assertEquals(1, room.getParticipants().size());
+        verify(roomRepository, never()).save(any(ChatRoom.class));
+        verify(roomRepository, never()).delete(any(ChatRoom.class));
+        verify(messageRepository, never()).deleteByChatRoomId(10L);
     }
 }

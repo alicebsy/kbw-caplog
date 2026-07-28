@@ -131,6 +131,25 @@ public class ChatService {
         chatRoomRepository.save(room);
     }
 
+    @Transactional
+    public void leaveRoom(Long roomId, Long currentUserNo) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        boolean removed = room.getParticipants()
+                .removeIf(participant -> participant.getUserNo().equals(currentUserNo));
+        if (!removed) {
+            throw new IllegalArgumentException("Not a participant");
+        }
+
+        if (room.getParticipants().isEmpty()) {
+            messageRepository.deleteByChatRoomId(roomId);
+            chatRoomRepository.delete(room);
+            return;
+        }
+
+        chatRoomRepository.save(room);
+    }
+
     private String buildRoomTitle(ChatRoom room, Long currentUserNo) {
         List<String> names = room.getParticipants().stream()
                 .filter(p -> !p.getUserNo().equals(currentUserNo))

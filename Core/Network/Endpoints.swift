@@ -49,6 +49,7 @@ enum Endpoints {
     static func sendMessage(chatId: String) -> String { "/share/chats/\(chatId)/messages" }
     /// ✅ 읽음 처리 엔드포인트 추가
     static func chatRead(chatId: String) -> String { "/share/chats/\(chatId)/read" }
+    static func leaveChat(chatId: String) -> String { "/share/chats/\(chatId)" }
 
     // MARK: - Search
     static let search            = "/search"

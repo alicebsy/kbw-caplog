@@ -59,6 +59,14 @@ struct ShareAPI {
             path: Endpoints.chatRead(chatId: chatId)
         )
     }
+
+    /// 현재 사용자가 채팅방에서 나가기
+    func leaveChat(chatId: String) async throws {
+        try await client.requestVoid(
+            "DELETE",
+            path: Endpoints.leaveChat(chatId: chatId)
+        )
+    }
     
     // MARK: - 공유 관리
     

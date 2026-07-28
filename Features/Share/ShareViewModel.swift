@@ -446,7 +446,7 @@ final class RealShareRepository: ShareRepository {
     }
     
     func leaveChat(threadId: String) async throws {
-        // 아직 별도 API가 없으므로 일단은 no-op 처리.
+        try await shareAPI.leaveChat(chatId: threadId)
     }
 
     func removeFriend(userId: String) async throws {
