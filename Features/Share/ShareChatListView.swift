@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 /// 채팅 목록 화면 (상단의 "채팅" 탭 컨텐츠)
 @MainActor
@@ -7,11 +6,27 @@ struct ShareChatListView: View {
     @ObservedObject var vm: ShareViewModel
     @Binding var selectedThread: ChatThread?
     @State private var showFriendSelection = false
+    @State private var chatCreationError: String?
 
     var body: some View {
         ZStack {
-            List {
-                ForEach(vm.threads) { t in
+            if vm.isLoading && vm.threads.isEmpty {
+                ProgressView("채팅 목록을 불러오는 중...")
+            } else if vm.threads.isEmpty {
+                ContentUnavailableView {
+                    Label("아직 채팅이 없어요", systemImage: "bubble.left.and.bubble.right")
+                } description: {
+                    Text(vm.errorMessage ?? "아래 버튼을 눌러 친구와 대화를 시작해 보세요.")
+                } actions: {
+                    if vm.errorMessage != nil {
+                        Button("다시 시도") {
+                            Task { await vm.refreshThreads() }
+                        }
+                    }
+                }
+            } else {
+                List {
+                    ForEach(vm.threads) { t in
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
                             
@@ -78,12 +93,13 @@ struct ShareChatListView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .listRowSeparator(.hidden)
+                    }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color(uiColor: .systemGroupedBackground))
+                .refreshable { await vm.loadAll() }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color(uiColor: .systemGroupedBackground))
-            .refreshable { await vm.loadAll() }
         }
         .sheet(isPresented: $showFriendSelection) {
             ShareFriendSelectionView(vm: vm) { selectedFriends in
@@ -91,6 +107,14 @@ struct ShareChatListView: View {
                     await startGroupChat(with: selectedFriends)
                 }
             }
+        }
+        .alert("채팅방을 만들 수 없어요", isPresented: Binding(
+            get: { chatCreationError != nil },
+            set: { if !$0 { chatCreationError = nil } }
+        )) {
+            Button("확인", role: .cancel) { chatCreationError = nil }
+        } message: {
+            Text(chatCreationError ?? "")
         }
         // 하단 탭바와 겹치지 않도록 safeAreaInset + 탭바 높이만큼 여백
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -137,6 +161,8 @@ struct ShareChatListView: View {
         
         if let thread = await vm.createAndEnterChat(participantUserIds: participantUserIds, title: title) {
             selectedThread = thread
+        } else {
+            chatCreationError = vm.errorMessage ?? "네트워크 연결을 확인하고 다시 시도해 주세요."
         }
     }
 }

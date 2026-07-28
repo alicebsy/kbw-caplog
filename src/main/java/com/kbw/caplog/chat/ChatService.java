@@ -34,9 +34,9 @@ public class ChatService {
         if (request.getParticipantUserIds() != null) {
             for (String uid : request.getParticipantUserIds()) {
                 if (uid == null || uid.isBlank()) continue;
-                userRepository.findByUserId(uid.trim())
-                        .map(User::getUserNo)
-                        .ifPresent(participantUserNos::add);
+                User participant = userRepository.findByUserId(uid.trim())
+                        .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
+                participantUserNos.add(participant.getUserNo());
             }
         }
         if (participantUserNos.size() < 2) {
@@ -125,9 +125,11 @@ public class ChatService {
     @Transactional
     public void markRead(Long roomId, Long currentUserNo) {
         ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        room.getParticipants().stream()
+        ChatRoomParticipant participant = room.getParticipants().stream()
                 .filter(p -> p.getUserNo().equals(currentUserNo))
-                .forEach(p -> p.setLastReadAt(Instant.now()));
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Not a participant"));
+        participant.setLastReadAt(Instant.now());
         chatRoomRepository.save(room);
     }
 
@@ -162,20 +164,25 @@ public class ChatService {
         return String.join(", ", names);
     }
 
-    private int countUnread(ChatRoom room, Long currentUserNo, ChatMessage lastMessage) {
-        if (lastMessage == null || lastMessage.getSenderUserNo().equals(currentUserNo)) return 0;
-        Optional<Instant> myLastRead = room.getParticipants().stream()
+    private int countUnread(ChatRoom room, Long currentUserNo) {
+        Instant myLastRead = room.getParticipants().stream()
                 .filter(p -> p.getUserNo().equals(currentUserNo))
+                .findFirst()
                 .map(ChatRoomParticipant::getLastReadAt)
-                .findFirst();
-        if (myLastRead.isEmpty()) return 1;
-        return lastMessage.getCreatedAt().isAfter(myLastRead.get()) ? 1 : 0;
+                .orElse(null);
+        long unreadCount = myLastRead == null
+                ? messageRepository.countByChatRoomIdAndSenderUserNoNot(room.getId(), currentUserNo)
+                : messageRepository.countByChatRoomIdAndSenderUserNoNotAndCreatedAtAfter(
+                        room.getId(),
+                        currentUserNo,
+                        myLastRead
+                );
+        return (int) Math.min(unreadCount, Integer.MAX_VALUE);
     }
 
     private ChatSummaryDto toSummaryDto(ChatRoom room, Long currentUserNo) {
-        ChatMessage lastMessage = messageRepository.findByChatRoomIdOrderByCreatedAtAsc(room.getId())
-                .stream()
-                .reduce((first, second) -> second)
+        ChatMessage lastMessage = messageRepository
+                .findTopByChatRoomIdOrderByCreatedAtDesc(room.getId())
                 .orElse(null);
         List<String> participantIds = room.getParticipants().stream()
                 .map(ChatRoomParticipant::getUserNo)
@@ -190,7 +197,7 @@ public class ChatService {
                 .lastMessage(lastMessage != null && lastMessage.getText() != null ? lastMessage.getText() : "")
                 .lastMessageCardTitle(lastMessage != null ? cardTitle(lastMessage) : null)
                 .updatedAt(lastMessage != null ? lastMessage.getCreatedAt() : room.getCreatedAt())
-                .unreadCount(countUnread(room, currentUserNo, lastMessage))
+                .unreadCount(countUnread(room, currentUserNo))
                 .participantIds(participantIds)
                 .avatarUrl(null)
                 .build();

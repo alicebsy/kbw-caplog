@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 struct ChatRoomView: View {
     @ObservedObject var vm: ShareViewModel
@@ -14,6 +13,11 @@ struct ChatRoomView: View {
     
     @State private var showCardSelection = false
     @State private var showLeaveConfirm = false
+    @State private var isInitialLoading = true
+    @State private var isSendingMessage = false
+    @State private var isSendingCards = false
+    @State private var isLeavingChat = false
+    @State private var operationError: String?
     
     // 최초 진입 후 스크롤 한번만 강제 이동
     @State private var hasInitialScrolled = false
@@ -22,32 +26,51 @@ struct ChatRoomView: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(groupedMessages) { group in
-                            
-                            // 날짜 헤더
-                            DateHeaderView(date: group.date)
-                                .padding(.top, 12)
-                                .padding(.bottom, 10)
-                            
-                            // 해당 날짜 메시지들
-                            ForEach(group.messages) { msg in
-                                MessageRow(
-                                    vm: vm,
-                                    meId: meId,
-                                    message: msg,
-                                    timeText: formatTime(msg.createdAt),
-                                    senderInfo: getSenderInfo(msg.senderId)
-                                )
-                                .id(msg.id)
-                                .padding(.vertical, 8)
+                    if isInitialLoading && groupedMessages.isEmpty {
+                        ProgressView("메시지를 불러오는 중...")
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 80)
+                    } else if groupedMessages.isEmpty {
+                        ContentUnavailableView {
+                            Label("아직 메시지가 없어요", systemImage: "bubble.left.and.bubble.right")
+                        } description: {
+                            Text(operationError ?? "첫 메시지를 보내 대화를 시작해 보세요.")
+                        } actions: {
+                            if operationError != nil {
+                                Button("다시 시도") {
+                                    Task { await reloadMessages() }
+                                }
                             }
                         }
+                        .padding(.top, 48)
+                    } else {
+                        LazyVStack(spacing: 0) {
+                            ForEach(groupedMessages) { group in
+                            
+                                // 날짜 헤더
+                                DateHeaderView(date: group.date)
+                                    .padding(.top, 12)
+                                    .padding(.bottom, 10)
+                            
+                                // 해당 날짜 메시지들
+                                ForEach(group.messages) { msg in
+                                    MessageRow(
+                                        vm: vm,
+                                        meId: meId,
+                                        message: msg,
+                                        timeText: formatTime(msg.createdAt),
+                                        senderInfo: getSenderInfo(msg)
+                                    )
+                                    .id(msg.id)
+                                    .padding(.vertical, 8)
+                                }
+                            }
+                        }
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
                     }
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
-                    .background(Color(uiColor: .systemGroupedBackground))
                 }
+                .background(Color(uiColor: .systemGroupedBackground))
                 
                 // 1) 메시지가 추가될 때마다 최신 메시지로 이동
                 .onChange(of: vm.messagesByThread[thread.id]?.last?.id) { _, lastId in
@@ -74,7 +97,9 @@ struct ChatRoomView: View {
                 
                 // 3) ChatRoom 진입 시 메시지 로드 → 최신 메시지로 이동
                 .task(id: thread.id) {
-                    await vm.openThread(thread.id)
+                    let loaded = await vm.openThread(thread.id)
+                    isInitialLoading = false
+                    operationError = loaded ? nil : vm.errorMessage
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         if let lastId = vm.messagesByThread[thread.id]?.last?.id {
@@ -89,7 +114,7 @@ struct ChatRoomView: View {
                         } catch {
                             break
                         }
-                        await vm.refreshThreadMessages(thread.id)
+                        _ = await vm.refreshThreadMessages(thread.id)
                     }
                 }
             }
@@ -106,6 +131,7 @@ struct ChatRoomView: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
+                .disabled(isSendingCards || isLeavingChat)
                 
                 TextField("메시지 입력", text: $inputText)
                     .textFieldStyle(.plain)
@@ -117,9 +143,14 @@ struct ChatRoomView: View {
                     )
                     .submitLabel(.send)
                     .onSubmit { send() }
+                    .disabled(isSendingMessage || isLeavingChat)
                 
                 Button("보내기") { send() }
-                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(
+                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || isSendingMessage
+                            || isLeavingChat
+                    )
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -158,9 +189,16 @@ struct ChatRoomView: View {
                 Button {
                     showLeaveConfirm = true
                 } label: {
-                    Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .foregroundStyle(Color.homeGreenDark.opacity(0.7))
+                    Group {
+                        if isLeavingChat {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundStyle(Color.homeGreenDark.opacity(0.7))
+                        }
+                    }
                 }
+                .disabled(isLeavingChat || isSendingMessage || isSendingCards)
             }
         }
         // 채팅방 전체에 초록 계열 틴트 적용 (뒤로가기/보내기 등 기본 파랑 제거)
@@ -170,8 +208,14 @@ struct ChatRoomView: View {
         .sheet(isPresented: $showCardSelection) {
             ShareCardSelectionSheet { selectedCards in
                 Task {
+                    isSendingCards = true
+                    defer { isSendingCards = false }
                     for card in selectedCards {
-                        await vm.sendCard(to: thread.id, card: card)
+                        let sent = await vm.sendCard(to: thread.id, card: card)
+                        if !sent {
+                            operationError = vm.errorMessage
+                            break
+                        }
                     }
                 }
             }
@@ -182,12 +226,26 @@ struct ChatRoomView: View {
             Button("취소", role: .cancel) {}
             Button("나가기", role: .destructive) {
                 Task {
-                    await vm.leaveChat(threadId: thread.id)
-                    dismiss()
+                    isLeavingChat = true
+                    let left = await vm.leaveChat(threadId: thread.id)
+                    isLeavingChat = false
+                    if left {
+                        dismiss()
+                    } else {
+                        operationError = vm.errorMessage
+                    }
                 }
             }
         } message: {
-            Text("이 채팅방을 나가시겠습니까?\n대화 내용이 모두 삭제됩니다.")
+            Text("이 채팅방을 나가시겠습니까?\n내 채팅 목록에서 사라지며 다시 볼 수 없습니다.")
+        }
+        .alert("작업을 완료하지 못했어요", isPresented: Binding(
+            get: { operationError != nil },
+            set: { if !$0 { operationError = nil } }
+        )) {
+            Button("확인", role: .cancel) { operationError = nil }
+        } message: {
+            Text(operationError ?? "")
         }
     }
     
@@ -197,24 +255,44 @@ struct ChatRoomView: View {
         guard !text.isEmpty else { return }
         
         Task {
-            await vm.send(to: thread.id, text: text)
-            inputText = ""
+            isSendingMessage = true
+            let sent = await vm.send(to: thread.id, text: text)
+            isSendingMessage = false
+            if sent {
+                inputText = ""
+            } else {
+                operationError = vm.errorMessage
+            }
         }
+    }
+
+    private func reloadMessages() async {
+        isInitialLoading = true
+        let loaded = await vm.openThread(thread.id)
+        isInitialLoading = false
+        operationError = loaded ? nil : vm.errorMessage
     }
     
     // MARK: - 보낸 사람 정보
-    private func getSenderInfo(_ senderId: String) -> SenderInfo {
-        if senderId == meId {
+    private func getSenderInfo(_ message: ChatMessage) -> SenderInfo {
+        if message.senderId == meId {
             return SenderInfo(name: "나", avatarURL: nil, profileImage: nil)
         }
-        if let friend = vm.friends.first(where: { $0.id == senderId }) {
+        if let friend = vm.friends.first(where: { $0.id == message.senderId }) {
             return SenderInfo(
                 name: friend.name,
                 avatarURL: friend.avatarURL?.absoluteString,
                 profileImage: friend.profileImage
             )
         }
-        return SenderInfo(name: "알 수 없음", avatarURL: nil, profileImage: nil)
+        let serverName = message.senderName?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = serverName.flatMap { $0.isEmpty ? nil : $0 } ?? "알 수 없음"
+        return SenderInfo(
+            name: displayName,
+            avatarURL: nil,
+            profileImage: nil
+        )
     }
     
     // MARK: - 메시지 그룹화

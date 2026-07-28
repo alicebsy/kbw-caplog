@@ -111,7 +111,9 @@ struct ChatListAvatarView: View {
             .frame(width: 40, height: 40)
         } else {
             // --- 1:1 채팅: 상대방 프로필 ---
-            let otherParticipantID = thread.participantIds.first(where: { $0 != "me" })
+            let otherParticipantID = thread.participantIds.first {
+                $0 != "me" && $0 != vm.currentUserId
+            }
             let friend = vm.friends.first(where: { $0.id == otherParticipantID })
             
             // 공용 뷰 사용

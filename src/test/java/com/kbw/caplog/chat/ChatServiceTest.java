@@ -65,7 +65,10 @@ class ChatServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
         when(userRepository.findByUserId("friend-user")).thenReturn(Optional.of(friend));
         when(roomRepository.findRoomsByParticipantUserNo(1L)).thenReturn(List.of(room));
-        when(messageRepository.findByChatRoomIdOrderByCreatedAtAsc(10L)).thenReturn(List.of());
+        when(messageRepository.findTopByChatRoomIdOrderByCreatedAtDesc(10L))
+                .thenReturn(Optional.empty());
+        when(messageRepository.countByChatRoomIdAndSenderUserNoNot(10L, 1L))
+                .thenReturn(0L);
 
         CreateChatRequest request = new CreateChatRequest();
         request.setParticipantUserIds(List.of("friend-user"));
@@ -77,6 +80,68 @@ class ChatServiceTest {
         assertEquals(2, result.getParticipantIds().size());
         assertTrue(result.getParticipantIds().containsAll(List.of("me-user", "friend-user")));
         verify(roomRepository, never()).save(any(ChatRoom.class));
+    }
+
+    @Test
+    void returnsExactUnreadCountAndLoadsOnlyLatestMessageForSummary() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        ChatMessageRepository messageRepository = mock(ChatMessageRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                messageRepository,
+                userRepository,
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        Instant lastReadAt = Instant.parse("2026-07-28T00:00:00Z");
+        ChatRoom room = ChatRoom.builder()
+                .id(10L)
+                .createdAt(Instant.parse("2026-07-27T00:00:00Z"))
+                .build();
+        room.getParticipants().add(
+                ChatRoomParticipant.builder()
+                        .chatRoom(room)
+                        .userNo(1L)
+                        .lastReadAt(lastReadAt)
+                        .build()
+        );
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(2L).build()
+        );
+        ChatMessage latestMessage = ChatMessage.builder()
+                .id(20L)
+                .chatRoom(room)
+                .senderUserNo(2L)
+                .text("세 번째 새 메시지")
+                .createdAt(Instant.parse("2026-07-28T00:03:00Z"))
+                .build();
+        User me = User.builder().userNo(1L).userId("me").name("나").build();
+        User friend = User.builder().userNo(2L).userId("friend").name("친구").build();
+
+        when(roomRepository.findRoomsByParticipantUserNo(1L)).thenReturn(List.of(room));
+        when(messageRepository.findTopByChatRoomIdOrderByCreatedAtDesc(10L))
+                .thenReturn(Optional.of(latestMessage));
+        when(messageRepository.countByChatRoomIdAndSenderUserNoNotAndCreatedAtAfter(
+                10L,
+                1L,
+                lastReadAt
+        )).thenReturn(3L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(me));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
+
+        var result = service.listRooms(1L);
+
+        assertEquals(1, result.size());
+        assertEquals(3, result.get(0).getUnreadCount());
+        assertEquals("세 번째 새 메시지", result.get(0).getLastMessage());
+        verify(messageRepository).findTopByChatRoomIdOrderByCreatedAtDesc(10L);
+        verify(messageRepository).countByChatRoomIdAndSenderUserNoNotAndCreatedAtAfter(
+                10L,
+                1L,
+                lastReadAt
+        );
+        verify(messageRepository, never()).findByChatRoomIdOrderByCreatedAtAsc(10L);
     }
 
     @Test
@@ -138,6 +203,56 @@ class ChatServiceTest {
         assertEquals("공유 카드", result.getCard().getTitle());
         verify(cardService).findOwnedCardByExternalId(1L, card.getId());
         verify(messageRepository).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void rejectsChatRoomCreationWhenParticipantDoesNotExist() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                mock(ChatMessageRepository.class),
+                userRepository,
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        User me = User.builder().userNo(1L).userId("me").name("나").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(me));
+        when(userRepository.findByUserId("missing-user")).thenReturn(Optional.empty());
+        CreateChatRequest request = new CreateChatRequest();
+        request.setParticipantUserIds(List.of("missing-user"));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.createRoom(1L, request)
+        );
+        verify(roomRepository, never()).save(any(ChatRoom.class));
+    }
+
+    @Test
+    void nonParticipantCannotMarkRoomAsRead() {
+        ChatRoomRepository roomRepository = mock(ChatRoomRepository.class);
+        ChatService service = new ChatService(
+                roomRepository,
+                mock(ChatMessageRepository.class),
+                mock(UserRepository.class),
+                mock(CardService.class),
+                new ObjectMapper().findAndRegisterModules()
+        );
+        ChatRoom room = ChatRoom.builder()
+                .id(10L)
+                .createdAt(Instant.parse("2026-07-28T00:00:00Z"))
+                .build();
+        room.getParticipants().add(
+                ChatRoomParticipant.builder().chatRoom(room).userNo(2L).build()
+        );
+        when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.markRead(10L, 1L)
+        );
+        verify(roomRepository, never()).save(any(ChatRoom.class));
     }
 
     @Test

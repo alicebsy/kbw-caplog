@@ -50,7 +50,7 @@ struct ShareView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(uiColor: .systemGroupedBackground))
         }
-        .navigationTitle("Share")
+        .navigationTitle("공유")
         .navigationBarTitleDisplayMode(.inline)
         // 대화방은 전체 화면으로 띄워 하단 탭이 보이지 않도록 처리
         .fullScreenCover(item: $selectedThread) { thread in

@@ -7,6 +7,7 @@ import Combine
 struct ChatMessage: Identifiable, Codable, Equatable {
     let id: String
     let senderId: String
+    let senderName: String?
     let createdAt: Date
     let text: String?
     let cardID: UUID?
@@ -14,12 +15,14 @@ struct ChatMessage: Identifiable, Codable, Equatable {
 
     init(id: String = UUID().uuidString,
          senderId: String,
+         senderName: String? = nil,
          text: String?,
          cardID: UUID?,
          sharedCard: Card? = nil,
          createdAt: Date = Date()) {
         self.id = id
         self.senderId = senderId
+        self.senderName = senderName
         self.text = text
         self.cardID = cardID
         self.sharedCard = sharedCard
@@ -51,17 +54,6 @@ protocol ShareRepository {
     func leaveChat(threadId: String) async throws
     func removeFriend(userId: String) async throws
 }
-
-extension ShareRepository {
-    func addFriend(userId: String) async throws -> Friend {
-        Friend(id: userId, name: userId, avatarURL: nil)
-    }
-    func markRead(threadId: String) async throws { }
-    func leaveChat(threadId: String) async throws { }
-    func removeFriend(userId: String) async throws { }
-}
-
-
 
 // MARK: - MockShareRepository (전체)
 
@@ -416,6 +408,7 @@ final class RealShareRepository: ShareRepository {
             ChatMessage(
                 id: msg.id,
                 senderId: msg.senderId,
+                senderName: msg.senderName,
                 text: msg.text,
                 cardID: msg.card?.id,
                 sharedCard: msg.card,
@@ -434,6 +427,7 @@ final class RealShareRepository: ShareRepository {
         return ChatMessage(
             id: serverMsg.id,
             senderId: serverMsg.senderId,
+            senderName: serverMsg.senderName,
             text: serverMsg.text,
             cardID: serverMsg.card?.id ?? cardID,
             sharedCard: serverMsg.card,
@@ -479,6 +473,10 @@ final class ShareViewModel: ObservableObject {
     // 저장소 (Mock or 실제 API)
     private let repo: ShareRepository
     private let cardManager = CardManager.shared
+
+    var currentUserId: String {
+        UserDefaults.standard.string(forKey: "userProfile_userId") ?? "me"
+    }
 
 
     // --------------------------------------------------
@@ -543,23 +541,35 @@ final class ShareViewModel: ObservableObject {
 
 
     private func loadThreads() async {
+        let shouldShowLoading = threads.isEmpty
+        if shouldShowLoading {
+            isLoading = true
+        }
+        defer {
+            if shouldShowLoading {
+                isLoading = false
+            }
+        }
         do {
             var list = try await repo.fetchChatThreads()
 
-            // 참여자 목록으로 제목 생성
+            // 서버가 참여자 전체 이름으로 만든 제목을 우선 사용한다.
+            // 친구가 아닌 참여자가 있어도 이름이 "알 수 없음"으로 사라지지 않는다.
             for i in 0..<list.count {
                 var t = list[i]
+                guard t.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    continue
+                }
 
-                // me 제외한 나머지 이름
                 let names = t.participantIds
                     .compactMap { id -> String? in
-                        guard id != "me" else { return nil }
+                        guard id != "me", id != currentUserId else { return nil }
                         return friends.first(where: { $0.id == id })?.name
                     }
                     .sorted()
 
                 if names.isEmpty {
-                    t.title = "알 수 없음"
+                    t.title = "채팅방"
                 }
                 else if names.count == 1 {
                     t.title = names.first!
@@ -595,9 +605,11 @@ final class ShareViewModel: ObservableObject {
             }
 
             self.threads = list
+            self.errorMessage = nil
         }
         catch {
-            self.errorMessage = error.localizedDescription
+            guard !Task.isCancelled else { return }
+            self.errorMessage = "채팅 목록을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."
         }
     }
 
@@ -606,16 +618,18 @@ final class ShareViewModel: ObservableObject {
     // MARK: - 메시지 열기
     // --------------------------------------------------
 
-    func openThread(_ threadId: String) async {
+    @discardableResult
+    func openThread(_ threadId: String) async -> Bool {
         await refreshThreadMessages(threadId, forceMarkRead: true)
     }
 
     /// 열려 있는 채팅방의 새 메시지를 서버에서 가져와 기존 목록과 중복 없이 합친다.
     /// 전송 직후의 응답과 자동 갱신 요청이 겹쳐도 같은 메시지가 두 번 표시되지 않는다.
+    @discardableResult
     func refreshThreadMessages(
         _ threadId: String,
         forceMarkRead: Bool = false
-    ) async {
+    ) async -> Bool {
         do {
             let fetchedMessages = try await repo.fetchMessages(threadId: threadId)
             let existingMessages = messagesByThread[threadId, default: []]
@@ -647,10 +661,13 @@ final class ShareViewModel: ObservableObject {
                     threads[idx] = t
                 }
             }
+            self.errorMessage = nil
+            return true
         }
         catch {
-            guard !Task.isCancelled else { return }
-            self.errorMessage = error.localizedDescription
+            guard !Task.isCancelled else { return false }
+            self.errorMessage = "메시지를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."
+            return false
         }
     }
 
@@ -659,9 +676,10 @@ final class ShareViewModel: ObservableObject {
     // MARK: - 메시지 전송
     // --------------------------------------------------
 
-    func send(to threadId: String, text: String) async {
+    @discardableResult
+    func send(to threadId: String, text: String) async -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty else { return false }
 
         do {
             let newMsg = try await repo.sendMessage(
@@ -670,7 +688,7 @@ final class ShareViewModel: ObservableObject {
                 cardID: nil
             )
 
-            messagesByThread[threadId, default: []].append(newMsg)
+            upsertMessage(newMsg, in: threadId)
 
             // thread 업데이트 (맨 위로)
             if let idx = threads.firstIndex(where: { $0.id == threadId }) {
@@ -681,16 +699,20 @@ final class ShareViewModel: ObservableObject {
                 t.unreadCount = 0
                 threads.insert(t, at: 0)
             }
+            self.errorMessage = nil
+            return true
         }
         catch {
             // 서버 전송에 실패하면 로컬에만 쌓지 않고 에러만 표시 (계정/DB 기준 일관성 유지)
             print("❌ Chat send failed: \(error.localizedDescription)")
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = "메시지를 보내지 못했습니다. 연결을 확인하고 다시 시도해 주세요."
+            return false
         }
     }
 
 
-    func sendCard(to threadId: String, card: Card) async {
+    @discardableResult
+    func sendCard(to threadId: String, card: Card) async -> Bool {
         do {
             let newMsg = try await repo.sendMessage(
                 threadId: threadId,
@@ -698,7 +720,7 @@ final class ShareViewModel: ObservableObject {
                 cardID: card.id
             )
 
-            messagesByThread[threadId, default: []].append(newMsg)
+            upsertMessage(newMsg, in: threadId)
 
             // 스레드 업데이트
             if let idx = threads.firstIndex(where: { $0.id == threadId }) {
@@ -709,9 +731,12 @@ final class ShareViewModel: ObservableObject {
                 t.unreadCount = 0
                 threads.insert(t, at: 0)
             }
+            self.errorMessage = nil
+            return true
         }
         catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = "카드를 보내지 못했습니다. 연결을 확인하고 다시 시도해 주세요."
+            return false
         }
     }
 
@@ -719,6 +744,22 @@ final class ShareViewModel: ObservableObject {
     // --------------------------------------------------
     // MARK: - 새 채팅방
     // --------------------------------------------------
+
+    private func upsertMessage(_ message: ChatMessage, in threadId: String) {
+        var messages = messagesByThread[threadId, default: []]
+        if let index = messages.firstIndex(where: { $0.id == message.id }) {
+            messages[index] = message
+        } else {
+            messages.append(message)
+        }
+        messages.sort {
+            if $0.createdAt == $1.createdAt {
+                return $0.id < $1.id
+            }
+            return $0.createdAt < $1.createdAt
+        }
+        messagesByThread[threadId] = messages
+    }
 
     /// 서버에 채팅방 생성 후 목록에 추가하고 해당 스레드 반환 (1:1 또는 단체)
     func createAndEnterChat(participantUserIds: [String], title: String) async -> ChatThread? {
@@ -732,6 +773,7 @@ final class ShareViewModel: ObservableObject {
             } else if let existing = threads.first(where: { $0.id == thread.id }) {
                 thread = existing
             }
+            self.errorMessage = nil
             return thread
         } catch {
             self.errorMessage = error.localizedDescription
@@ -752,14 +794,18 @@ final class ShareViewModel: ObservableObject {
     // MARK: - 채팅방 나가기
     // --------------------------------------------------
 
-    func leaveChat(threadId: String) async {
+    @discardableResult
+    func leaveChat(threadId: String) async -> Bool {
         do {
             try await repo.leaveChat(threadId: threadId)
             threads.removeAll { $0.id == threadId }
             messagesByThread.removeValue(forKey: threadId)
+            self.errorMessage = nil
+            return true
         }
         catch {
             self.errorMessage = "채팅방을 나가는 데 실패했습니다."
+            return false
         }
     }
 
@@ -848,7 +894,7 @@ final class ShareViewModel: ObservableObject {
 
         // 1) 친구 목록에서 me 업데이트
         friends = friends.map { f in
-            if f.id == "me" {
+            if f.id == "me" || f.id == currentUserId {
                 return Friend(
                     id: f.id,
                     name: name ?? f.name,
@@ -862,9 +908,11 @@ final class ShareViewModel: ObservableObject {
         // 2) 채팅방 리스트에서 me 이름 반영
         threads = threads.map { thread in
             var t = thread
-            if t.participantIds.contains("me"), let newName = name {
+            if t.participantIds.contains(where: { $0 == "me" || $0 == currentUserId }),
+               let newName = name {
                 // 단톡방이면 자동으로 연쇄적으로 반영됨
-                t.title = t.title.replacingOccurrences(of: friends.first(where: { $0.id == "me" })?.name ?? "나",
+                t.title = t.title.replacingOccurrences(
+                    of: friends.first(where: { $0.id == "me" || $0.id == currentUserId })?.name ?? "나",
                                                        with: newName)
             }
             return t
