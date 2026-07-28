@@ -10,10 +10,39 @@ import Foundation
 import Security
 
 enum SessionStore {
-    private static let key = "caplog.jwt"
+    private static let accessTokenKey = "caplog.jwt"
+    private static let refreshTokenKey = "caplog.refresh-token"
+
+    static func save(accessToken: String, refreshToken: String?) {
+        save(accessToken, key: accessTokenKey)
+        if let refreshToken {
+            save(refreshToken, key: refreshTokenKey)
+        } else {
+            delete(key: refreshTokenKey)
+        }
+        // 이전 버전에서 UserDefaults에 저장했던 토큰은 제거한다.
+        UserDefaults.standard.removeObject(forKey: "access_token")
+    }
 
     static func saveJWT(_ token: String) {
-        AuthStorage.shared.accessToken = token
+        save(accessToken: token, refreshToken: nil)
+    }
+
+    static func readJWT() -> String? {
+        read(key: accessTokenKey)
+    }
+
+    static func readRefreshToken() -> String? {
+        read(key: refreshTokenKey)
+    }
+
+    static func clear() {
+        delete(key: accessTokenKey)
+        delete(key: refreshTokenKey)
+        UserDefaults.standard.removeObject(forKey: "access_token")
+    }
+
+    private static func save(_ token: String, key: String) {
         let data = token.data(using: .utf8)!
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -25,7 +54,7 @@ enum SessionStore {
         SecItemAdd(add as CFDictionary, nil)
     }
 
-    static func readJWT() -> String? {
+    private static func read(key: String) -> String? {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
@@ -38,8 +67,7 @@ enum SessionStore {
         return String(data: data, encoding: .utf8)
     }
 
-    static func clear() {
-        AuthStorage.shared.clear()
+    private static func delete(key: String) {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key

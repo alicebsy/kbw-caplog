@@ -49,12 +49,15 @@ enum AuthAPI {
         }
     }
 
-    /// 로그인: 액세스 토큰 반환 (SessionStore에 저장 후 API 호출 시 Bearer 헤더로 사용)
+    /// 로그인: 액세스/갱신 토큰 반환
     /// - POST /api/auth/login
-    static func login(email: String, password: String) async throws -> String {
+    static func login(email: String, password: String) async throws -> LoginResponse {
         if BackendEnv.isMock {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-            return "mock_jwt_token_for_test"
+            return LoginResponse(
+                accessToken: "mock_jwt_token_for_test",
+                refreshToken: "mock_refresh_token_for_test"
+            )
         }
         let body = ["email": email, "password": password]
 
@@ -75,31 +78,23 @@ enum AuthAPI {
                           userInfo: [NSLocalizedDescriptionKey: "Login failed (\(code))"])
         }
 
-        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let token = obj["accessToken"] as? String { return token }
-            if let token = obj["jwt"] as? String { return token }
-        }
-        throw NSError(domain: "AuthAPI", code: -2,
-                      userInfo: [NSLocalizedDescriptionKey: "Token not found in response"])
+        return try JSONDecoder().decode(LoginResponse.self, from: data)
     }
 
     // 소셜 로그인
-    static func exchangeApple(idToken: String) async throws -> String {
+    static func exchangeApple(idToken: String) async throws -> LoginResponse {
         struct Req: Encodable { let idToken: String }
-        let res: LoginResponse = try await postJSON(path: "auth/apple", body: Req(idToken: idToken))
-        return res.accessToken
+        return try await postJSON(path: "auth/apple", body: Req(idToken: idToken))
     }
     
-    static func exchangeGoogle(idToken: String) async throws -> String {
+    static func exchangeGoogle(idToken: String) async throws -> LoginResponse {
         struct Req: Encodable { let idToken: String }
-        let res: LoginResponse = try await postJSON(path: "auth/google", body: Req(idToken: idToken))
-        return res.accessToken
+        return try await postJSON(path: "auth/google", body: Req(idToken: idToken))
     }
     
-    static func exchangeKakao(accessToken: String) async throws -> String {
+    static func exchangeKakao(accessToken: String) async throws -> LoginResponse {
         struct Req: Encodable { let accessToken: String }
-        let res: LoginResponse = try await postJSON(path: "auth/kakao", body: Req(accessToken: accessToken))
-        return res.accessToken
+        return try await postJSON(path: "auth/kakao", body: Req(accessToken: accessToken))
     }
 
     // MARK: - Helpers

@@ -10,6 +10,7 @@ struct MyPageView: View {
     @State private var screenshotCount: Int?
     @State private var showResetConfirm = false
     @State private var isImportingScreenshots = false
+    @State private var showLogoutConfirm = false
 
     var body: some View {
         ScrollView(showsIndicators: false) { content }
@@ -23,6 +24,14 @@ struct MyPageView: View {
                 }
             } message: {
                 Text("로컬에만 있는 카드를 모두 지우고, 스크린샷 처리 목록을 비웁니다. 아래 '스크린샷에서 카드 가져오기'를 누르면 스크린샷당 카드 1개만 다시 만들어집니다.")
+            }
+            .confirmationDialog("로그아웃하시겠어요?", isPresented: $showLogoutConfirm) {
+                Button("로그아웃", role: .destructive) {
+                    Task { await vm.logout() }
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("이 기기의 로그인 정보와 프로필 캐시가 삭제됩니다.")
             }
             .modifier(MyPageModifier(vm: vm, showingError: $showingError))
             .navigationBarBackButtonHidden(true)
@@ -134,7 +143,7 @@ struct MyPageView: View {
 
             // 로그아웃 버튼 (맨 아래)
             Button {
-                Task { await vm.logout() }
+                showLogoutConfirm = true
             } label: {
                 Text("로그아웃")
                     .font(.system(size: 16, weight: .semibold))

@@ -9,6 +9,10 @@ struct MyPagePasswordChangeView: View {
 
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var changeSucceeded = false
+    @State private var isSubmitting = false
+
+    private let userService = UserService()
 
     var body: some View {
         NavigationStack {
@@ -56,8 +60,10 @@ struct MyPagePasswordChangeView: View {
                     .frame(height: 24)
                 
                 // 변경 버튼
-                Button(action: validateAndSubmit) {
-                    Text("비밀번호 변경")
+                Button {
+                    Task { await validateAndSubmit() }
+                } label: {
+                    Text(isSubmitting ? "변경 중..." : "비밀번호 변경")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(allFieldsFilled ? Color.myPageActionBlue : .secondary)
                         .frame(maxWidth: .infinity)
@@ -69,7 +75,7 @@ struct MyPagePasswordChangeView: View {
                         )
                         .cornerRadius(12)
                 }
-                .disabled(!allFieldsFilled)
+                .disabled(!allFieldsFilled || isSubmitting)
                 .padding(.horizontal, 20)
                 
                 Spacer()
@@ -96,7 +102,7 @@ struct MyPagePasswordChangeView: View {
             }
             .alert("안내", isPresented: $showAlert) {
                 Button("확인") {
-                    if alertMessage.contains("변경되었습니다") { dismiss() }
+                    if changeSucceeded { dismiss() }
                 }
             } message: {
                 Text(alertMessage)
@@ -110,7 +116,8 @@ struct MyPagePasswordChangeView: View {
         !currentPW.isEmpty && !newPW.isEmpty && !confirmPW.isEmpty
     }
 
-    private func validateAndSubmit() {
+    @MainActor
+    private func validateAndSubmit() async {
         guard !currentPW.isEmpty, !newPW.isEmpty, !confirmPW.isEmpty else {
             alertMessage = "모든 항목을 입력해주세요."
             showAlert = true
@@ -121,8 +128,31 @@ struct MyPagePasswordChangeView: View {
             showAlert = true
             return
         }
-        // TODO: 실제 API 연동
-        alertMessage = "비밀번호가 변경되었습니다."
+        guard (8...72).contains(newPW.count) else {
+            alertMessage = "새 비밀번호는 8자 이상 72자 이하로 입력해주세요."
+            showAlert = true
+            return
+        }
+        guard currentPW != newPW else {
+            alertMessage = "새 비밀번호는 현재 비밀번호와 다르게 입력해주세요."
+            showAlert = true
+            return
+        }
+
+        isSubmitting = true
+        defer { isSubmitting = false }
+
+        do {
+            try await userService.changePassword(current: currentPW, new: newPW)
+            currentPW = ""
+            newPW = ""
+            confirmPW = ""
+            changeSucceeded = true
+            alertMessage = "비밀번호가 변경되었습니다."
+        } catch {
+            changeSucceeded = false
+            alertMessage = error.localizedDescription
+        }
         showAlert = true
     }
 }

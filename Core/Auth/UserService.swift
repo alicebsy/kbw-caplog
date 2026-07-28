@@ -110,7 +110,20 @@ struct UserService {
             return
         }
         
-        try await client.requestVoid("POST", path: Endpoints.logout)
+        if let refreshToken = SessionStore.readRefreshToken() {
+            struct Payload: Encodable {
+                let refreshToken: String
+                let allDevices: Bool
+            }
+            try await client.requestVoid(
+                "POST",
+                path: Endpoints.logout,
+                body: Payload(refreshToken: refreshToken, allDevices: false),
+                authorized: false
+            )
+        } else {
+            try await client.requestVoid("POST", path: Endpoints.logout, authorized: false)
+        }
     }
 
     /// 비밀번호 변경 (JWT Bearer 필요)

@@ -29,7 +29,10 @@ final class AppState: ObservableObject {
     /// 로그아웃 시 호출
     func logout() {
         SessionStore.clear()
-        AuthStorage.shared.clear()
         isLoggedIn = false
     }
+}
+
+extension Notification.Name {
+    static let sessionExpired = Notification.Name("sessionExpired")
 }

@@ -6,6 +6,7 @@ import SwiftUI
 /// - false → Register1View(Join / Log in)
 struct StartView: View {
     @ObservedObject var appState: AppState
+    @State private var showSessionExpired = false
 
     var body: some View {
         Group {
@@ -23,6 +24,15 @@ struct StartView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .logoutCompleted)) { _ in
             appState.logout()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionExpired)) { _ in
+            appState.logout()
+            showSessionExpired = true
+        }
+        .alert("로그인이 만료되었습니다", isPresented: $showSessionExpired) {
+            Button("다시 로그인", role: .cancel) {}
+        } message: {
+            Text("계속 사용하려면 다시 로그인해주세요.")
         }
     }
 }

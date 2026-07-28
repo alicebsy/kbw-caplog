@@ -6,19 +6,28 @@ protocol AuthStoring {
 }
 
 final class AuthStorage: AuthStoring {
-    private let key = "access_token"
     static let shared = AuthStorage()
     private init() {}
 
     var accessToken: String? {
         get {
-            if let v = UserDefaults.standard.string(forKey: key) { return v }
-            return SessionStore.readJWT()
+            if let token = SessionStore.readJWT() {
+                return token
+            }
+            // 기존 앱 버전의 UserDefaults 토큰을 Keychain으로 한 번만 이전한다.
+            if let legacyToken = UserDefaults.standard.string(forKey: "access_token") {
+                SessionStore.saveJWT(legacyToken)
+                return legacyToken
+            }
+            return nil
         }
         set {
-            if let v = newValue { UserDefaults.standard.set(v, forKey: key) }
-            else { UserDefaults.standard.removeObject(forKey: key) }
+            if let newValue {
+                SessionStore.saveJWT(newValue)
+            } else {
+                SessionStore.clear()
+            }
         }
     }
-    func clear() { accessToken = nil }
+    func clear() { SessionStore.clear() }
 }

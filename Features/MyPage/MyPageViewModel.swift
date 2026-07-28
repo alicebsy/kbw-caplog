@@ -178,7 +178,6 @@ final class MyPageViewModel: ObservableObject {
         // 로그인 계정 프로필 캐시 삭제 (다음 로그인 시 이전 계정 정보 안 보이게)
         Self.clearProfileCache()
         // 로컬 토큰 정리
-        AuthStorage.shared.clear()
         SessionStore.clear()
         // StartView가 AppState.logout() 호출해 Register 화면으로 전환
         NotificationCenter.default.post(name: .logoutCompleted, object: nil)

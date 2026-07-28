@@ -121,6 +121,12 @@ struct APIClient {
                 }
 
             case 401:
+                if authorized {
+                    SessionStore.clear()
+                    await MainActor.run {
+                        NotificationCenter.default.post(name: .sessionExpired, object: nil)
+                    }
+                }
                 throw APIError.unauthorized
 
             default:

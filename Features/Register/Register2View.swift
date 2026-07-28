@@ -88,10 +88,13 @@ struct Register2View: View {
                                 )
 
                                 // 2) 바로 로그인해서 accessToken 받기
-                                let jwt = try await AuthAPI.login(email: email, password: password)
+                                let session = try await AuthAPI.login(email: email, password: password)
 
                                 // 3) 토큰 저장 후 다음 화면 이동
-                                SessionStore.saveJWT(jwt)
+                                SessionStore.save(
+                                    accessToken: session.accessToken,
+                                    refreshToken: session.refreshToken
+                                )
                                 goPerm = true
                             } catch {
                                 show("회원가입 실패: \(error.localizedDescription)")
@@ -190,11 +193,14 @@ struct Register2View: View {
         showAlert = true
     }
 
-    private func exchangeAndProceed(_ call: @escaping () async throws -> String) async {
+    private func exchangeAndProceed(_ call: @escaping () async throws -> AuthAPI.LoginResponse) async {
         isLoading = true
         do {
-            let jwt = try await call()
-            SessionStore.saveJWT(jwt)
+            let session = try await call()
+            SessionStore.save(
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken
+            )
             goPerm = true
         } catch {
             show("소셜 로그인 실패: \(error.localizedDescription)")

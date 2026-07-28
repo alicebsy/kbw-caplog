@@ -45,8 +45,11 @@ struct Register3View: View {
                     isLoading = true
                     Task {
                         do {
-                            let jwt = try await AuthAPI.login(email: email, password: password)
-                            SessionStore.saveJWT(jwt)
+                            let session = try await AuthAPI.login(email: email, password: password)
+                            SessionStore.save(
+                                accessToken: session.accessToken,
+                                refreshToken: session.refreshToken
+                            )
                             goPerm = true
                         } catch {
                             show("로그인 실패: \(error.localizedDescription)")
@@ -150,11 +153,14 @@ struct Register3View: View {
         showAlert = true
     }
 
-    private func exchangeAndProceed(_ call: @escaping () async throws -> String) async {
+    private func exchangeAndProceed(_ call: @escaping () async throws -> AuthAPI.LoginResponse) async {
         isLoading = true
         do {
-            let jwt = try await call()
-            SessionStore.saveJWT(jwt)
+            let session = try await call()
+            SessionStore.save(
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken
+            )
             goPerm = true
         } catch {
             show("소셜 로그인 실패: \(error.localizedDescription)")
