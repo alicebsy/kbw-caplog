@@ -41,7 +41,27 @@ struct APIClient {
     }
     private var decoder: JSONDecoder {
         let dec = JSONDecoder()
-        dec.dateDecodingStrategy = .iso8601
+        dec.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let value = try container.decode(String.self)
+
+            let fractionalFormatter = ISO8601DateFormatter()
+            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractionalFormatter.date(from: value) {
+                return date
+            }
+
+            let standardFormatter = ISO8601DateFormatter()
+            standardFormatter.formatOptions = [.withInternetDateTime]
+            if let date = standardFormatter.date(from: value) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "지원하지 않는 ISO-8601 날짜 형식입니다: \(value)"
+            )
+        }
         return dec
     }
 

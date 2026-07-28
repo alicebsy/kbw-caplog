@@ -19,9 +19,9 @@ final class AppState: ObservableObject {
     /// 로그인 완료 여부 (true면 탭바 메인 화면 표시)
     @Published var isLoggedIn: Bool = false
     
-    /// 앱 시작 시 JWT 있으면 자동 로그인 처리
+    /// 앱 시작 시 공통 인증 저장소에 JWT가 있으면 자동 로그인 처리
     func checkExistingSession() {
-        if SessionStore.readJWT() != nil {
+        if AuthStorage.shared.accessToken != nil {
             isLoggedIn = true
         }
     }

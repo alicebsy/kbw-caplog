@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.kbw.caplog.ai.dto.AiClassifyResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,6 +21,9 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
 @Service
 public class OpenAiClassificationService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(OpenAiClassificationService.class);
 
     private static final String SYSTEM_INSTRUCTIONS =
             "스크린샷 OCR 텍스트를 사용자가 지정한 기준으로 분류하세요. "
@@ -57,11 +62,14 @@ public class OpenAiClassificationService {
                 .headers(headers -> headers.setBearerAuth(apiKey))
                 .bodyValue(requestBody)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, response ->
-                        response.bodyToMono(String.class)
-                                .defaultIfEmpty("")
-                                .map(ignored -> new ResponseStatusException(
-                                        BAD_GATEWAY, "OpenAI 요청에 실패했습니다.")))
+                .onStatus(HttpStatusCode::isError, response -> {
+                    log.warn("OpenAI upstream request failed with status {}",
+                            response.statusCode().value());
+                    return response.releaseBody().then(Mono.error(
+                            new ResponseStatusException(
+                                    BAD_GATEWAY, "OpenAI 요청에 실패했습니다.")
+                    ));
+                })
                 .bodyToMono(JsonNode.class)
                 .map(OpenAiClassificationService::parseResponse)
                 .timeout(Duration.ofSeconds(90))

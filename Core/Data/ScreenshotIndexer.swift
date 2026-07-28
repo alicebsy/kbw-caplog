@@ -184,8 +184,10 @@ final class ScreenshotIndexer {
                                     CardImageStore.save(image: uiImage, id: id)
                                 }
                                 ScreenshotPipelineStatus.shared.setOcrGptSuccess(cardTitle: card.title)
-                                await self.cardManager.createCard(card)
-                                self.markAssetAsProcessed(asset)
+                                let savedToServer = await self.cardManager.createCard(card)
+                                if savedToServer {
+                                    self.markAssetAsProcessed(asset)
+                                }
                                 await self.uploadScreenshotToServer(image: uiImage)
                             case .failure(let err):
                                 ScreenshotPipelineStatus.shared.setPipelineFailed(step: "OCR/GPT", errorDescription: err.localizedDescription)
@@ -237,9 +239,11 @@ final class ScreenshotIndexer {
                         if let id = card.thumbnailURL ?? card.screenshotURLs.first {
                             CardImageStore.save(image: uiImage, id: id)
                         }
-                        self.markAssetAsProcessed(asset)
                         Task { @MainActor in
-                            await self.cardManager.createCard(card)
+                            let savedToServer = await self.cardManager.createCard(card)
+                            if savedToServer {
+                                self.markAssetAsProcessed(asset)
+                            }
                             await self.uploadScreenshotToServer(image: uiImage)
                         }
                     case .failure(let error):

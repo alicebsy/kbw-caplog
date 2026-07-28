@@ -7,7 +7,6 @@ class ScreenshotProcessingService {
     
     // MARK: - Services
     private let googleVision = GoogleVisionService()
-    private let cardService = CardService()
     
     // MARK: - Processing Pipeline
     
@@ -174,25 +173,23 @@ class ScreenshotProcessingService {
         classifyTextWithGPT_stable(prompt: prompt) { [weak self] gptResult, usage in
             guard let self = self else { return }
             
-            print("✅ GPT-4 분류 완료: \(gptResult.prefix(100))...")
+            print("🤖 GPT-4 분류 응답: \(gptResult.prefix(100))...")
             print("📊 Token 사용량: \(usage)")
             
             // Step 3: Card 생성
-            guard let card = self.parseGPTResultToCard(
+            let parsedCard = self.parseGPTResultToCard(
                 gptResult: gptResult,
                 extractedText: ocrText,
                 visionLabels: visionLabels,
                 image: originalImage
-            ) else {
-                // GPT가 에러 문자열(❌ API 에러, ❌ 빈 응답 등)을 반환한 경우 원인을 그대로 전달
-                if gptResult.hasPrefix("❌") {
-                    print("[Caplog 스크린샷] ❌ 카드 생성 불가: GPT 에러 - \(gptResult.prefix(120))")
-                    completion(.failure(.gptFailed(gptResult)))
-                } else {
-                    print("[Caplog 스크린샷] ❌ 카드 생성 불가: GPT 응답 파싱 실패 (JSON/필드 문제)")
-                    completion(.failure(.cardCreationFailed("GPT 응답 파싱 실패")))
-                }
-                return
+            )
+            let card = parsedCard ?? self.makeOCRFallbackCard(
+                ocrText: ocrText,
+                ocrTextLines: ocrTextLines,
+                visionLabels: visionLabels
+            )
+            if parsedCard == nil {
+                print("[Caplog 스크린샷] ⚠️ AI 분류 실패 → OCR 기본 카드로 계속 진행")
             }
             
             // Step 4: ProcessingResult 생성
@@ -209,9 +206,42 @@ class ScreenshotProcessingService {
             print("   - OCR 라인: \(ocrTextLines.count)")
             print("   - Vision 레이블: \(visionLabels.count)")
             
-            // Step 5: 서버에 저장 (optional)
-            self.saveCardToServer(processingResult, completion: completion)
+            // 카드 저장은 ScreenshotIndexer/ScreenshotMonitor의 CardManager에서 한 번만 수행한다.
+            completion(.success(processingResult))
         }
+    }
+
+    /// 외부 AI를 사용할 수 없을 때도 OCR 결과를 잃지 않고 기본 카드로 보존한다.
+    private func makeOCRFallbackCard(
+        ocrText: String,
+        ocrTextLines: [String],
+        visionLabels: [VisionLabel]
+    ) -> Card {
+        let normalizedLines = ocrTextLines
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let firstLine = normalizedLines.first ?? "스크린샷 메모"
+        let title = String(firstLine.prefix(50))
+        let normalizedText = ocrText
+            .replacingOccurrences(of: "\n", with: " ")
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        let summary = String(normalizedText.prefix(150))
+        let labelTags = visionLabels
+            .filter { $0.confidence > 0.5 }
+            .map(\.description)
+        let imageName = UUID().uuidString
+
+        return Card(
+            title: title,
+            summary: summary,
+            category: .etc,
+            subcategory: "기타",
+            tags: Array(Set(["OCR"] + labelTags)),
+            fields: ["분류 상태": "AI 분류 대기"],
+            thumbnailURL: imageName,
+            screenshotURLs: [imageName]
+        )
     }
     
     /// GPT 프롬프트 생성 (Caplog 전용 - JSON only)
@@ -499,34 +529,6 @@ class ScreenshotProcessingService {
         return categorySub
     }
     
-    /// 서버에 카드 저장
-    private func saveCardToServer(
-        _ processingResult: ProcessingResult,
-        completion: @escaping (Result<ProcessingResult, ProcessingError>) -> Void
-    ) {
-        print("💾 Step 4: 서버에 카드 저장 시작")
-        
-        Task {
-            do {
-                let savedCard = try await cardService.createCard(processingResult.card)
-                print("✅ 카드 저장 완료: \(savedCard.title)")
-                
-                // 저장된 Card로 ProcessingResult 업데이트
-                let updatedResult = ProcessingResult(
-                    card: savedCard,
-                    ocrText: processingResult.ocrText,
-                    googleVisionLabels: processingResult.googleVisionLabels,
-                    preprocessedImage: processingResult.preprocessedImage,
-                    apiUsage: processingResult.apiUsage
-                )
-                completion(.success(updatedResult))
-            } catch {
-                print("⚠️ 서버 저장 실패 (Mock 모드): \(error.localizedDescription)")
-                // Mock 모드에서는 원본 ProcessingResult 반환
-                completion(.success(processingResult))
-            }
-        }
-    }
 }
 
 // MARK: - Error Types

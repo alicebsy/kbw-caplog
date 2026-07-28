@@ -6,6 +6,8 @@ import com.kbw.caplog.ai.dto.VisionLabelsResponse;
 import com.kbw.caplog.ai.dto.VisionTextResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +29,9 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
 @Service
 public class GoogleVisionService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(GoogleVisionService.class);
 
     private static final int MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -83,11 +88,14 @@ public class GoogleVisionService {
                         .build())
                 .bodyValue(Map.of("requests", List.of(request)))
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, response ->
-                        response.bodyToMono(String.class)
-                                .defaultIfEmpty("")
-                                .map(ignored -> new ResponseStatusException(
-                                        BAD_GATEWAY, "Google Vision 요청에 실패했습니다.")))
+                .onStatus(HttpStatusCode::isError, response -> {
+                    log.warn("Google Vision upstream request failed with status {}",
+                            response.statusCode().value());
+                    return response.releaseBody().then(Mono.error(
+                            new ResponseStatusException(
+                                    BAD_GATEWAY, "Google Vision 요청에 실패했습니다.")
+                    ));
+                })
                 .bodyToMono(JsonNode.class)
                 .timeout(Duration.ofSeconds(60))
                 .onErrorMap(TimeoutException.class, ignored ->

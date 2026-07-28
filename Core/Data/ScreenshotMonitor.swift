@@ -164,8 +164,10 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
                         if let id = card.thumbnailURL ?? card.screenshotURLs.first {
                             CardImageStore.save(image: uiImage, id: id)
                         }
-                        ScreenshotIndexer.shared.markAssetAsProcessed(asset)
-                        await self.cardManager.createCard(card)
+                        let savedToServer = await self.cardManager.createCard(card)
+                        if savedToServer {
+                            ScreenshotIndexer.shared.markAssetAsProcessed(asset)
+                        }
                         await self.uploadScreenshotToServer(image: uiImage)
                         self.showNotification(for: processingResult.card)
                     case .failure(let error):

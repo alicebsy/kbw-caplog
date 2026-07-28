@@ -157,7 +157,8 @@ final class CardManager: ObservableObject {
     // MARK: - CRUD Methods
     
     /// 카드 생성 (스크린샷 AI 분류 결과 등). 스크린샷당 카드 1개 유지, 서버 저장 성공 시 DB 반영, 실패 시 로컬만 유지.
-    func createCard(_ card: Card) async {
+    @discardableResult
+    func createCard(_ card: Card) async -> Bool {
         print("[Caplog 카드] createCard 요청: \(card.title)")
         // 스크린샷당 카드 1개: 같은 sourceScreenshotAssetId면 기존 카드 제거 후 새 카드로 대체
         if let assetId = card.sourceScreenshotAssetId, !assetId.isEmpty {
@@ -194,6 +195,7 @@ final class CardManager: ObservableObject {
             ScreenshotPipelineStatus.shared.setPostSuccess(cardTitle: newCard.title)
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
             print("[Caplog 카드] ✅ 서버 저장 성공, 목록 \(allCards.count)개")
+            return true
         } catch {
             allCards.append(card)
             localOnlyCardIds.insert(card.id)
@@ -201,6 +203,7 @@ final class CardManager: ObservableObject {
             ScreenshotPipelineStatus.shared.setPostFailed(errorDescription: error.localizedDescription)
             NotificationCenter.default.post(name: .cardUpdated, object: nil)
             print("[Caplog 카드] ⚠️ 서버 저장 실패 → 로컬 반영됨: \(card.title), 목록 \(allCards.count)개 | \(error.localizedDescription)")
+            return false
         }
     }
     
