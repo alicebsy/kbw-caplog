@@ -8,6 +8,7 @@ struct HomeView: View {
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
+    @StateObject private var appNotificationCenter = AppNotificationCenter.shared
 
     @State private var selectedCard: Card? = nil
     @State private var fullscreenImage: String? = nil
@@ -24,6 +25,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 HomeHeader(
                     userName: vm.userName,
+                    unreadNotificationCount: appNotificationCenter.unreadCount,
                     onTapNotification: { notificationDestination = .open }
                 )
                 Spacer().frame(height: S)
@@ -177,8 +179,14 @@ struct HomeView: View {
         .navigationDestination(item: $selectedCard) { CardDetailView(card: $0) }
         .navigationDestination(item: $notificationDestination) { _ in NotificationView() }
 
-        .task { await vm.load() }
-        .refreshable { await vm.load() }
+        .task {
+            await vm.load()
+            await appNotificationCenter.refresh()
+        }
+        .refreshable {
+            await vm.load()
+            await appNotificationCenter.refresh()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .homeTabSelected)) { _ in
             Task { await vm.reloadHomeContent() }
         }
@@ -186,6 +194,7 @@ struct HomeView: View {
             Task {
                 await vm.reloadHomeContent()
                 await vm.refreshNearbyRecommendations()
+                await appNotificationCenter.refresh()
             }
         }
     }

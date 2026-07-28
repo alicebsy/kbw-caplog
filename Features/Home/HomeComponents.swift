@@ -58,6 +58,7 @@ struct HomeSection<Content: View>: View {
 // MARK: - 상단 헤더 (심플한 진초록 타이포)
 struct HomeHeader: View {
     let userName: String
+    let unreadNotificationCount: Int
     var onTapNotification: () -> Void
 
     var body: some View {
@@ -72,15 +73,25 @@ struct HomeHeader: View {
             }
             Spacer()
             Button(action: onTapNotification) {
-                Image(systemName: "bell")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color.homeGreenDark)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        Circle()
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
-                    )
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bell")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Color.homeGreenDark)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(Color.white)
+                                .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                        )
+                    if unreadNotificationCount > 0 {
+                        Text(unreadNotificationCount > 9 ? "9+" : "\(unreadNotificationCount)")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Circle().fill(Color.unreadBadgeRed))
+                            .offset(x: 5, y: -4)
+                    }
+                }
             }
             .buttonStyle(.plain)
         }
