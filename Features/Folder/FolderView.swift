@@ -81,23 +81,12 @@ struct FolderCategoryListView: View {
                             }
                         }) {
                             HStack(spacing: 10) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                        .fill(
-                                            selectedCategory == category
-                                            ? Color.myPageSectionGreen
-                                            : Color.myPageSectionGreen.opacity(0.1)
-                                        )
-                                    Image(systemName: category.symbolName)
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(
-                                            selectedCategory == category
-                                            ? Color.white
-                                            : Color.myPageSectionGreen
-                                        )
-                                }
-                                .frame(width: 32, height: 32)
-                                .accessibilityHidden(true)
+                                Image(systemName: category.symbolName)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(Color.myPageSectionGreen)
+                                    .symbolRenderingMode(.monochrome)
+                                    .frame(width: 32, height: 32)
+                                    .accessibilityHidden(true)
 
                                 Text(category.displayName)
                                     .font(.system(size: 17, weight: .semibold))
@@ -183,15 +172,12 @@ struct FolderCategoryListView: View {
                                     .environmentObject(manager)
                             } label: {
                                 HStack(spacing: 12) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                            .fill(Color.myPageSectionGreen.opacity(0.1))
-                                        Image(systemName: Card.symbolName(forSubcategory: sub.name))
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundStyle(Color.myPageSectionGreen)
-                                    }
-                                    .frame(width: 30, height: 30)
-                                    .accessibilityHidden(true)
+                                    Image(systemName: Card.symbolName(forSubcategory: sub.name))
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundStyle(Color.myPageSectionGreen)
+                                        .symbolRenderingMode(.monochrome)
+                                        .frame(width: 30, height: 30)
+                                        .accessibilityHidden(true)
 
                                     Text(sub.name)
                                         .font(.system(size: 16, weight: .medium))
