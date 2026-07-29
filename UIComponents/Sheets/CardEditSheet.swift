@@ -85,8 +85,8 @@ struct CardEditSheet: View {
                                         }
                                     }) {
                                         HStack {
-                                            Text(category.emoji)
-                                            Text(category.rawValue)
+                                            Image(systemName: category.symbolName)
+                                            Text(category.displayName)
                                             if selectedCategory == category {
                                                 Image(systemName: "checkmark")
                                             }
@@ -95,8 +95,10 @@ struct CardEditSheet: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text(selectedCategory.emoji)
-                                    Text(selectedCategory.rawValue)
+                                    Image(systemName: selectedCategory.symbolName)
+                                        .foregroundStyle(Color.myPageSectionGreen)
+                                        .accessibilityHidden(true)
+                                    Text(selectedCategory.displayName)
                                         .font(.system(size: 15))
                                     Spacer()
                                     Image(systemName: "chevron.down")

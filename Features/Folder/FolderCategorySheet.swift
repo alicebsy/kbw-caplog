@@ -12,14 +12,20 @@ struct FolderCategorySheet: View {
                     selectedCategory = cat
                     selectedSub = nil
                 } label: {
-                    Text(cat.displayName)
-                        .font(.headline)
-                        .foregroundColor(selectedCategory == cat ? .white : .brandTextMain)
-                        .padding(8)
-                        .frame(maxWidth: .infinity)
-                        .background(selectedCategory == cat ? cat.color : .clear)
-                        .cornerRadius(8)
+                    HStack(spacing: 8) {
+                        Image(systemName: cat.symbolName)
+                            .frame(width: 22)
+                            .accessibilityHidden(true)
+                        Text(cat.displayName)
+                            .font(.headline)
+                    }
+                    .foregroundColor(selectedCategory == cat ? .white : .brandTextMain)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedCategory == cat ? Color.myPageSectionGreen : .clear)
+                    .cornerRadius(8)
                 }
+                .accessibilityLabel(cat.displayName)
                 .listRowInsets(EdgeInsets()) // 여백 최소화
             }
 
@@ -28,11 +34,17 @@ struct FolderCategorySheet: View {
                 Button {
                     selectedSub = sub.name   // ✅ sub.name만 저장 (String)
                 } label: {
-                    Text(sub.name)
-                        .font(.system(size: 16))
-                        .foregroundColor(selectedSub == sub.name ? .homeGreen : .brandTextMain)
-                        .padding(.vertical, 4)
+                    HStack(spacing: 8) {
+                        Image(systemName: Card.symbolName(forSubcategory: sub.name))
+                            .frame(width: 22)
+                            .accessibilityHidden(true)
+                        Text(sub.name)
+                            .font(.system(size: 16))
+                    }
+                    .foregroundColor(selectedSub == sub.name ? .myPageSectionGreen : .brandTextMain)
+                    .padding(.vertical, 4)
                 }
+                .accessibilityLabel("\(sub.name) 폴더")
                 .listRowInsets(EdgeInsets())
             }
         }

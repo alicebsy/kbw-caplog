@@ -140,7 +140,9 @@ struct ScreenshotUploadView: View {
                         .foregroundColor(.secondary)
                     
                     HStack {
-                        Text(card.category.emoji)
+                        Image(systemName: card.category.symbolName)
+                            .foregroundStyle(Color.myPageSectionGreen)
+                            .accessibilityHidden(true)
                         Text(card.subcategory)
                             .font(.caption)
                             .padding(.horizontal, 8)

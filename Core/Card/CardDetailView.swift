@@ -251,8 +251,13 @@ struct CardDetailView: View {
 
                         // 카테고리
                         HStack {
-                            Text(card.category.emoji)
-                                .font(.system(size: 20))
+                            Image(systemName: card.category.symbolName)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Color.myPageSectionGreen)
+                                .frame(width: 28, height: 28)
+                                .background(Color.myPageSectionGreen.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .accessibilityHidden(true)
                             Text(card.category.displayName)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.secondary)

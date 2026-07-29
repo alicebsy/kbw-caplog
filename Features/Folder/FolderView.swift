@@ -10,7 +10,7 @@ struct FolderView: View {
         NavigationStack {
             FolderCategoryListView()
                 .environmentObject(manager)
-                .navigationTitle("Folder")
+                .navigationTitle("폴더")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
@@ -73,17 +73,33 @@ struct FolderCategoryListView: View {
         HStack(spacing: 0) {
             // --- 왼쪽: 대분류 리스트 + 하단 갤러리/최근 인식 ---
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 10) {
                     ForEach(FolderCategory.allCases) { category in
                         Button(action: {
-                            selectedCategory = category
+                            withAnimation(.easeOut(duration: 0.18)) {
+                                selectedCategory = category
+                            }
                         }) {
-                            HStack(spacing: 8) {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(selectedCategory == category ? Color.myPageSectionGreen : Color.clear)
-                                    .frame(width: 4, height: 24)
+                            HStack(spacing: 10) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                        .fill(
+                                            selectedCategory == category
+                                            ? Color.myPageSectionGreen
+                                            : Color.myPageSectionGreen.opacity(0.1)
+                                        )
+                                    Image(systemName: category.symbolName)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(
+                                            selectedCategory == category
+                                            ? Color.white
+                                            : Color.myPageSectionGreen
+                                        )
+                                }
+                                .frame(width: 32, height: 32)
+                                .accessibilityHidden(true)
 
-                                Text("\(category.emoji) \(category.displayName)")
+                                Text(category.displayName)
                                     .font(.system(size: 17, weight: .semibold))
                                     .foregroundColor(
                                         selectedCategory == category
@@ -94,9 +110,23 @@ struct FolderCategoryListView: View {
 
                                 Spacer()
                             }
+                            .padding(.vertical, 7)
+                            .padding(.horizontal, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(
+                                        selectedCategory == category
+                                        ? Color.myPageSectionGreen.opacity(0.08)
+                                        : Color.clear
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
-                        .padding(.leading, 20)
+                        .padding(.horizontal, 10)
+                        .accessibilityLabel(category.displayName)
+                        .accessibilityAddTraits(
+                            selectedCategory == category ? .isSelected : []
+                        )
                     }
 
                     // 갤러리·인식 정보 + 최근 인식 카드 (왼쪽 맨 아래)
@@ -152,11 +182,24 @@ struct FolderCategoryListView: View {
                                 FolderItemListView(category: selectedCategory, subcategory: sub.name)
                                     .environmentObject(manager)
                             } label: {
-                                Text("\(Card.emoji(forSubcategory: sub.name)) \(sub.name)")
-                                    .font(.system(size: 17, weight: .regular))
-                                    .foregroundStyle(Color.primary)
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(Color.myPageSectionGreen.opacity(0.1))
+                                        Image(systemName: Card.symbolName(forSubcategory: sub.name))
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(Color.myPageSectionGreen)
+                                    }
+                                    .frame(width: 30, height: 30)
+                                    .accessibilityHidden(true)
+
+                                    Text(sub.name)
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(Color.primary)
+                                }
                             }
-                            .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
+                            .accessibilityLabel("\(sub.name) 폴더")
+                            .listRowInsets(EdgeInsets(top: 9, leading: 20, bottom: 9, trailing: 20))
                         }
                     }
                     .listRowSeparator(.hidden)

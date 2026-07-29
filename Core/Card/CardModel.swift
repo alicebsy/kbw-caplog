@@ -141,43 +141,35 @@ struct Card: Identifiable, Hashable, Codable {
         screenshotURLs.first
     }
     
-    // ✅ (수정) 요청하신 이모지로 재변경
-    static func emoji(forSubcategory subcategory: String) -> String {
+    /// 하위 카테고리를 앱 전반에서 같은 SF Symbol로 표시합니다.
+    static func symbolName(forSubcategory subcategory: String) -> String {
         switch subcategory {
-        // Info (📂)
-        case "맛집": return "🍽️"
-        case "카페": return "☕️"
-        case "공부": return "📚"
-        case "공고": return "📢"
-        case "취업": return "💼"
-        case "필기": return "📝"
-        case "뉴스": return "📰"
-        case "문화생활": return "🖼️"
-        case "운동/건강": return "🏃"
-        case "소비": return "💳"
-        case "쿠폰": return "🏷️"
-        // Contents (😂)
-        case "글": return "✍️"
-        case "짤": return "😆"
-        // Social (👥)
-        case "채팅": return "💬"
-        case "사진": return "📷"
-        // Log (🎮)
-        case "기록": return "📓"
-        case "활동": return "🌟"
-        // Music/Art (🎵)
-        case "음악": return "🎧"
-        case "미술": return "🎨" // 수정 (🖌️ -> 🎨)
-        // Etc (🎸)
-        case "기타": return "🗂️"
-        // 그 외의 경우
-        default:
-            return "📌"
+        case "맛집": return "fork.knife"
+        case "카페": return "cup.and.saucer.fill"
+        case "공부": return "books.vertical.fill"
+        case "공고": return "megaphone.fill"
+        case "취업": return "briefcase.fill"
+        case "필기": return "pencil.line"
+        case "뉴스": return "newspaper.fill"
+        case "문화생활": return "theatermasks.fill"
+        case "운동/건강": return "figure.run"
+        case "소비": return "creditcard.fill"
+        case "쿠폰": return "ticket.fill"
+        case "글": return "doc.text.fill"
+        case "짤": return "face.smiling"
+        case "채팅": return "bubble.left.and.bubble.right.fill"
+        case "사진": return "photo.fill"
+        case "기록": return "note.text"
+        case "활동": return "figure.walk"
+        case "음악": return "music.note"
+        case "미술": return "paintbrush.pointed.fill"
+        case "기타": return "square.grid.2x2.fill"
+        default: return "bookmark.fill"
         }
     }
     
-    var subcategoryEmoji: String {
-        Self.emoji(forSubcategory: subcategory)
+    var subcategorySymbolName: String {
+        Self.symbolName(forSubcategory: subcategory)
     }
     
     /// 서버와 OCR 결과에서 사용하는 만료일 필드 중 비어 있지 않은 첫 값을 반환합니다.
@@ -231,14 +223,14 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
         case .etc: return .brandLine
         }
     }
-    var emoji: String {
+    var symbolName: String {
         switch self {
-        case .info: return "📂"
-        case .contents: return "😂"
-        case .social: return "👥" // ✅ 수정 (💬 -> 👥)
-        case .log: return "🎮"
-        case .musicArt: return "🎵"
-        case .etc: return "🗂️"
+        case .info: return "tray.full.fill"
+        case .contents: return "doc.richtext.fill"
+        case .social: return "person.2.fill"
+        case .log: return "clock.arrow.circlepath"
+        case .musicArt: return "paintpalette.fill"
+        case .etc: return "square.grid.2x2.fill"
         }
     }
     var subcategories: [FolderSubcategory] {

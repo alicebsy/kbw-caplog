@@ -114,8 +114,10 @@ struct UnifiedCardView: View {
                                 Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
                             )
                         
-                        Text(card.subcategoryEmoji)
-                            .font(.system(size: 14))
+                        Image(systemName: card.subcategorySymbolName)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.myPageSectionGreen)
+                            .accessibilityHidden(true)
                     }
                     .frame(width: 28, height: 28)
                     
