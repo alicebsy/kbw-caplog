@@ -11,13 +11,16 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
     
     private var screenshotCollection: PHAssetCollection?
     private var lastProcessedAssetIdentifier: String?
+    private var isMonitoring = false
     
     private override init() {
         super.init()
     }
     
     /// 스크린샷 앨범 찾기 (시뮬레이터에서는 .smartAlbumScreenshots가 비어 있을 수 있어 제목·최근 항목 fallback)
-    static func findScreenshotCollection() -> PHAssetCollection? {
+    static func findScreenshotCollection(
+        allowSimulatorFallback: Bool = true
+    ) -> PHAssetCollection? {
         let bySubtype = PHAssetCollection.fetchAssetCollections(
             with: .smartAlbum,
             subtype: .smartAlbumScreenshots,
@@ -33,17 +36,28 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
             }
         }
         if result != nil { return result }
-        // 시뮬레이터 등에서 스크린샷 앨범이 없으면 최근 항목(Recents) 사용
+
+        #if targetEnvironment(simulator)
+        guard allowSimulatorFallback else { return nil }
+        // 시뮬레이터에서만 스크린샷 앨범이 없을 때 최근 항목(Recents)을 사용합니다.
         let recents = PHAssetCollection.fetchAssetCollections(
             with: .smartAlbum,
             subtype: .smartAlbumUserLibrary,
             options: nil
         )
         return recents.firstObject
+        #else
+        return nil
+        #endif
     }
     
     /// 모니터링 시작
     func startMonitoring() {
+        guard !isMonitoring else { return }
+        guard SessionStore.currentAccountStorageScope() != nil else {
+            print("⏸️ ScreenshotMonitor: 로그인 전에는 모니터링하지 않음")
+            return
+        }
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         
         guard status == .authorized || status == .limited else {
@@ -57,12 +71,17 @@ final class ScreenshotMonitor: NSObject, PHPhotoLibraryChangeObserver {
         }
         
         PHPhotoLibrary.shared().register(self)
+        isMonitoring = true
         print("✅ ScreenshotMonitor: 실시간 스크린샷 모니터링 시작")
     }
     
     /// 모니터링 중지
     func stopMonitoring() {
+        guard isMonitoring else { return }
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
+        isMonitoring = false
+        screenshotCollection = nil
+        lastProcessedAssetIdentifier = nil
         print("⏹️ ScreenshotMonitor: 모니터링 중지")
     }
     

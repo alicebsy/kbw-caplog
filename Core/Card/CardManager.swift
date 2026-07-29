@@ -360,7 +360,7 @@ final class CardManager: ObservableObject {
         localOnlyCardIds = []
         viewedCardIDs = viewedCardIDs.filter { id in allCards.contains(where: { $0.id == id }) }
         savePersistedLocalCards([])
-        ScreenshotIndexer.clearAllProcessedData()
+        ScreenshotIndexer.clearCurrentAccountProcessedData()
         print("✅ CardManager: 로컬 카드 \(removedCount)개 삭제, 스크린샷 처리 목록 초기화")
         NotificationCenter.default.post(name: .cardUpdated, object: nil)
     }

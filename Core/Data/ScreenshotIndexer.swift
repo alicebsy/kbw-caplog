@@ -12,24 +12,43 @@ import UIKit
 @MainActor
 final class ScreenshotIndexer {
     static let shared = ScreenshotIndexer()
-    
+
     private let processingService = ScreenshotProcessingService()
     private let cardManager = CardManager.shared
-    
+
     private init() {}
 
-    private let initialImportDoneKey = "ScreenshotIndexer_initialImportDone"
+    private static let legacyInitialImportDoneKey = "ScreenshotIndexer_initialImportDone"
+    private static let legacyProcessedAssetIdsKey = "ScreenshotIndexer_processedAssetIds"
     /// 이미 카드로 만든 스크린샷(asset localIdentifier) — 한 스크린샷당 카드 하나만 생성
-    private let processedAssetIdsKey = "ScreenshotIndexer_processedAssetIds"
     private let maxProcessedIds = 500
+
+    private struct AccountKeys {
+        let initialImportDone: String
+        let processedAssetIds: String
+        let legacyMigrationDone: String
+    }
+
+    private var accountKeys: AccountKeys? {
+        guard let scope = SessionStore.currentAccountStorageScope() else { return nil }
+        return AccountKeys(
+            initialImportDone: "ScreenshotIndexer.\(scope).initialImportDone",
+            processedAssetIds: "ScreenshotIndexer.\(scope).processedAssetIds",
+            legacyMigrationDone: "ScreenshotIndexer.\(scope).legacyMigrationDone"
+        )
+    }
 
     private var processedAssetIds: [String] {
         get {
-            (UserDefaults.standard.array(forKey: processedAssetIdsKey) as? [String]) ?? []
+            migrateLegacyDataIfNeeded()
+            guard let keys = accountKeys else { return [] }
+            return (UserDefaults.standard.array(forKey: keys.processedAssetIds) as? [String]) ?? []
         }
         set {
+            migrateLegacyDataIfNeeded()
+            guard let keys = accountKeys else { return }
             let trimmed = Array(newValue.suffix(maxProcessedIds))
-            UserDefaults.standard.set(trimmed, forKey: processedAssetIdsKey)
+            UserDefaults.standard.set(trimmed, forKey: keys.processedAssetIds)
         }
     }
 
@@ -40,7 +59,9 @@ final class ScreenshotIndexer {
 
     /// 갤러리(스크린샷 앨범/최근 항목)에 있는 스크린샷 전체 개수 (비동기, 폴더 등에서 표시용)
     static func fetchGalleryScreenshotCount() async -> Int {
-        guard let collection = ScreenshotMonitor.findScreenshotCollection() else { return 0 }
+        guard let collection = ScreenshotMonitor.findScreenshotCollection(
+            allowSimulatorFallback: false
+        ) else { return 0 }
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         let result = PHAsset.fetchAssets(in: collection, options: options)
@@ -52,10 +73,19 @@ final class ScreenshotIndexer {
         processedAssetIds.contains(asset.localIdentifier)
     }
 
-    /// 앱 재설치 후 첫 실행 시 로컬 인덱스 초기화 (처리 목록·초기 인덱싱 플래그 삭제)
-    static func clearAllProcessedData() {
-        UserDefaults.standard.removeObject(forKey: "ScreenshotIndexer_processedAssetIds")
-        UserDefaults.standard.removeObject(forKey: "ScreenshotIndexer_initialImportDone")
+    /// 현재 로그인 계정의 처리 목록·초기 인덱싱 플래그만 삭제합니다.
+    static func clearCurrentAccountProcessedData() {
+        guard let scope = SessionStore.currentAccountStorageScope() else { return }
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "ScreenshotIndexer.\(scope).processedAssetIds")
+        defaults.removeObject(forKey: "ScreenshotIndexer.\(scope).initialImportDone")
+    }
+
+    /// 계정별 키 도입 전 사용하던 공용 처리 기록을 삭제합니다.
+    static func clearLegacyProcessedData() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: legacyProcessedAssetIdsKey)
+        defaults.removeObject(forKey: legacyInitialImportDoneKey)
     }
 
     /// 스크린샷을 카드로 저장했음을 기록 (한 스크린샷당 카드 하나)
@@ -92,27 +122,39 @@ final class ScreenshotIndexer {
 
     /// 플래그 초기화 후 최근 스크린샷 다시 가져오기 (홈에서 "스크린샷에서 카드 가져오기" 버튼용)
     func forceImportRecentScreenshots(limit: Int = 20) async {
-        UserDefaults.standard.removeObject(forKey: initialImportDoneKey)
+        guard let keys = accountKeys else {
+            ScreenshotPipelineStatus.shared.setNoScreenshots(
+                reason: "로그인 정보를 확인할 수 없어 스크린샷을 가져오지 못했어요."
+            )
+            return
+        }
+        UserDefaults.standard.removeObject(forKey: keys.initialImportDone)
         await importRecentScreenshotsIfNeeded(limit: limit)
     }
 
     /// 기존 "처리 완료" 목록을 비우고, 최근 스크린샷을 처음부터 다시 인식·OCR·카드 생성 (전부 새로 돌림)
     func resetAndReimportScreenshots(limit: Int = 50) async {
-        Self.clearAllProcessedData()
-        UserDefaults.standard.removeObject(forKey: initialImportDoneKey)
+        Self.clearCurrentAccountProcessedData()
         await importRecentScreenshotsIfNeeded(limit: limit)
     }
 
     /// 최근 스크린샷 N개만 인덱싱 (앱 실행 시 기존 스크린샷 반영용). 세션당 1회만 실행.
     /// 연결 대상: 갤러리(사진 앱)의 "스크린샷" 스마트 앨범 = .smartAlbumScreenshots
     func importRecentScreenshotsIfNeeded(limit: Int = 20) async {
+        migrateLegacyDataIfNeeded()
+        guard let keys = accountKeys else {
+            ScreenshotPipelineStatus.shared.setNoScreenshots(
+                reason: "로그인 후 스크린샷을 가져올 수 있어요."
+            )
+            return
+        }
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
             let msg = "사진 권한 없음. 설정 → Caplog → 사진에서 허용해 주세요."
             ScreenshotPipelineStatus.shared.setNoScreenshots(reason: msg)
             return
         }
-        if UserDefaults.standard.bool(forKey: initialImportDoneKey) {
+        if UserDefaults.standard.bool(forKey: keys.initialImportDone) {
             ScreenshotPipelineStatus.shared.setNoScreenshots(
                 reason: "새로운 스크린샷이 생기면 자동으로 확인할게요."
             )
@@ -139,7 +181,7 @@ final class ScreenshotIndexer {
             ScreenshotPipelineStatus.shared.setNoScreenshots(
                 reason: "새로 가져올 스크린샷이 없어요. 이미 만든 카드는 건너뛰었어요."
             )
-            UserDefaults.standard.set(true, forKey: initialImportDoneKey)
+            UserDefaults.standard.set(true, forKey: keys.initialImportDone)
             return
         }
 
@@ -148,7 +190,26 @@ final class ScreenshotIndexer {
             await processOne(asset: asset, index: i + 1, total: toProcess.count)
         }
         ScreenshotPipelineStatus.shared.setCompleted()
-        UserDefaults.standard.set(true, forKey: initialImportDoneKey)
+        UserDefaults.standard.set(true, forKey: keys.initialImportDone)
+    }
+
+    /// 업데이트 전 공용 처리 기록은 최초 로그인한 계정으로 한 번만 이전합니다.
+    private func migrateLegacyDataIfNeeded() {
+        guard let keys = accountKeys else { return }
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: keys.legacyMigrationDone) else { return }
+
+        if defaults.object(forKey: keys.processedAssetIds) == nil,
+           let legacyIds = defaults.array(forKey: Self.legacyProcessedAssetIdsKey) as? [String] {
+            defaults.set(Array(legacyIds.suffix(maxProcessedIds)), forKey: keys.processedAssetIds)
+        }
+        if defaults.object(forKey: keys.initialImportDone) == nil,
+           defaults.bool(forKey: Self.legacyInitialImportDoneKey) {
+            defaults.set(true, forKey: keys.initialImportDone)
+        }
+
+        defaults.set(true, forKey: keys.legacyMigrationDone)
+        Self.clearLegacyProcessedData()
     }
 
     private func processOne(asset: PHAsset, index: Int, total: Int) async {

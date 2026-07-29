@@ -7,6 +7,7 @@
 
 
 import Foundation
+import CryptoKit
 import Security
 
 enum SessionStore {
@@ -36,10 +37,40 @@ enum SessionStore {
         read(key: refreshTokenKey)
     }
 
+    /// JWT subject(email)를 직접 저장하지 않고 해시한 계정별 로컬 저장 범위입니다.
+    static func currentAccountStorageScope() -> String? {
+        guard let token = readJWT(),
+              let subject = jwtSubject(from: token) else {
+            return nil
+        }
+        let digest = SHA256.hash(data: Data(subject.utf8))
+        return digest.prefix(16).map { String(format: "%02x", $0) }.joined()
+    }
+
     static func clear() {
         delete(key: accessTokenKey)
         delete(key: refreshTokenKey)
         UserDefaults.standard.removeObject(forKey: "access_token")
+    }
+
+    private static func jwtSubject(from token: String) -> String? {
+        let parts = token.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else { return nil }
+
+        var encodedPayload = String(parts[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let paddingCount = (4 - encodedPayload.count % 4) % 4
+        encodedPayload += String(repeating: "=", count: paddingCount)
+
+        guard let data = Data(base64Encoded: encodedPayload),
+              let object = try? JSONSerialization.jsonObject(with: data),
+              let json = object as? [String: Any],
+              let subject = json["sub"] as? String,
+              !subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return subject.lowercased()
     }
 
     private static func save(_ token: String, key: String) {

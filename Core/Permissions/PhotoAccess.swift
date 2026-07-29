@@ -42,22 +42,8 @@ final class PhotoAccess: ObservableObject {
     }
 
     private func loadScreenshotsCount() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let allPhotosOptions = PHFetchOptions()
-            allPhotosOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-            
-            let allPhotos = PHAsset.fetchAssets(with: allPhotosOptions)
-            
-            var count = 0
-            allPhotos.enumerateObjects { asset, _, _ in
-                if asset.mediaType == .image {
-                    count += 1
-                }
-            }
-            
-            DispatchQueue.main.async {
-                self.screenshotCount = count
-            }
+        Task { @MainActor [weak self] in
+            self?.screenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount()
         }
     }
 }

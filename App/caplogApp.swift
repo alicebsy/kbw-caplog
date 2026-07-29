@@ -3,7 +3,6 @@ import UIKit
 import KakaoSDKCommon
 import KakaoSDKAuth
 import GoogleSignIn
-import Photos
 
 @main
 struct CaplogApp: App {
@@ -34,34 +33,22 @@ struct CaplogApp: App {
                         _ = GIDSignIn.sharedInstance.handle(url)
                     }
                 }
-                .onAppear {
-                    setupScreenshotMonitoring()
+                .onChange(of: appState.isLoggedIn) { _, isLoggedIn in
+                    updateScreenshotMonitoring(isLoggedIn: isLoggedIn)
                 }
         }
     }
     
-    /// 스크린샷 자동 분류 모니터링 시작
-    private func setupScreenshotMonitoring() {
-        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        
-        if status == .authorized || status == .limited {
-            // 이미 권한이 있으면 바로 시작
-            Task { @MainActor in
+    /// 로그인한 동안에만 새 스크린샷 자동 분류를 감시합니다.
+    private func updateScreenshotMonitoring(isLoggedIn: Bool) {
+        Task { @MainActor in
+            if isLoggedIn {
                 ScreenshotMonitor.shared.startMonitoring()
                 print("✅ 스크린샷 자동 분류 활성화됨")
+            } else {
+                ScreenshotMonitor.shared.stopMonitoring()
+                print("⏹️ 로그아웃 상태 - 스크린샷 자동 분류 비활성화")
             }
-        } else if status == .notDetermined {
-            // 권한 요청 후 시작
-            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
-                if newStatus == .authorized || newStatus == .limited {
-                    Task { @MainActor in
-                        ScreenshotMonitor.shared.startMonitoring()
-                        print("✅ 스크린샷 자동 분류 활성화됨")
-                    }
-                }
-            }
-        } else {
-            print("⚠️ 사진 권한 없음 - 스크린샷 자동 분류 비활성화")
         }
     }
 }
@@ -87,7 +74,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // 앱 삭제 후 재설치 시: UserDefaults는 비어 있음. 이때 로그인/로컬 데이터를 초기화해 새로 시작하도록 함.
         if !UserDefaults.standard.bool(forKey: Self.hasLaunchedBeforeKey) {
             SessionStore.clear()
-            ScreenshotIndexer.clearAllProcessedData()
+            ScreenshotIndexer.clearLegacyProcessedData()
             UserDefaults.standard.removeObject(forKey: "recentlyViewedCardIDs")
             UserDefaults.standard.removeObject(forKey: "userProfile_nickname")
             UserDefaults.standard.removeObject(forKey: "recent_searches")
