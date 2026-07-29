@@ -44,7 +44,7 @@ struct HomeView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 36))
-                            .foregroundStyle(Color.myPageSectionGreen.opacity(0.6))
+                            .foregroundStyle(Color.pointBlue.opacity(0.8))
                         Text("아직 카드가 없어요")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
@@ -93,7 +93,12 @@ struct HomeView: View {
                     Spacer().frame(height: S)
                 }
 
-                HomeSection(title: "⏳ 마감 임박", wrapInCard: false) {
+                HomeSection(
+                    title: "마감 임박",
+                    wrapInCard: false,
+                    systemImage: "clock.badge.exclamationmark",
+                    tint: .pointAmber
+                ) {
                     if vm.coupons.isEmpty {
                         Text("마감일이 가까운 카드가 없어요.")
                             .font(.subheadline)
@@ -129,7 +134,11 @@ struct HomeView: View {
                 Spacer().frame(height: S)
 
                 if !vm.recommended.isEmpty {
-                    HomeSection(title: vm.recommendationTitle) {
+                    HomeSection(
+                        title: vm.recommendationTitle,
+                        systemImage: vm.recommendationTitle == "내 주변 추천" ? "location.fill" : "sparkles",
+                        tint: vm.recommendationTitle == "내 주변 추천" ? .pointCoral : .pointViolet
+                    ) {
                         TabView {
                             ForEach(vm.recommended.prefix(3)) { card in
                                 UnifiedCardView(
@@ -152,7 +161,11 @@ struct HomeView: View {
                 }
 
                 if !vm.recent.isEmpty {
-                    HomeSection(title: "👀 최근 본 카드") {
+                    HomeSection(
+                        title: "최근 본 카드",
+                        systemImage: "clock.arrow.circlepath",
+                        tint: .pointBlue
+                    ) {
                         VStack(spacing: 12) {
                             ForEach(vm.recent.prefix(3)) { card in
                                 UnifiedCardView(

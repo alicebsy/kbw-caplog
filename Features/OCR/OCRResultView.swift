@@ -22,9 +22,9 @@ struct OCRResultView: View {
                 // ✅ 1️⃣ GPT-4 분류 결과 (노란색)
                 if let result = gptResult {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("📦 GPT-4 분류 결과")
+                        Label("GPT-4 분류 결과", systemImage: "sparkles")
                             .font(.headline)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.pointViolet)
                         
                         Text(result)
                             .padding()
@@ -37,9 +37,9 @@ struct OCRResultView: View {
 
                 // ✅ 2️⃣ VisionKit OCR 결과 (회색)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("📄 VisionKit OCR 결과")
+                    Label("VisionKit OCR 결과", systemImage: "doc.text.viewfinder")
                         .font(.headline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.pointBlue)
                     
                     if recognizedText.isEmpty {
                         Text("인식된 텍스트가 없습니다.")
@@ -57,9 +57,9 @@ struct OCRResultView: View {
                 // ✅ 3️⃣ Apple Vision 온디바이스 이미지 분류 결과
                 if let labels = imageLabels, !labels.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("🎯 기기 내 이미지 분류")
+                        Label("기기 내 이미지 분류", systemImage: "viewfinder")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.pointTeal)
                         
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(labels) { label in
@@ -78,9 +78,9 @@ struct OCRResultView: View {
                     .frame(maxWidth: .infinity)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("🎯 기기 내 이미지 분류")
+                        Label("기기 내 이미지 분류", systemImage: "viewfinder")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.pointTeal)
                         
                         Text("탐지된 객체/개념이 없습니다.")
                             .font(.body)

@@ -215,12 +215,12 @@ enum FolderCategory: String, CaseIterable, Identifiable, Codable, Hashable {
     }
     var color: Color {
         switch self {
-        case .info: return .homeGreen
-        case .contents: return .homeGreenLight
-        case .social: return .caplogGrayMedium
-        case .log: return .brandAccent
-        case .musicArt: return .brandGreenCard
-        case .etc: return .brandLine
+        case .info: return .pointBlue
+        case .contents: return .pointAmber
+        case .social: return .pointCoral
+        case .log: return .pointTeal
+        case .musicArt: return .pointViolet
+        case .etc: return .pointSlate
         }
     }
     var symbolName: String {

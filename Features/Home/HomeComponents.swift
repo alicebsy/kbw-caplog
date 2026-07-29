@@ -15,8 +15,18 @@ public enum HomeMetrics {
 // MARK: - 섹션 타이틀 (수평 패딩만, 위/아래 여백 없음)
 struct HomeSectionHeader: View {
     let title: String
+    var systemImage: String? = nil
+    var tint: Color = .myPageSectionGreen
+
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+            }
             Text(title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.primary)
@@ -30,10 +40,13 @@ struct HomeSectionHeader: View {
 struct HomeSection<Content: View>: View {
     let title: String
     var wrapInCard: Bool = true
+    var systemImage: String? = nil
+    var tint: Color = .myPageSectionGreen
     @ViewBuilder var content: Content
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HomeSectionHeader(title: title)
+            HomeSectionHeader(title: title, systemImage: systemImage, tint: tint)
                 .padding(.horizontal, 20)
             Spacer().frame(height: HomeMetrics.headerToCard)
             if wrapInCard {
@@ -64,9 +77,15 @@ struct HomeHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(userName.isEmpty ? "안녕하세요 👋" : "\(userName)님, 안녕하세요 👋")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color.homeGreenDark)
+                HStack(spacing: 7) {
+                    Text(userName.isEmpty ? "안녕하세요" : "\(userName)님, 안녕하세요")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(Color.homeGreenDark)
+                    Image(systemName: "hand.wave.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Color.pointAmber)
+                        .accessibilityHidden(true)
+                }
                 Text("캡처한 로그를 한눈에 정리해요")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)

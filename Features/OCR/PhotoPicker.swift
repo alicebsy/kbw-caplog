@@ -117,7 +117,7 @@ struct ScreenshotUploadView: View {
             }
             
             if let error = errorMessage {
-                Text("❌ \(error)")
+                Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundColor(.red)
                     .padding()
@@ -127,9 +127,9 @@ struct ScreenshotUploadView: View {
             
             if let card = resultCard {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("✅ 카드 생성 완료!")
+                    Label("카드 생성 완료", systemImage: "checkmark.circle.fill")
                         .font(.headline)
-                        .foregroundColor(.green)
+                        .foregroundColor(.pointTeal)
                     
                     Text(card.title)
                         .font(.title3)
@@ -141,7 +141,7 @@ struct ScreenshotUploadView: View {
                     
                     HStack {
                         Image(systemName: card.category.symbolName)
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(card.category.color)
                             .accessibilityHidden(true)
                         Text(card.subcategory)
                             .font(.caption)

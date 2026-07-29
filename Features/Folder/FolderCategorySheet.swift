@@ -14,6 +14,7 @@ struct FolderCategorySheet: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: cat.symbolName)
+                            .foregroundStyle(selectedCategory == cat ? Color.white : cat.color)
                             .frame(width: 22)
                             .accessibilityHidden(true)
                         Text(cat.displayName)
@@ -22,7 +23,7 @@ struct FolderCategorySheet: View {
                     .foregroundColor(selectedCategory == cat ? .white : .brandTextMain)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(selectedCategory == cat ? Color.myPageSectionGreen : .clear)
+                    .background(selectedCategory == cat ? cat.color : .clear)
                     .cornerRadius(8)
                 }
                 .accessibilityLabel(cat.displayName)
@@ -36,12 +37,13 @@ struct FolderCategorySheet: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: Card.symbolName(forSubcategory: sub.name))
+                            .foregroundStyle(selectedCategory.color)
                             .frame(width: 22)
                             .accessibilityHidden(true)
                         Text(sub.name)
                             .font(.system(size: 16))
                     }
-                    .foregroundColor(selectedSub == sub.name ? .myPageSectionGreen : .brandTextMain)
+                    .foregroundColor(selectedSub == sub.name ? selectedCategory.color : .brandTextMain)
                     .padding(.vertical, 4)
                 }
                 .accessibilityLabel("\(sub.name) 폴더")

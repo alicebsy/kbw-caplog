@@ -96,7 +96,7 @@ struct CardEditSheet: View {
                             } label: {
                                 HStack {
                                     Image(systemName: selectedCategory.symbolName)
-                                        .foregroundStyle(Color.myPageSectionGreen)
+                                        .foregroundStyle(selectedCategory.color)
                                         .accessibilityHidden(true)
                                     Text(selectedCategory.displayName)
                                         .font(.system(size: 15))

@@ -93,7 +93,7 @@ struct Register1View: View {
                 OCRResultView(
                     image: selectedImage,
                     recognizedText: recognizedText,
-                    gptResult: gptResult ?? "GPT 결과 없음 ❌",
+                    gptResult: gptResult ?? "GPT 결과 없음",
                     imageLabels: imageLabels.isEmpty ? nil : imageLabels
                 )
             }

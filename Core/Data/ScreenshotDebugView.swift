@@ -122,8 +122,9 @@ struct ResultSections: View {
         VStack(spacing: 16) {
             // 1️⃣ GPT-4 분류 결과
             ResultSection(
-                title: "📦 GPT-4 분류 결과",
-                color: .yellow
+                title: "GPT-4 분류 결과",
+                systemImage: "sparkles",
+                color: .pointViolet
             ) {
                 VStack(alignment: .leading, spacing: 8) {
                     ResultRow(label: "제목", value: result.card.title)
@@ -146,8 +147,9 @@ struct ResultSections: View {
             
             // 2️⃣ VisionKit OCR 결과
             ResultSection(
-                title: "📄 VisionKit OCR 결과 (\(result.ocrText.count)개 라인)",
-                color: .blue
+                title: "VisionKit OCR 결과 (\(result.ocrText.count)개 라인)",
+                systemImage: "doc.text.viewfinder",
+                color: .pointBlue
             ) {
                 if result.ocrText.isEmpty {
                     Text("인식된 텍스트가 없습니다")
@@ -173,8 +175,9 @@ struct ResultSections: View {
             
             // 3️⃣ Apple Vision 온디바이스 이미지 분류 결과
             ResultSection(
-                title: "🎯 기기 내 이미지 레이블 (\(result.imageLabels.count)개)",
-                color: .green
+                title: "기기 내 이미지 레이블 (\(result.imageLabels.count)개)",
+                systemImage: "viewfinder",
+                color: .pointTeal
             ) {
                 if result.imageLabels.isEmpty {
                     Text("탐지된 레이블이 없습니다")
@@ -202,8 +205,9 @@ struct ResultSections: View {
             
             // 4️⃣ 메타데이터
             ResultSection(
-                title: "ℹ️ 메타데이터",
-                color: .gray
+                title: "메타데이터",
+                systemImage: "info.circle.fill",
+                color: .pointSlate
             ) {
                 VStack(alignment: .leading, spacing: 8) {
                     ResultRow(label: "카드 ID", value: result.card.id.uuidString)
@@ -227,12 +231,13 @@ struct ResultSections: View {
 // MARK: - 결과 섹션 컴포넌트
 struct ResultSection<Content: View>: View {
     let title: String
+    let systemImage: String
     let color: Color
     @ViewBuilder let content: Content
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title)
+            Label(title, systemImage: systemImage)
                 .font(.headline)
                 .foregroundColor(color)
             

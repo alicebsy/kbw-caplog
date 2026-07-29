@@ -19,7 +19,7 @@ final class HomeViewModel: ObservableObject {
     @Published var coupons: [Card] = []
     @Published var recommended: [Card] = []
     @Published var recent: [Card] = []
-    @Published var recommendationTitle: String = "💡 추천 카드"
+    @Published var recommendationTitle: String = "추천 카드"
     
     private let friendManager = FriendManager.shared
     var friends: [Friend] { friendManager.friends }
@@ -212,8 +212,8 @@ final class HomeViewModel: ObservableObject {
             ? cardManager.recommendedCards(limit: 10)
             : nearbyRecommended
         recommendationTitle = nearbyRecommended.isEmpty
-            ? "💡 추천 카드"
-            : "📍 내 주변 추천"
+            ? "추천 카드"
+            : "내 주변 추천"
         recommended = Self.deduplicateByID(recommendationSource.filter { !expiringIds.contains($0.id) })
             .prefix(5).map { $0 }
 

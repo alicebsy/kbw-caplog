@@ -253,7 +253,7 @@ struct CardDetailView: View {
                         HStack {
                             Image(systemName: card.category.symbolName)
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Color.myPageSectionGreen)
+                                .foregroundStyle(card.category.color)
                                 .symbolRenderingMode(.monochrome)
                                 .frame(width: 22, height: 28)
                                 .accessibilityHidden(true)

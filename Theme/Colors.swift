@@ -67,6 +67,15 @@ extension Color {
     static let myPageActionBlueBg = Color(hex: "#2E6CF6").opacity(0.12)
     static let myPageSectionGreen = Color.accentGreen
 
+    // === 차분한 포인트 팔레트 ===
+    // 딥그린을 주색으로 유지하면서 정보 구조를 구분할 때만 제한적으로 사용합니다.
+    static let pointBlue   = Color(hex: "#4F6F8F")
+    static let pointAmber  = Color(hex: "#A8783F")
+    static let pointCoral  = Color(hex: "#AD6B66")
+    static let pointTeal   = Color(hex: "#4D7C76")
+    static let pointViolet = Color(hex: "#74658A")
+    static let pointSlate  = Color(hex: "#68727E")
+
     // === 마감 임박 카드: 브랜드별 색상 (원래 톤) ===
     static func expiringCardBrandColor(brandName: String?) -> Color {
         guard let name = brandName?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {

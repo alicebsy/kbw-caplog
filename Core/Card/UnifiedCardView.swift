@@ -116,7 +116,7 @@ struct UnifiedCardView: View {
                         
                         Image(systemName: card.subcategorySymbolName)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(card.category.color)
                             .accessibilityHidden(true)
                     }
                     .frame(width: 28, height: 28)

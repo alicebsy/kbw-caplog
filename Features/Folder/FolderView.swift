@@ -83,7 +83,7 @@ struct FolderCategoryListView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: category.symbolName)
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Color.myPageSectionGreen)
+                                    .foregroundStyle(category.color)
                                     .symbolRenderingMode(.monochrome)
                                     .frame(width: 32, height: 32)
                                     .accessibilityHidden(true)
@@ -92,7 +92,7 @@ struct FolderCategoryListView: View {
                                     .font(.system(size: 17, weight: .semibold))
                                     .foregroundColor(
                                         selectedCategory == category
-                                        ? Color.myPageSectionGreen
+                                        ? category.color
                                         : .primary
                                     )
                                     .lineLimit(1)
@@ -105,7 +105,7 @@ struct FolderCategoryListView: View {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .fill(
                                         selectedCategory == category
-                                        ? Color.myPageSectionGreen.opacity(0.08)
+                                        ? category.color.opacity(0.1)
                                         : Color.clear
                                     )
                             )
@@ -174,7 +174,7 @@ struct FolderCategoryListView: View {
                                 HStack(spacing: 12) {
                                     Image(systemName: Card.symbolName(forSubcategory: sub.name))
                                         .font(.system(size: 17, weight: .semibold))
-                                        .foregroundStyle(Color.myPageSectionGreen)
+                                        .foregroundStyle(selectedCategory.color)
                                         .symbolRenderingMode(.monochrome)
                                         .frame(width: 30, height: 30)
                                         .accessibilityHidden(true)
@@ -283,7 +283,7 @@ struct FolderItemListView: View {
         VStack(spacing: 14) {
             Image(systemName: "folder.badge.questionmark")
                 .font(.system(size: 44))
-                .foregroundStyle(Color.myPageSectionGreen.opacity(0.5))
+                .foregroundStyle(category.color.opacity(0.7))
             Text("아직 \(subcategory) 항목이 없어요")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.primary)
@@ -320,7 +320,7 @@ struct FolderRecentCardsView: View {
                 VStack(spacing: 14) {
                     Image(systemName: "photo.on.rectangle.angled")
                         .font(.system(size: 44))
-                        .foregroundStyle(Color.myPageSectionGreen.opacity(0.5))
+                        .foregroundStyle(Color.pointBlue.opacity(0.7))
                     Text("인식된 카드가 없어요")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
