@@ -10,13 +10,15 @@ struct StartView: View {
 
     var body: some View {
         Group {
-            if appState.isLoggedIn {
-                // 로그인 완료 → 탭바 메인 화면
-                AppNavigation()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-showCardDesignPreview") {
+                CardDesignPreviewView()
             } else {
-                // 로그인 전 → 회원가입/로그인 화면
-                Register1View(appState: appState)
+                authenticatedContent
             }
+            #else
+            authenticatedContent
+            #endif
         }
         .onAppear {
             // 앱 시작 시 기존 JWT 있으면 자동 로그인
@@ -33,6 +35,19 @@ struct StartView: View {
             Button("다시 로그인", role: .cancel) {}
         } message: {
             Text("계속 사용하려면 다시 로그인해주세요.")
+        }
+    }
+
+    @ViewBuilder
+    private var authenticatedContent: some View {
+        Group {
+            if appState.isLoggedIn {
+                // 로그인 완료 → 탭바 메인 화면
+                AppNavigation()
+            } else {
+                // 로그인 전 → 회원가입/로그인 화면
+                Register1View(appState: appState)
+            }
         }
     }
 }
