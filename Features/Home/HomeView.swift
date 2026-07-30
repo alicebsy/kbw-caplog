@@ -44,7 +44,7 @@ struct HomeView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 36))
-                            .foregroundStyle(Color.pointBlue.opacity(0.8))
+                            .foregroundStyle(Color.pointTeal.opacity(0.78))
                         Text("아직 카드가 없어요")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
@@ -137,7 +137,7 @@ struct HomeView: View {
                     HomeSection(
                         title: vm.recommendationTitle,
                         systemImage: vm.recommendationTitle == "내 주변 추천" ? "location.fill" : "sparkles",
-                        tint: vm.recommendationTitle == "내 주변 추천" ? .pointCoral : .pointViolet
+                        tint: .pointTeal
                     ) {
                         TabView {
                             ForEach(vm.recommended.prefix(3)) { card in
@@ -164,7 +164,7 @@ struct HomeView: View {
                     HomeSection(
                         title: "최근 본 카드",
                         systemImage: "clock.arrow.circlepath",
-                        tint: .pointBlue
+                        tint: .pointTeal
                     ) {
                         VStack(spacing: 12) {
                             ForEach(vm.recent.prefix(3)) { card in
@@ -193,7 +193,7 @@ struct HomeView: View {
                 .frame(height: 76)
         }
         .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("Home")
+        .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
