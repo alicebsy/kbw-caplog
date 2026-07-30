@@ -457,11 +457,14 @@ class ScreenshotProcessingService {
             tags.append(contentsOf: keywords)
         }
         
-        // 온디바이스 이미지 분류 레이블 태그 추가 (신뢰도 높은 것만)
+        // 온디바이스 이미지 분류 레이블은 핵심 필드 키워드 뒤에 보조로 추가합니다.
+        // 일반적인 이미지 레이블이 카드의 중요한 키워드를 밀어내지 않도록 신뢰도와 개수를 제한합니다.
         let highConfidenceLabels = imageLabels
-            .filter { $0.confidence > 0.5 }
+            .filter { $0.confidence >= 0.7 }
             .map { $0.description }
         tags.append(contentsOf: highConfidenceLabels)
+
+        let normalizedTags = normalizedKeywords(from: tags, limit: 5)
         
         let cardId = UUID()
         let imageName = cardId.uuidString
@@ -472,11 +475,35 @@ class ScreenshotProcessingService {
             summary: summary,
             category: category,
             subcategory: subcategory,
-            tags: Array(Set(tags)), // 중복 제거
+            tags: normalizedTags,
             fields: fields,
             thumbnailURL: imageName,
             screenshotURLs: [imageName]
         )
+    }
+
+    /// 키워드는 추출 우선순서를 유지하면서 중복·공백·불필요한 해시 기호를 정리합니다.
+    private func normalizedKeywords(from candidates: [String], limit: Int) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+
+        for candidate in candidates {
+            let keyword = candidate
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+            guard !keyword.isEmpty else { continue }
+
+            let comparisonKey = keyword.folding(
+                options: [.caseInsensitive, .diacriticInsensitive],
+                locale: .current
+            )
+            guard seen.insert(comparisonKey).inserted else { continue }
+
+            result.append(keyword)
+            if result.count == limit { break }
+        }
+
+        return result
     }
     
     /// JSON 이외 문자가 섞였을 때 방어용 (```json / ```JSON / ``` 제거)

@@ -152,9 +152,19 @@ struct ScreenshotUploadView: View {
                     }
                     
                     if !card.tags.isEmpty {
-                        Text(card.tags.map { "#\($0)" }.joined(separator: " "))
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(card.tags.prefix(5), id: \.self) { tag in
+                                    Text("#\(tag)")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(Color.homeGreenDark)
+                                        .padding(.horizontal, 9)
+                                        .padding(.vertical, 5)
+                                        .background(Color.homeGreenDark.opacity(0.08))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
                     }
                     
                     Button("상세 보기") {

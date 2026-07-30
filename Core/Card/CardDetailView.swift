@@ -310,7 +310,7 @@ struct CardDetailView: View {
                         // 태그
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Text("태그")
+                                Text("핵심 키워드")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(.secondary)
                                 Spacer()
@@ -323,13 +323,13 @@ struct CardDetailView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: "plus.circle.fill")
                                             .font(.system(size: 14))
-                                        Text("태그 추가")
+                                        Text("키워드 추가")
                                             .font(.system(size: 13))
                                     }
-                                    .foregroundStyle(Color.brandAccent)
+                                    .foregroundStyle(Color.homeGreenDark)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color.brandAccent.opacity(0.08))
+                                    .background(Color.homeGreenDark.opacity(0.08))
                                     .clipShape(Capsule())
                                 }
 
@@ -349,13 +349,13 @@ struct CardDetailView: View {
                                             } label: {
                                                 Image(systemName: "xmark.circle.fill")
                                                     .font(.system(size: 16))
-                                                    .foregroundStyle(Color.brandAccent.opacity(0.6))
+                                                    .foregroundStyle(Color.homeGreenDark.opacity(0.55))
                                             }
                                         }
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(Color.brandAccent.opacity(0.08))
-                                        .foregroundStyle(Color.brandAccent)
+                                        .background(Color.homeGreenDark.opacity(0.08))
+                                        .foregroundStyle(Color.homeGreenDark)
                                         .clipShape(Capsule())
                                     }
 
@@ -364,7 +364,7 @@ struct CardDetailView: View {
                                     } label: {
                                         Image(systemName: "plus.circle.fill")
                                             .font(.system(size: 20))
-                                            .foregroundStyle(Color.brandAccent)
+                                            .foregroundStyle(Color.homeGreenDark)
                                     }
                                     .padding(.leading, 4)
                                 }

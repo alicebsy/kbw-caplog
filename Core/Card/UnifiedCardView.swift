@@ -22,6 +22,24 @@ struct UnifiedCardView: View {
         case coupon
         case chat
     }
+
+    private var displayTags: [String] {
+        var seen = Set<String>()
+
+        return card.tags.compactMap { rawTag in
+            let tag = rawTag
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+            guard !tag.isEmpty else { return nil }
+
+            let comparisonKey = tag.folding(
+                options: [.caseInsensitive, .diacriticInsensitive],
+                locale: .current
+            )
+            guard seen.insert(comparisonKey).inserted else { return nil }
+            return tag
+        }
+    }
     
     var body: some View {
         Group {
@@ -87,22 +105,31 @@ struct UnifiedCardView: View {
             // LEFT: 텍스트 (카드 상세 보기)
             VStack(alignment: .leading, spacing: 8) {
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(card.category.displayName + " · " + card.subcategory)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(1)
-                    
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 5) {
+                        Image(systemName: card.subcategorySymbolName)
+                            .font(.system(size: 10, weight: .semibold))
+                            .accessibilityHidden(true)
+                        Text(card.category.displayName + " · " + card.subcategory)
+                            .lineLimit(1)
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.homeGreenDark)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(card.category.color.opacity(0.11))
+                    .clipShape(Capsule())
+
                     Text(card.title)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Color.brandTextMain)
                         .lineLimit(1)
                 }
                 
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 14))
-                        .foregroundStyle(Color.brandTextSub)
+                        .foregroundStyle(Color.homeGraySub)
                         .lineLimit(2)
                 }
                 
@@ -123,16 +150,11 @@ struct UnifiedCardView: View {
                     
                     Text(card.contextualInfoText)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.brandTextSub)
+                        .foregroundStyle(Color.homeGraySub)
                         .lineLimit(1)
                 }
                 
-                if !card.tagsString.isEmpty {
-                    Text(card.tagsString)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.brandTextSub)
-                        .lineLimit(1)
-                }
+                keywordChips(maxVisible: 2)
             }
             .contentShape(Rectangle()) // 탭 영역 명확하게 지정
             .onTapGesture {
@@ -180,6 +202,37 @@ struct UnifiedCardView: View {
         .padding(.horizontal, 14)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private func keywordChips(maxVisible: Int) -> some View {
+        let visibleTags = Array(displayTags.prefix(maxVisible))
+
+        if !visibleTags.isEmpty {
+            HStack(spacing: 6) {
+                ForEach(visibleTags, id: \.self) { tag in
+                    Text("#\(tag)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.homeGreenDark)
+                        .lineLimit(1)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color.homeGreenDark.opacity(0.08))
+                        .clipShape(Capsule())
+                }
+
+                if displayTags.count > visibleTags.count {
+                    Text("+\(displayTags.count - visibleTags.count)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.homeGraySub)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 5)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .clipShape(Capsule())
+                        .accessibilityLabel("키워드 \(displayTags.count - visibleTags.count)개 더 있음")
+                }
+            }
+        }
     }
     
     
