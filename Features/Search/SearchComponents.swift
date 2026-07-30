@@ -7,7 +7,7 @@ struct SearchEmptyStateView: View {
         VStack(spacing: 10) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 36))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.pointBlue.opacity(0.75))
             Text("검색 결과가 없습니다.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -37,7 +37,7 @@ struct SearchErrorView: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.pointAmber)
                 .font(.system(size: 28))
             Text(message)
                 .font(.footnote)
@@ -45,6 +45,7 @@ struct SearchErrorView: View {
             if let retry {
                 Button("다시 시도") { retry() }
                     .buttonStyle(.borderedProminent)
+                    .tint(Color.myPageSectionGreen)
                     .controlSize(.small)
             }
         }

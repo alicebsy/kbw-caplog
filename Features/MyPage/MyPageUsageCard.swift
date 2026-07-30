@@ -12,7 +12,7 @@ struct MyPageUsageCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "photo.stack.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointTeal)
                     Text("\(savedCount)")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
@@ -27,7 +27,7 @@ struct MyPageUsageCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointViolet)
                     Text("\(recommendedCount)")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)

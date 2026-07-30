@@ -38,7 +38,7 @@ struct SelectableFriendRow: View {
             // 체크박스
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundColor(isSelected ? .blue : .gray.opacity(0.5))
+                .foregroundColor(isSelected ? .myPageSectionGreen : .gray.opacity(0.5))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -85,7 +85,7 @@ struct ChatThreadRow: View {
             // 체크박스
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundColor(isSelected ? .blue : .gray.opacity(0.5))
+                .foregroundColor(isSelected ? .myPageSectionGreen : .gray.opacity(0.5))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -103,10 +103,10 @@ struct ChatListAvatarView: View {
         if thread.participantIds.count > 2 {
             // --- 3인 이상 그룹 채팅: 인원 수 ---
             ZStack {
-                Circle().fill(Color.brandAccent.opacity(0.15))
+                Circle().fill(Color.pointBlue.opacity(0.12))
                 Text("\(thread.participantIds.count)")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.brandAccent)
+                    .foregroundStyle(Color.pointBlue)
             }
             .frame(width: 40, height: 40)
         } else {

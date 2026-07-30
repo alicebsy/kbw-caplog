@@ -14,9 +14,13 @@ struct ShareView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Button { innerTab = .friends } label: {
-                    Label("친구", systemImage: "person.2.fill")
+                    HStack(spacing: 7) {
+                        Image(systemName: "person.2.fill")
+                            .foregroundStyle(innerTab == .friends ? Color.white : Color.pointCoral)
+                        Text("친구")
+                            .foregroundStyle(innerTab == .friends ? Color.white : Color.primary)
+                    }
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(innerTab == .friends ? .white : .primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(innerTab == .friends ? Color.myPageSectionGreen : Color(uiColor: .tertiarySystemGroupedBackground))
@@ -24,9 +28,13 @@ struct ShareView: View {
                 }
                 .buttonStyle(.plain)
                 Button { innerTab = .chats } label: {
-                    Label("채팅", systemImage: "bubble.left.and.bubble.right.fill")
+                    HStack(spacing: 7) {
+                        Image(systemName: "bubble.left.and.bubble.right.fill")
+                            .foregroundStyle(innerTab == .chats ? Color.white : Color.pointBlue)
+                        Text("채팅")
+                            .foregroundStyle(innerTab == .chats ? Color.white : Color.primary)
+                    }
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(innerTab == .chats ? .white : .primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(innerTab == .chats ? Color.myPageSectionGreen : Color(uiColor: .tertiarySystemGroupedBackground))

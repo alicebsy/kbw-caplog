@@ -21,7 +21,7 @@ struct MyPageProfileSection: View {
                 HStack(spacing: 14) {
                     Image(systemName: "person.2.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointBlue)
                         .frame(width: 24, alignment: .center)
                     Text("성별")
                         .font(.system(size: 15, weight: .medium))
@@ -67,7 +67,7 @@ struct MyPageProfileSection: View {
                     HStack(spacing: 14) {
                         Image(systemName: "calendar")
                             .font(.system(size: 15))
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(Color.pointBlue)
                             .frame(width: 24, alignment: .center)
                         Text("생년월일")
                             .font(.system(size: 15, weight: .medium))
@@ -81,7 +81,7 @@ struct MyPageProfileSection: View {
                         Spacer(minLength: 8)
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(Color.pointSlate.opacity(0.55))
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 16)

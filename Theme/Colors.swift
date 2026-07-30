@@ -63,8 +63,8 @@ extension Color {
     static let placeholder = Color(.placeholderText)
 
     // === MyPage 전용 토큰 ===
-    static let myPageActionBlue   = Color(hex: "#2E6CF6")
-    static let myPageActionBlueBg = Color(hex: "#2E6CF6").opacity(0.12)
+    static let myPageActionBlue   = Color(hex: "#4F6F8F")
+    static let myPageActionBlueBg = Color(hex: "#4F6F8F").opacity(0.12)
     static let myPageSectionGreen = Color.accentGreen
 
     // === 차분한 포인트 팔레트 ===

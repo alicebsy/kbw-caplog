@@ -59,7 +59,7 @@ struct ShareCardSelectionSheet: View {
                             Text("전체")
                         }
                         .buttonStyle(.bordered)
-                        .tint(selectedCategory == nil ? .blue : .gray)
+                        .tint(selectedCategory == nil ? .myPageSectionGreen : .gray)
 
                         ForEach(FolderCategory.allCases) { category in
                             Menu {
@@ -127,7 +127,7 @@ struct ShareCardSelectionSheet: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 18)
-                                .stroke(selectedIDs.contains(card.id) ? Color.blue : Color.clear, lineWidth: 3)
+                                .stroke(selectedIDs.contains(card.id) ? Color.myPageSectionGreen : Color.clear, lineWidth: 3)
                         )
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowSeparator(.hidden)

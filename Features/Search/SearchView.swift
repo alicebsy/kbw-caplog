@@ -26,7 +26,7 @@ struct SearchView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointBlue)
                     TextField("검색어를 입력해주세요", text: $vm.query)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
@@ -199,7 +199,7 @@ private struct RecentSearchList: View {
                         HStack(spacing: 8) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.pointSlate)
                             Text(term)
                                 .foregroundStyle(.secondary)
                         }

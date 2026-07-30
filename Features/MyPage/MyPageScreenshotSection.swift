@@ -24,7 +24,7 @@ struct MyPageScreenshotSection: View {
                     HStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 16))
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(Color.pointTeal)
                         Text("스크린샷에서 카드 가져오기")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.primary)
@@ -35,7 +35,7 @@ struct MyPageScreenshotSection: View {
                         } else {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color.pointSlate.opacity(0.55))
                         }
                     }
                     .padding(.vertical, 14)
@@ -53,7 +53,7 @@ struct MyPageScreenshotSection: View {
                     HStack(spacing: 12) {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 16))
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(Color.pointTeal)
                         Text("전체 스크린샷 다시 인식")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.primary)
@@ -61,7 +61,7 @@ struct MyPageScreenshotSection: View {
                         if !isImporting {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color.pointSlate.opacity(0.55))
                         }
                     }
                     .padding(.vertical, 14)

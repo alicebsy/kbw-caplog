@@ -62,11 +62,11 @@ struct CapsuleButton: View {
     var isEnabled: Bool = true
     var verticalPadding: CGFloat = 8
     var fontSize: CGFloat = 14
-    /// true면 액센트 블루 배경 (저장 등 주요 액션)
+    /// true면 브랜드 딥그린 배경 (저장 등 주요 액션)
     var isPrimary: Bool = false
 
     private var effectiveFill: Color {
-        if isPrimary && isEnabled { return Color.myPageActionBlue }
+        if isPrimary && isEnabled { return Color.myPageSectionGreen }
         return fill
     }
     private var effectiveTint: Color {

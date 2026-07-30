@@ -26,6 +26,7 @@ struct ShareFriendListView: View {
                         Button("다시 시도") {
                             Task { await vm.reloadFriends() }
                         }
+                        .foregroundStyle(Color.pointBlue)
                     }
                 }
             } else {
@@ -58,7 +59,7 @@ struct ShareFriendListView: View {
                                 } label: {
                                     Image(systemName: "bubble.left.and.bubble.right")
                                         .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(Color.myPageSectionGreen)
+                                        .foregroundColor(Color.pointBlue)
                                         .frame(minWidth: 44, minHeight: 44)
                                         .contentShape(Rectangle())
                                 }
@@ -75,7 +76,7 @@ struct ShareFriendListView: View {
                                         } else {
                                             Image(systemName: "trash")
                                                 .font(.system(size: 16, weight: .regular))
-                                                .foregroundColor(Color.registerRed.opacity(0.75))
+                                                .foregroundColor(Color.pointCoral)
                                         }
                                     }
                                     .frame(minWidth: 44, minHeight: 44)

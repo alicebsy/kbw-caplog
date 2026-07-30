@@ -64,7 +64,7 @@ struct MyPageCardCleanupSection: View {
                     HStack(spacing: 12) {
                         Image(systemName: "square.stack.3d.up.slash")
                             .font(.system(size: 16))
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(Color.pointTeal)
                         Text(duplicateCount > 0 ? "중복 제거하기" : "한 번 더 정리하기")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.primary)
@@ -75,7 +75,7 @@ struct MyPageCardCleanupSection: View {
                         } else {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color.pointSlate.opacity(0.55))
                         }
                     }
                     .padding(.vertical, 14)
@@ -101,7 +101,7 @@ struct MyPageCardCleanupSection: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color.pointSlate.opacity(0.55))
                         }
                         .padding(.vertical, 14)
                         .padding(.horizontal, 16)

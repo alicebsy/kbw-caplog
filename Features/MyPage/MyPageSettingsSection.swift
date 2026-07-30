@@ -13,6 +13,7 @@ struct MyPageSettingsSection: View {
             VStack(spacing: 0) {
                 SettingsToggleRow(
                     icon: "location.fill",
+                    tint: .pointCoral,
                     title: "위치 접근 권한",
                     subtitle: "위치 기반 추천에 사용돼요",
                     isOn: $allowLocationRecommend,
@@ -21,6 +22,7 @@ struct MyPageSettingsSection: View {
                 MyPageRowDivider()
                 SettingsToggleRow(
                     icon: "bell.fill",
+                    tint: .pointAmber,
                     title: "알림 수신",
                     subtitle: "마감 임박 등 알림을 받아요",
                     isOn: $allowNotification,
@@ -36,6 +38,7 @@ struct MyPageSettingsSection: View {
 
 private struct SettingsToggleRow: View {
     var icon: String
+    var tint: Color
     var title: String
     var subtitle: String?
     @Binding var isOn: Bool
@@ -45,7 +48,7 @@ private struct SettingsToggleRow: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 15))
-                .foregroundStyle(Color.myPageSectionGreen)
+                .foregroundStyle(tint)
                 .frame(width: 24, alignment: .center)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

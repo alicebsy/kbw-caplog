@@ -46,7 +46,7 @@ struct ShareFriendSearchSheet: View {
                         .frame(height: 44)
                         .background(keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading
                                     ? Color.gray.opacity(0.5)
-                                    : Color.blue)
+                                    : Color.myPageSectionGreen)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal, 20)

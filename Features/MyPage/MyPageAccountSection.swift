@@ -19,7 +19,7 @@ struct MyPageAccountSection: View {
                 HStack(spacing: 14) {
                     Image(systemName: "person.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointBlue)
                         .frame(width: 24, alignment: .center)
                     Text("이름")
                         .font(.system(size: 15, weight: .medium))
@@ -53,7 +53,7 @@ struct MyPageAccountSection: View {
                 HStack(spacing: 14) {
                     Image(systemName: "at")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointBlue)
                         .frame(width: 24, alignment: .center)
                     Text("아이디")
                         .font(.system(size: 15, weight: .medium))
@@ -76,7 +76,7 @@ struct MyPageAccountSection: View {
                 HStack(spacing: 14) {
                     Image(systemName: "envelope.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(Color.myPageSectionGreen)
+                        .foregroundStyle(Color.pointBlue)
                         .frame(width: 24, alignment: .center)
                     Text("이메일")
                         .font(.system(size: 15, weight: .medium))

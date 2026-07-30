@@ -22,6 +22,7 @@ struct ShareChatListView: View {
                         Button("다시 시도") {
                             Task { await vm.refreshThreads() }
                         }
+                        .foregroundStyle(Color.pointBlue)
                     }
                 }
             } else {
