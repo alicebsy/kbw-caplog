@@ -1,4 +1,5 @@
 import Foundation
+#if SOCIAL_LOGIN_ENABLED
 import Combine
 import AuthenticationServices
 import GoogleSignIn
@@ -23,7 +24,10 @@ final class AuthService: NSObject {
         ctrl.performRequests()
     }
 
-    func signInWithGoogle(presenting: UIViewController, onFinish: @escaping (Result<GIDGoogleUser, Error>) -> Void) {
+    func signInWithGoogle(
+        presenting: UIViewController,
+        onFinish: @escaping (Result<GIDGoogleUser, Error>) -> Void
+    ) {
         GIDSignIn.sharedInstance.signIn(withPresenting: presenting) { result, error in
             if let error = error { onFinish(.failure(error)); return }
             guard let user = result?.user else { return }
@@ -80,3 +84,4 @@ extension AuthService: ASAuthorizationControllerDelegate, ASAuthorizationControl
         return anyScene.windows.first ?? UIWindow(windowScene: anyScene)
     }
 }
+#endif

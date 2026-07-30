@@ -237,7 +237,7 @@ CapLog는 24팀 **강배우**의 졸업프로젝트로 시작했습니다. 팀�
 | 보안 저장소 | iOS Keychain |
 | 로컬 데이터 | UserDefaults, Application Support |
 | 네트워크 | URLSession, Codable |
-| 소셜 SDK 흔적 | Google Sign-In, Kakao SDK |
+| 보류 기능 | Apple·Google·Kakao 소셜 로그인 |
 
 ### Backend
 
@@ -344,7 +344,7 @@ export APP_BASE_URL="http://localhost:8080"
 cp Secrets.local.xcconfig.example Secrets.local.xcconfig
 ```
 
-`Secrets.local.xcconfig`에 로컬 Kakao 네이티브 앱 키를 설정합니다. 이 파일은 Git에 포함하지 않습니다.
+실제 iPhone에서 개발 서버에 연결한다면 `Secrets.local.xcconfig`의 `CAPLOG_API_BASE_URL`을 Mac의 LAN 주소로 설정합니다. 이 파일은 Git에 포함하지 않습니다. Kakao 네이티브 앱 키는 소셜 로그인을 다시 활성화할 때만 필요합니다.
 
 Release 빌드는 `CAPLOG_API_BASE_URL`에 HTTPS 운영 서버 주소가 필요합니다. Debug 빌드에서 실제 iPhone을 사용한다면 Mac과 iPhone이 같은 네트워크에 있어야 하며, 개발 서버 주소가 Mac의 LAN 주소와 일치해야 합니다.
 
@@ -367,7 +367,7 @@ Release 빌드는 `CAPLOG_API_BASE_URL`에 HTTPS 운영 서버 주소가 필요�
 - 앱 내부 알림만 제공하며 APNs 푸시는 아직 없음
 - 채팅은 WebSocket이 아닌 약 3초 주기의 폴링 방식
 - 자동 access token 갱신과 원 요청 재시도 미완성
-- Apple·Google·Kakao 소셜 로그인은 클라이언트 코드가 일부 남아 있지만 서버 계정 통합은 미완성
+- Apple·Google·Kakao 소셜 로그인은 서버 계정 통합 전까지 화면과 기본 빌드에서 비활성화
 - 실제 회원 탈퇴와 전체 데이터 삭제 흐름 미완성
 - 공유 전 민감 필드를 선택적으로 제외하는 기능 필요
 - DB migration, 운영 HTTPS, secret manager, 모니터링 구성 필요
@@ -380,6 +380,7 @@ Release 빌드는 `CAPLOG_API_BASE_URL`에 HTTPS 운영 서버 주소가 필요�
 - [보안 강화 변경사항](docs/security-hardening.md)
 - [스크린샷 카드 생성 설정과 문제 해결](docs/screenshot-setup.md)
 - [MySQL 설정](docs/mysql-setup.md)
+- [보류 기능과 복원 체크리스트](docs/deferred-features.md)
 - [졸업프로젝트 1차 보고서](docs/report1.md)
 - [졸업프로젝트 2차 보고서](docs/report2.md)
 - [졸업프로젝트 최종 보고서](docs/report3.md)

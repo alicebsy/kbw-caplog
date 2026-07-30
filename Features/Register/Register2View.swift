@@ -1,7 +1,9 @@
 import SwiftUI
+#if SOCIAL_LOGIN_ENABLED
 import AuthenticationServices
 import GoogleSignIn
 import KakaoSDKAuth
+#endif
 
 /// 회원가입 화면 (이메일/비밀번호 + 소셜 로그인)
 struct Register2View: View {
@@ -116,6 +118,7 @@ struct Register2View: View {
                 } message: { Text(alertMessage) }
                 .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
 
+                #if SOCIAL_LOGIN_ENABLED
                 Text("OR")
                     .font(.system(size: 12))
                     .foregroundColor(.black)
@@ -177,6 +180,7 @@ struct Register2View: View {
                         }
                     }
                 }
+                #endif
 
                 Spacer(minLength: 24)
             }

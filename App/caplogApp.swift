@@ -1,8 +1,10 @@
 import SwiftUI
 import UIKit
+#if SOCIAL_LOGIN_ENABLED
 import KakaoSDKCommon
 import KakaoSDKAuth
 import GoogleSignIn
+#endif
 
 @main
 struct CaplogApp: App {
@@ -11,6 +13,7 @@ struct CaplogApp: App {
     @StateObject private var appState = AppState()
 
     init() {
+        #if SOCIAL_LOGIN_ENABLED
         guard let appKey = KakaoConfiguration.nativeAppKey else {
             #if DEBUG
             assertionFailure("Secrets.local.xcconfig에 KAKAO_NATIVE_APP_KEY를 설정하세요.")
@@ -20,6 +23,7 @@ struct CaplogApp: App {
             #endif
         }
         KakaoSDK.initSDK(appKey: appKey)
+        #endif
     }
 
     var body: some Scene {
@@ -27,11 +31,15 @@ struct CaplogApp: App {
             StartView(appState: appState)
                 .environmentObject(appState)
                 .onOpenURL { url in
+                    #if SOCIAL_LOGIN_ENABLED
                     if AuthApi.isKakaoTalkLoginUrl(url) {
                         _ = AuthController.handleOpenUrl(url: url)
                     } else {
                         _ = GIDSignIn.sharedInstance.handle(url)
                     }
+                    #else
+                    _ = url
+                    #endif
                 }
                 .onChange(of: appState.isLoggedIn) { _, isLoggedIn in
                     updateScreenshotMonitoring(isLoggedIn: isLoggedIn)
@@ -53,6 +61,7 @@ struct CaplogApp: App {
     }
 }
 
+#if SOCIAL_LOGIN_ENABLED
 private enum KakaoConfiguration {
     static var nativeAppKey: String? {
         guard let value = Bundle.main.object(forInfoDictionaryKey: "KAKAO_NATIVE_APP_KEY") as? String else {
@@ -66,6 +75,7 @@ private enum KakaoConfiguration {
         return trimmed
     }
 }
+#endif
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
     private static let hasLaunchedBeforeKey = "caplog.hasLaunchedBefore"
@@ -88,9 +98,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ app: UIApplication,
                      open url: URL,
                      options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        #if SOCIAL_LOGIN_ENABLED
         if AuthApi.isKakaoTalkLoginUrl(url) {
             return AuthController.handleOpenUrl(url: url)
         }
         return GIDSignIn.sharedInstance.handle(url)
+        #else
+        return false
+        #endif
     }
 }

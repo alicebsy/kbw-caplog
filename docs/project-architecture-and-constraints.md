@@ -572,9 +572,11 @@ API의 원시 값은 기존 호환을 위해 영어를 유지한다.
 
 ### 11.4 소셜 로그인
 
-**미구현에 가까운 부분 구현**
+**미구현에 가까운 부분 구현 · 현재 빌드에서 비활성화**
 
-- Apple, Google, Kakao 로그인 버튼과 일부 iOS SDK 호출·토큰 교환 코드가 남아 있다.
+- Apple, Google, Kakao 로그인 버튼과 일부 iOS SDK 호출·토큰 교환 코드는 `SOCIAL_LOGIN_ENABLED` 조건부 컴파일 영역에 보존되어 있다.
+- 2026-07-30부터 평소 빌드 시간을 줄이기 위해 Google Sign-In과 Kakao SDK 패키지를 Xcode 프로젝트 타깃에서 임시 제외했다.
+- 기본 빌드에서는 소셜 로그인 버튼을 노출하지 않고 이메일 회원가입·로그인만 제공한다.
 - Kakao 네이티브 앱 키를 로컬 xcconfig로 주입하는 구조가 있다.
 - Google URL scheme 등 클라이언트 설정 흔적도 있다.
 - 그러나 현재 백엔드 `AuthController`에는 `/auth/apple`, `/auth/google`, `/auth/kakao` 교환 endpoint가 없다.
@@ -897,11 +899,14 @@ Git에 올라가지 않는 `Secrets.local.xcconfig`에서 환경별 값을 설�
 개념적인 예:
 
 ```text
-KAKAO_NATIVE_APP_KEY = 발급받은_네이티브_앱_키
 CAPLOG_API_BASE_URL = http:/$()/개발자_Mac_LAN_IP:8080
+
+// 소셜 로그인을 다시 활성화할 때만 사용
+KAKAO_NATIVE_APP_KEY = 발급받은_네이티브_앱_키
 ```
 
 xcconfig에서는 `//`가 주석으로 해석될 수 있어 URL 표기에 프로젝트가 사용하는 escape 형식을 따라야 한다.
+Kakao 네이티브 앱 키는 현재 기본 빌드에는 필요하지 않다.
 
 ### 16.5 시뮬레이터와 실제 iPhone의 차이
 

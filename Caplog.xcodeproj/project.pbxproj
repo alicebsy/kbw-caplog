@@ -6,14 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		CE8108562E9CFE3700181F2D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108552E9CFE3700181F2D /* GoogleSignIn */; };
-		CE8108582E9CFE3700181F2D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108572E9CFE3700181F2D /* GoogleSignInSwift */; };
-		CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */; };
-		CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108622E9CFECD00181F2D /* KakaoSDKCommon */; };
-		CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CE8108652E9D009E00181F2D /* KakaoSDKUser */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		CE81079B2E9CF74300181F2D /* caplog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = caplog.entitlements; sourceTree = "<group>"; };
 		CEA428962ED529D2003457FC /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
@@ -58,11 +50,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE8108562E9CFE3700181F2D /* GoogleSignIn in Frameworks */,
-				CE8108632E9CFECD00181F2D /* KakaoSDKCommon in Frameworks */,
-				CE8108582E9CFE3700181F2D /* GoogleSignInSwift in Frameworks */,
-				CE8108662E9D009E00181F2D /* KakaoSDKUser in Frameworks */,
-				CE81085D2E9CFECD00181F2D /* KakaoSDKAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,11 +104,6 @@
 			);
 			name = Caplog;
 			packageProductDependencies = (
-				CE8108552E9CFE3700181F2D /* GoogleSignIn */,
-				CE8108572E9CFE3700181F2D /* GoogleSignInSwift */,
-				CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */,
-				CE8108622E9CFECD00181F2D /* KakaoSDKCommon */,
-				CE8108652E9D009E00181F2D /* KakaoSDKUser */,
 			);
 			productName = caplog;
 			productReference = CEB027E72E9FE78B007EE2D8 /* Caplog.app */;
@@ -152,8 +134,6 @@
 			mainGroup = CEFCA1132E8D8F5C0014AA05;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CE8108542E9CFE3700181F2D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
-				CE8108592E9CFE5D00181F2D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CEFCA1132E8D8F5C0014AA05;
@@ -402,52 +382,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		CE8108542E9CFE3700181F2D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 9.0.0;
-			};
-		};
-		CE8108592E9CFE5D00181F2D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.25.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		CE8108552E9CFE3700181F2D /* GoogleSignIn */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE8108542E9CFE3700181F2D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
-			productName = GoogleSignIn;
-		};
-		CE8108572E9CFE3700181F2D /* GoogleSignInSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE8108542E9CFE3700181F2D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
-			productName = GoogleSignInSwift;
-		};
-		CE81085C2E9CFECD00181F2D /* KakaoSDKAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE8108592E9CFE5D00181F2D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
-			productName = KakaoSDKAuth;
-		};
-		CE8108622E9CFECD00181F2D /* KakaoSDKCommon */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE8108592E9CFE5D00181F2D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
-			productName = KakaoSDKCommon;
-		};
-		CE8108652E9D009E00181F2D /* KakaoSDKUser */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE8108592E9CFE5D00181F2D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
-			productName = KakaoSDKUser;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CEFCA1142E8D8F5C0014AA05 /* Project object */;
 }
