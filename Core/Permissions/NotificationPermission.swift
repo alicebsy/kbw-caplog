@@ -44,6 +44,14 @@ final class NotificationPermission: ObservableObject {
     }
 
     var isAuthorized: Bool { status == .authorized }
+
+    var permissionState: PermissionState {
+        switch status {
+        case .authorized:    return .granted
+        case .denied:        return .denied
+        case .notDetermined: return .notDetermined
+        }
+    }
     var actionTitle: String {
         switch status {
         case .authorized: return "허용됨"
