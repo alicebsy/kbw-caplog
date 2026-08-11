@@ -145,14 +145,19 @@ struct HomeView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 13))
                             .foregroundStyle(Color.pointAmber)
+                        // .secondary는 흰 배경 기준 색이라 앰버 틴트 위에서는
+                        // 3.16:1까지 떨어집니다. 반드시 읽어야 하는 경고이므로 본문 색을 씁니다.
                         Text("최신 카드를 불러오지 못해 저장된 내용을 보여주고 있어요.")
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextMain)
                         Spacer(minLength: 8)
                         Button("다시 시도") {
                             Task { await vm.retry() }
                         }
                         .font(.system(size: 13, weight: .semibold))
+                        // 색을 지정하지 않으면 iOS 기본 액센트(파란색)를 받아
+                        // 앱의 딥그린 체계에서 혼자 튀고 대비도 3.25:1로 미달입니다.
+                        .foregroundStyle(Color.homeGreenTint)
                         .disabled(vm.isLoading)
                     }
                     .padding(.horizontal, 12)

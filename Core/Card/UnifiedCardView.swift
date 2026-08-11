@@ -419,6 +419,11 @@ struct UnifiedCardView: View {
         let accentText = accent.contrasting(on: cardSurface)                     // 본문 텍스트 AA 4.5:1
         let accentGraphic = accent.contrasting(on: cardSurface, minimumRatio: 3) // 아이콘·그래픽 3:1
 
+        // "쿠폰" 알약은 액센트를 12% 더 올린 배경이라 카드 표면보다 밝습니다.
+        // accentText를 그대로 쓰면 4.22:1로 미달이라 알약 배경 기준으로 다시 계산합니다.
+        let pillSurface = cardSurface.composited(with: accent, fraction: 0.12)
+        let pillText = accent.contrasting(on: pillSurface)
+
         return Group {
             if isHomeScreen {
                 let cardCorner: CGFloat = 20
@@ -473,7 +478,7 @@ struct UnifiedCardView: View {
                             HStack(spacing: 6) {
                                 Text("쿠폰")
                                     .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(pillText)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(
