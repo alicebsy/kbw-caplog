@@ -157,10 +157,10 @@ struct ScreenshotUploadView: View {
                                 ForEach(card.tags.prefix(5), id: \.self) { tag in
                                     Text("#\(tag)")
                                         .font(.system(size: 12, weight: .semibold))
-                                        .foregroundStyle(Color.homeGreenDark)
+                                        .foregroundStyle(Color.homeGreenTint)
                                         .padding(.horizontal, 9)
                                         .padding(.vertical, 5)
-                                        .background(Color.homeGreenDark.opacity(0.08))
+                                        .background(Color.homeGreenTint.opacity(0.08))
                                         .clipShape(Capsule())
                                 }
                             }

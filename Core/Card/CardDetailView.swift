@@ -326,10 +326,10 @@ struct CardDetailView: View {
                                         Text("키워드 추가")
                                             .font(.system(size: 13))
                                     }
-                                    .foregroundStyle(Color.homeGreenDark)
+                                    .foregroundStyle(Color.homeGreenTint)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color.homeGreenDark.opacity(0.08))
+                                    .background(Color.homeGreenTint.opacity(0.08))
                                     .clipShape(Capsule())
                                 }
 
@@ -349,13 +349,13 @@ struct CardDetailView: View {
                                             } label: {
                                                 Image(systemName: "xmark.circle.fill")
                                                     .font(.system(size: 16))
-                                                    .foregroundStyle(Color.homeGreenDark.opacity(0.55))
+                                                    .foregroundStyle(Color.homeGreenTint.opacity(0.55))
                                             }
                                         }
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(Color.homeGreenDark.opacity(0.08))
-                                        .foregroundStyle(Color.homeGreenDark)
+                                        .background(Color.homeGreenTint.opacity(0.08))
+                                        .foregroundStyle(Color.homeGreenTint)
                                         .clipShape(Capsule())
                                     }
 
@@ -364,7 +364,7 @@ struct CardDetailView: View {
                                     } label: {
                                         Image(systemName: "plus.circle.fill")
                                             .font(.system(size: 20))
-                                            .foregroundStyle(Color.homeGreenDark)
+                                            .foregroundStyle(Color.homeGreenTint)
                                     }
                                     .padding(.leading, 4)
                                 }

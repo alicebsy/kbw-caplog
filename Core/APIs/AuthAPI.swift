@@ -81,6 +81,20 @@ enum AuthAPI {
         return try JSONDecoder().decode(LoginResponse.self, from: data)
     }
 
+    /// 토큰 갱신: 새 액세스/갱신 토큰 반환
+    /// - POST /api/auth/refresh
+    /// - 서버가 리프레시 토큰도 회전시키므로 응답의 두 토큰을 모두 저장해야 합니다.
+    static func refresh(refreshToken: String) async throws -> LoginResponse {
+        if BackendEnv.isMock {
+            return LoginResponse(
+                accessToken: "mock_jwt_token_for_test",
+                refreshToken: "mock_refresh_token_for_test"
+            )
+        }
+        struct Req: Encodable { let refreshToken: String }
+        return try await postJSON(path: "auth/refresh", body: Req(refreshToken: refreshToken))
+    }
+
     // 소셜 로그인
     static func exchangeApple(idToken: String) async throws -> LoginResponse {
         struct Req: Encodable { let idToken: String }

@@ -16,7 +16,7 @@ public enum HomeMetrics {
 struct HomeSectionHeader: View {
     let title: String
     var systemImage: String? = nil
-    var tint: Color = .myPageSectionGreen
+    var tint: Color = .accentGreenTint
 
     var body: some View {
         HStack(spacing: 8) {
@@ -41,7 +41,7 @@ struct HomeSection<Content: View>: View {
     let title: String
     var wrapInCard: Bool = true
     var systemImage: String? = nil
-    var tint: Color = .myPageSectionGreen
+    var tint: Color = .accentGreenTint
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -79,7 +79,7 @@ struct HomeHeader: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(userName.isEmpty ? "안녕하세요" : "\(userName)님, 안녕하세요")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color.homeGreenDark)
+                    .foregroundColor(Color.homeGreenTint)
                 Text("캡처한 로그를 한눈에 정리해요")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
@@ -89,11 +89,11 @@ struct HomeHeader: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(Color.homeGreenDark)
+                        .foregroundColor(Color.homeGreenTint)
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(Color.white)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                                 .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
                         )
                     if unreadNotificationCount > 0 {

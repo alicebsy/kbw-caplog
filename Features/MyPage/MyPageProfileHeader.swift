@@ -27,7 +27,7 @@ struct MyPageProfileHeader: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 64, height: 64)
-                        .foregroundStyle(Color.myPageSectionGreen.opacity(0.3), Color(uiColor: .systemGray6))
+                        .foregroundStyle(Color.accentGreenTint.opacity(0.3), Color(uiColor: .systemGray6))
                 }
                 Button {
                     if profileImage != nil { showPhotoAlert = true }

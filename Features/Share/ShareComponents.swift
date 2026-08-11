@@ -38,7 +38,7 @@ struct SelectableFriendRow: View {
             // 체크박스
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundColor(isSelected ? .myPageSectionGreen : .gray.opacity(0.5))
+                .foregroundColor(isSelected ? .accentGreenTint : .gray.opacity(0.5))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -85,7 +85,7 @@ struct ChatThreadRow: View {
             // 체크박스
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundColor(isSelected ? .myPageSectionGreen : .gray.opacity(0.5))
+                .foregroundColor(isSelected ? .accentGreenTint : .gray.opacity(0.5))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

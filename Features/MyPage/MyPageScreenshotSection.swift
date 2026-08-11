@@ -99,7 +99,7 @@ struct MyPageScreenshotSection: View {
 
             if pipelineStatus.isRunning && pipelineStatus.totalCount > 0 {
                 ProgressView(value: pipelineStatus.progress)
-                    .tint(Color.myPageSectionGreen)
+                    .tint(Color.accentGreenTint)
                 Text("\(pipelineStatus.currentCount)/\(pipelineStatus.totalCount) 처리 중")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
@@ -110,7 +110,7 @@ struct MyPageScreenshotSection: View {
                     onImport()
                 }
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.myPageSectionGreen)
+                .foregroundStyle(Color.accentGreenTint)
                 .disabled(isImporting)
             }
         }
@@ -130,7 +130,7 @@ struct MyPageScreenshotSection: View {
     private var statusColor: Color {
         switch pipelineStatus.phase {
         case .idle: return .secondary
-        case .running, .success: return Color.myPageSectionGreen
+        case .running, .success: return Color.accentGreenTint
         case .warning: return .orange
         case .failure: return .red
         }

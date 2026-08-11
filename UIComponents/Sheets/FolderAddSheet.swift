@@ -33,7 +33,7 @@ struct FolderAddSheet: View {
                 .tint(.homeGreen)
         }
         .padding(.vertical)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(15)
         .presentationDetents([.medium])
     }

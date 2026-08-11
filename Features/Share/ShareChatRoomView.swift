@@ -194,7 +194,7 @@ struct ChatRoomView: View {
                             ProgressView()
                         } else {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .foregroundStyle(Color.homeGreenDark.opacity(0.7))
+                                .foregroundStyle(Color.homeGreenTint.opacity(0.7))
                         }
                     }
                 }
@@ -202,7 +202,7 @@ struct ChatRoomView: View {
             }
         }
         // 채팅방 전체에 초록 계열 틴트 적용 (뒤로가기/보내기 등 기본 파랑 제거)
-        .tint(Color.homeGreenDark)
+        .tint(Color.homeGreenTint)
         
         // 카드 선택 시트
         .sheet(isPresented: $showCardSelection) {
@@ -357,7 +357,7 @@ struct DateHeaderView: View {
     var body: some View {
         Text(date)
             .font(.system(size: 13))
-            .foregroundColor(Color.homeGreenDark)
+            .foregroundColor(Color.homeGreenTint)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Capsule().fill(Color.homeGreenLight.opacity(0.4)))
@@ -431,7 +431,7 @@ struct MessageRow: View {
                             .padding(.vertical, 10)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(isMine ? Color.homeGreenDark : Color.white)
+                                    .fill(isMine ? Color.homeGreenDark : Color(uiColor: .secondarySystemGroupedBackground))
                             )
                             .foregroundColor(isMine ? .white : .primary)
                             .overlay(

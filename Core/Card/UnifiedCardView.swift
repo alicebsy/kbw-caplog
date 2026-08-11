@@ -14,6 +14,7 @@ struct UnifiedCardView: View {
     
     @State private var isShareSheetPresented = false
     @Environment(\.notificationCardWidth) private var isNotificationCard
+    @Environment(\.colorScheme) private var colorScheme
     
     enum CardStyle {
         case row
@@ -114,7 +115,7 @@ struct UnifiedCardView: View {
                             .lineLimit(1)
                     }
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.homeGreenDark)
+                    .foregroundStyle(Color.homeGreenTint)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(card.category.color.opacity(0.11))
@@ -136,7 +137,7 @@ struct UnifiedCardView: View {
                 HStack(spacing: 8) {
                     ZStack {
                         Circle()
-                            .fill(Color.white)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             .overlay(
                                 Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
                             )
@@ -200,7 +201,7 @@ struct UnifiedCardView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -213,11 +214,11 @@ struct UnifiedCardView: View {
                 ForEach(visibleTags, id: \.self) { tag in
                     Text("#\(tag)")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.homeGreenDark)
+                        .foregroundStyle(Color.homeGreenTint)
                         .lineLimit(1)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(Color.homeGreenDark.opacity(0.08))
+                        .background(Color.homeGreenTint.opacity(0.08))
                         .clipShape(Capsule())
                 }
 
@@ -266,7 +267,7 @@ struct UnifiedCardView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.05), radius: 3, y: 2)
         .onTapGesture { onTap() }
@@ -371,7 +372,7 @@ struct UnifiedCardView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
         )
         .onTapGesture { onTap() }
@@ -409,6 +410,14 @@ struct UnifiedCardView: View {
         let accent = Self.couponAccentColor(thumbnailId: imageName, fallback: fallbackBrand)
         let hasExpiry = expiryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
         let brandIconName = Color.expiringCardBrandIconName(brandName: brandName.isEmpty ? nil : brandName)
+
+        // 액센트는 브랜드 색이거나 스크린샷 평균색이라 밝기를 예측할 수 없습니다.
+        // 그대로 글자색으로 쓰면 대비가 1.1:1까지 떨어지므로(연노랑 카카오 등)
+        // 카드 표면 기준으로 색조는 유지하고 밝기만 보정해서 씁니다.
+        let cardSurface = Color(hex: colorScheme == .dark ? "#1C1C1E" : "#FFFFFF")
+            .composited(with: accent, fraction: 0.07)
+        let accentText = accent.contrasting(on: cardSurface)                     // 본문 텍스트 AA 4.5:1
+        let accentGraphic = accent.contrasting(on: cardSurface, minimumRatio: 3) // 아이콘·그래픽 3:1
 
         return Group {
             if isHomeScreen {
@@ -488,7 +497,7 @@ struct UnifiedCardView: View {
                             if hasExpiry {
                                 Text(expiryText)
                                     .font(.system(size: 15, weight: .medium))
-                                    .foregroundStyle(accent.opacity(0.95))
+                                    .foregroundStyle(accentText)
                                     .lineLimit(1)
                             }
 
@@ -511,7 +520,7 @@ struct UnifiedCardView: View {
                                 } else if !brandName.isEmpty && (brandName.lowercased().contains("배스킨") || brandName.lowercased().contains("baskin") || brandName.lowercased().contains("베라")) {
                                     Image(systemName: "gift.fill")
                                         .font(.system(size: 20))
-                                        .foregroundStyle(accent.opacity(0.85))
+                                        .foregroundStyle(accentGraphic)
                                 }
                                 Spacer()
                                 HStack(spacing: 4) {
@@ -531,7 +540,7 @@ struct UnifiedCardView: View {
                                         Image(systemName: "chevron.right.circle.fill")
                                             .font(.system(size: 26))
                                             .symbolRenderingMode(.palette)
-                                            .foregroundStyle(accent, Color(uiColor: .secondarySystemGroupedBackground))
+                                            .foregroundStyle(accentGraphic, Color(uiColor: .secondarySystemGroupedBackground))
                                     }
                                     .buttonStyle(.plain)
                                 }

@@ -11,6 +11,9 @@ final class HomeViewModel: ObservableObject {
     @Published var showMyPageView: Bool = false
     @Published var isImportingScreenshots: Bool = false
     @Published var isLoading: Bool = false
+    /// 카드 로드에 실패했을 때의 사용자용 문구. nil이면 정상.
+    /// "카드가 아직 없음"과 "불러오지 못함"을 화면에서 구분하기 위해 필요합니다.
+    @Published var loadError: String? = nil
     
     // MARK: - Data (서버/캐시 기반, mock 기본값 없음)
     @Published var userName: String = {
@@ -43,7 +46,9 @@ final class HomeViewModel: ObservableObject {
             .sink { [weak self] notification in
                 if let nickname = notification.userInfo?["nickname"] as? String {
                     self?.userName = nickname
+                    #if DEBUG
                     print("🔄 HomeViewModel: 이름 업데이트 → \(nickname)")
+                    #endif
                 }
             }
             .store(in: &cancellables)
@@ -90,6 +95,10 @@ final class HomeViewModel: ObservableObject {
         
         // 2) 카드 전체 로드
         await cardManager.loadAllCards()
+
+        // 로드 실패를 화면에 전달합니다. 이게 없으면 서버가 죽어도
+        // "아직 카드가 없어요"만 떠서 사용자가 카드를 잃은 것으로 오해합니다.
+        loadError = cardManager.errorMessage
         
         // 3) 홈 화면 내용 채우기 (최근 본 카드까지 포함)
         await reloadHomeContent()
@@ -103,6 +112,12 @@ final class HomeViewModel: ObservableObject {
         }
         
         print("🏠 HomeViewModel: 홈 초기 로드 완료")
+    }
+
+    /// 오류 화면의 "다시 시도"에서 호출합니다.
+    func retry() async {
+        loadError = nil
+        await load()
     }
 
     func refreshNearbyRecommendations() async {
@@ -128,7 +143,9 @@ final class HomeViewModel: ObservableObject {
             }
         } catch {
             nearbyRecommended = []
+            #if DEBUG
             print("⚠️ HomeViewModel: 위치 기반 추천 실패 - \(error.localizedDescription)")
+            #endif
         }
         await reloadHomeContent()
     }

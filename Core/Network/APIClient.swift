@@ -5,6 +5,7 @@ import Foundation
 enum APIError: LocalizedError {
     case unauthorized
     case decodeFailed
+    /// 연관값은 응답 원문입니다. 로그 전용이며 사용자 화면에 그대로 쓰지 않습니다.
     case server(String)
     case network(Error)
     case invalidResponse
@@ -14,11 +15,19 @@ enum APIError: LocalizedError {
         switch self {
         case .unauthorized:     return "인증이 만료되었습니다."
         case .decodeFailed:     return "서버 응답 파싱에 실패했습니다."
-        case .server(let msg):  return msg
+        // 서버 원문에는 스택 트레이스나 내부 식별자가 섞여 있을 수 있어
+        // 사용자에게는 일반 문구만 보여줍니다. 원문은 debugDetail로 확인합니다.
+        case .server:           return "서버가 요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요."
         case .network(let err): return err.localizedDescription
         case .invalidResponse:  return "유효하지 않은 서버 응답입니다."
         case .timeout:          return "요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요."
         }
+    }
+
+    /// 로그·디버깅용 서버 응답 원문. 사용자에게 표시하면 안 됩니다.
+    var debugDetail: String? {
+        if case .server(let msg) = self { return msg }
+        return nil
     }
 }
 
@@ -77,7 +86,8 @@ struct APIClient {
         query: [URLQueryItem]? = nil,
         body: B? = Optional<B>.none,
         authorized: Bool = true,
-        timeoutInterval: TimeInterval = 30
+        timeoutInterval: TimeInterval = 30,
+        allowRetryAfterRefresh: Bool = true
     ) async throws -> T {
         var url = APIConfig.baseURL
         url.append(path: APIConfig.apiPrefix + path)
@@ -94,8 +104,11 @@ struct APIClient {
             req.httpBody = try encoder.encode(body)
         }
 
+        // 401 재시도 시 "이 토큰으로 실패했다"를 판단하기 위해 사용한 토큰을 기억합니다.
+        var tokenUsed: String?
         if authorized, let token = authStore.accessToken {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            tokenUsed = token
         }
 
         do {
@@ -115,12 +128,31 @@ struct APIClient {
                 }
                 do { return try decoder.decode(T.self, from: data) }
                 catch {
+                    // 응답 본문에는 사용자 데이터가 들어있을 수 있어 릴리스 빌드에서는 남기지 않습니다.
+                    #if DEBUG
                     print("❌ Decode error: \(error)")
                     print("📦 Response data: \(String(data: data, encoding: .utf8) ?? "nil")")
+                    #endif
                     throw APIError.decodeFailed
                 }
 
             case 401:
+                // 액세스 토큰은 1시간이면 만료됩니다. 바로 로그아웃시키지 않고
+                // 저장된 리프레시 토큰으로 한 번 갱신한 뒤 원 요청을 재시도합니다.
+                if authorized,
+                   allowRetryAfterRefresh,
+                   await TokenRefresher.shared.refresh(failedToken: tokenUsed) {
+                    return try await request(
+                        method,
+                        path: path,
+                        query: query,
+                        body: body,
+                        authorized: authorized,
+                        timeoutInterval: timeoutInterval,
+                        allowRetryAfterRefresh: false   // 재시도는 한 번만
+                    )
+                }
+
                 if authorized {
                     SessionStore.clear()
                     await MainActor.run {
@@ -131,7 +163,9 @@ struct APIClient {
 
             default:
                 let msg = String(data: data, encoding: .utf8) ?? "Status \(http.statusCode)"
-                print("❌ Server error: \(msg)")
+                #if DEBUG
+                print("❌ Server error (\(http.statusCode)): \(msg)")
+                #endif
                 throw APIError.server(msg)
             }
         } catch let error as URLError {

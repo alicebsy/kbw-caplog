@@ -40,6 +40,51 @@ struct HomeView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 42)
+                } else if let loadError = vm.loadError,
+                          vm.recommended.isEmpty, vm.recent.isEmpty, vm.coupons.isEmpty {
+                    // 서버에서 못 받아온 경우. "카드가 없는 것"과 반드시 구분해야
+                    // 사용자가 자기 카드가 사라졌다고 오해하지 않습니다.
+                    VStack(spacing: 12) {
+                        Image(systemName: "wifi.exclamationmark")
+                            .font(.system(size: 36))
+                            .foregroundStyle(Color.pointAmber)
+                        Text("카드를 불러오지 못했어요")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                        Text(loadError)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button {
+                            Task { await vm.retry() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if vm.isLoading {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Text(vm.isLoading ? "다시 불러오는 중..." : "다시 시도")
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .frame(height: 42)
+                            .background(Color.myPageSectionGreen)
+                            .clipShape(Capsule())
+                        }
+                        .disabled(vm.isLoading)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                    .padding(.horizontal, 24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+                    )
+                    .padding(.horizontal, 20)
+                    Spacer().frame(height: S)
                 } else if vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
@@ -88,6 +133,33 @@ struct HomeView: View {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color(uiColor: .secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+                    )
+                    .padding(.horizontal, 20)
+                    Spacer().frame(height: S)
+                }
+
+                if vm.loadError != nil,
+                   !(vm.recommended.isEmpty && vm.recent.isEmpty && vm.coupons.isEmpty) {
+                    // 저장된 카드는 그대로 보여주되, 최신 상태가 아니라는 점을 알립니다.
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.pointAmber)
+                        Text("최신 카드를 불러오지 못해 저장된 내용을 보여주고 있어요.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 8)
+                        Button("다시 시도") {
+                            Task { await vm.retry() }
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .disabled(vm.isLoading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.pointAmber.opacity(0.10))
                     )
                     .padding(.horizontal, 20)
                     Spacer().frame(height: S)

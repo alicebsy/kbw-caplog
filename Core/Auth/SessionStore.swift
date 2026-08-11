@@ -26,7 +26,10 @@ enum SessionStore {
     }
 
     static func saveJWT(_ token: String) {
-        save(accessToken: token, refreshToken: nil)
+        // 액세스 토큰만 교체하고 리프레시 토큰은 유지합니다.
+        // (예전 구현은 리프레시 토큰을 지워 자동 갱신을 불가능하게 만들었습니다.)
+        save(token, key: accessTokenKey)
+        UserDefaults.standard.removeObject(forKey: "access_token")
     }
 
     static func readJWT() -> String? {

@@ -22,7 +22,7 @@ struct MyPageLabeledRow<Content: View>: View {
             if let icon = icon {
                 Image(systemName: icon)
                     .font(.system(size: 15))
-                    .foregroundStyle(Color.myPageSectionGreen)
+                    .foregroundStyle(Color.accentGreenTint)
                     .frame(width: 24, alignment: .center)
             }
             Text(label)
@@ -103,7 +103,7 @@ struct RadioButton: View {
             HStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .stroke(isOn ? Color.myPageSectionGreen : Color(uiColor: .systemGray3), lineWidth: 1.5)
+                        .stroke(isOn ? Color.accentGreenTint : Color(uiColor: .systemGray3), lineWidth: 1.5)
                         .frame(width: 20, height: 20)
                     if isOn {
                         Circle()

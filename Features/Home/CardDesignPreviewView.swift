@@ -47,12 +47,12 @@ struct CardDesignPreviewView: View {
                         Label("핵심 키워드 2개와 나머지 개수 표시", systemImage: "number")
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.homeGreenDark)
+                    .foregroundStyle(Color.homeGreenTint)
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.homeGreenDark.opacity(0.07))
+                            .fill(Color.homeGreenTint.opacity(0.07))
                     )
                 }
                 .padding(20)

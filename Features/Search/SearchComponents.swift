@@ -45,7 +45,7 @@ struct SearchErrorView: View {
             if let retry {
                 Button("다시 시도") { retry() }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color.myPageSectionGreen)
+                    .tint(Color.accentGreenTint)
                     .controlSize(.small)
             }
         }

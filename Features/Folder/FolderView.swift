@@ -141,7 +141,7 @@ struct FolderCategoryListView: View {
                                 Text("최근 인식 카드")
                                     .font(.system(size: 13, weight: .medium))
                             }
-                            .foregroundStyle(Color.myPageSectionGreen)
+                            .foregroundStyle(Color.accentGreenTint)
                         }
                     }
                     .padding(.leading, 20)
