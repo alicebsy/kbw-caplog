@@ -5,8 +5,10 @@ extension Color {
     // Brand (기존 팔레트 유지)
     static let brandGradientTop    = Color(hex: "#87ABA4")
     static let brandGradientBottom = Color(hex: "#FFFCF1")
-    static let joinButton  = Color(hex: "#AABBBE")
-    static let loginButton = Color(hex: "#5E5858")
+    // joinButton(#AABBBE) / loginButton(#5E5858)은 제거했습니다.
+    // 랜딩의 가입 버튼은 흰 글자 대비 1.99:1로 거의 읽을 수 없었고, 같은 동작인
+    // 가입 폼 버튼(#34A853, 3.06:1)과도 색이 달랐습니다. 인증 화면은 이제
+    // 앱 본체와 같은 homeGreenDark / homeGreenTint를 씁니다.
     static let brandBgTop      = Color(hex: "#FFFCC1")
     static let brandBgBottom   = Color(hex: "#87ABA4")
     static let brandHeader     = Color(hex: "#CFE8E0")
@@ -41,7 +43,10 @@ extension Color {
     static let registerLineGray      = Color(hex: "#E4E8E9")
     static let registerBackground    = Color(hex: "#F5F8F6")
     static let registerTextGray      = Color(hex: "#8D8D8D")
-    static let registerPlaceholder   = Color.adaptive(light: "#8E8E93", dark: "#8E8E93")
+    // 플레이스홀더는 입력 항목이 무엇인지 알려주는 유일한 라벨이라 본문 기준(4.5:1)을 적용합니다.
+    // 인증 화면 그라데이션 위쪽(#87ABA4)에서 #8E8E93은 2.4:1, #6B6B6B도 2.13:1로 미달이라
+    // 그라데이션 어디에 놓여도 4.34:1 이상 나오는 값으로 잡았습니다.
+    static let registerPlaceholder   = Color.adaptive(light: "#3D3D3D", dark: "#B0B0B0")
     static let registerToJoin        = Color(hex: "#BFC2C3")
     static let registerButtonGray    = Color(hex: "#74727F")
     static let registerInactive      = Color(hex: "#FDFDFD")
@@ -69,7 +74,13 @@ extension Color {
 
     // Common aliases
     static let checkMint   = Color(hex: "#8FD694")
-    static let divider     = Color.gray.opacity(0.3)
+    // 입력 필드의 밑줄은 필드 경계를 알려주는 유일한 표시라 3:1이 필요합니다.
+    // 인증 화면 그라데이션 위에서는 회색 계열이 1.5~2.2:1까지 떨어져서
+    // 브랜드 딥그린을 씁니다(그라데이션 어디에 놓여도 최소 4.14:1).
+    static let divider     = Color.adaptive(light: "#144749", dark: "#7FB7B4")
+    // 입력 오류 안내. registerRed(#EA4335)는 흰 면에서도 3.92:1로 AA 미달이고,
+    // 인증 화면 그라데이션 위에서는 더 떨어집니다.
+    static let errorRed    = Color.adaptive(light: "#8C1D18", dark: "#FF8A80")
     static let placeholder = Color(.placeholderText)
 
     // === MyPage 전용 토큰 ===

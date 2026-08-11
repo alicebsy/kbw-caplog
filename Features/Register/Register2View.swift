@@ -30,99 +30,117 @@ struct Register2View: View {
         !isLoading
     }
 
+    /// 비밀번호 확인이 어긋난 걸 가입 버튼을 누른 뒤에야 알 수 있었습니다.
+    private var passwordMismatch: Bool {
+        !confirmPassword.isEmpty && password != confirmPassword
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer(minLength: 12)
+        // 랜딩과 같은 배경·로고·버튼을 씁니다.
+        GeometryReader { proxy in
+            ScrollView {
+                formContent
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 32)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: .center)
+            }
+            .background(AuthBackground())
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .scrollDismissesKeyboard(.interactively)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
 
-                Text("회원가입")
-                    .font(.system(size: 22, weight: .bold))
+    private var formContent: some View {
+        VStack(spacing: 28) {
+            AuthHeader(title: "회원가입", subtitle: "캡처를 카드로 정리해 드릴게요.")
 
-                // 입력 필드
-                VStack(spacing: 20) {
-                    UnderlineTextField(placeholder: "Name", text: $name)
-                        .autocorrectionDisabled(true)
-                        .textInputAutocapitalization(.never)
-                        .textContentType(.name)
+            AuthFieldGroup {
+                UnderlineTextField(placeholder: "이름", text: $name)
+                    .autocorrectionDisabled(true)
+                    .textInputAutocapitalization(.never)
+                    .textContentType(.name)
 
-                    UnderlineTextField(placeholder: "Email Address", text: $email)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.emailAddress)
-                        .textContentType(.emailAddress)
+                UnderlineTextField(placeholder: "이메일", text: $email)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
 
-                    UnderlineTextField(placeholder: "ID", text: $userId)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.asciiCapable)
-                        .textContentType(.username)
+                UnderlineTextField(placeholder: "아이디", text: $userId)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.asciiCapable)
+                    .textContentType(.username)
 
-                    UnderlineTextField(placeholder: "Password", text: $password, isSecure: true)
+                UnderlineTextField(placeholder: "비밀번호", text: $password, isSecure: true)
+                    .textContentType(.password)
+                    .privacySensitive(true)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    UnderlineTextField(placeholder: "비밀번호 확인", text: $confirmPassword, isSecure: true)
                         .textContentType(.password)
                         .privacySensitive(true)
 
-                    UnderlineTextField(placeholder: "Password Confirm", text: $confirmPassword, isSecure: true)
-                        .textContentType(.password)
-                        .privacySensitive(true)
+                    if passwordMismatch {
+                        Text("비밀번호가 일치하지 않습니다.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.errorRed)
+                    }
                 }
-                .padding(.horizontal, 40)
 
                 // 약관 체크
                 CheckBoxView(isChecked: $agreeToTerms)
-                    .padding(.horizontal, 40)
+            }
 
-                // 가입 버튼
-                Button {
-                    guard agreeToTerms else { return show("약관에 동의해야 회원가입이 가능합니다.") }
-                    guard password == confirmPassword else { return show("비밀번호가 일치하지 않습니다.") }
-                    guard ![name, email, userId, password].contains(where: { $0.isEmpty }) else {
-                        return show("모든 필드를 입력해주세요.")
-                    }
-                    isLoading = true
-                    Task {
-                            do {
-                                // 1) 회원가입: 성공만 확인(토큰 X)
-                                try await AuthAPI.register(
-                                    name: name,
-                                    email: email,
-                                    userId: userId,
-                                    password: password
-                                )
-
-                                // 2) 바로 로그인해서 accessToken 받기
-                                let session = try await AuthAPI.login(email: email, password: password)
-
-                                // 3) 토큰 저장 후 다음 화면 이동
-                                SessionStore.save(
-                                    accessToken: session.accessToken,
-                                    refreshToken: session.refreshToken
-                                )
-                                goPerm = true
-                            } catch {
-                                show("회원가입 실패: \(error.localizedDescription)")
-                            }
-                            isLoading = false
-                        }
-                } label: {
-                    Text(isLoading ? "Joining..." : "Join")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 311, height: 45)
-                        .background(Color.registerGreen) // 통일
-                        .cornerRadius(32)
-                        .opacity(canSubmit ? 1.0 : 0.6)
+            // 가입 버튼
+            Button {
+                guard agreeToTerms else { return show("약관에 동의해야 회원가입이 가능합니다.") }
+                guard password == confirmPassword else { return show("비밀번호가 일치하지 않습니다.") }
+                guard ![name, email, userId, password].contains(where: { $0.isEmpty }) else {
+                    return show("모든 필드를 입력해주세요.")
                 }
-                .disabled(!canSubmit)
-                .alert("회원가입", isPresented: $showAlert) {
-                    Button("확인", role: .cancel) {}
-                } message: { Text(alertMessage) }
-                .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
+                isLoading = true
+                Task {
+                    do {
+                        // 1) 회원가입: 성공만 확인(토큰 X)
+                        try await AuthAPI.register(
+                            name: name,
+                            email: email,
+                            userId: userId,
+                            password: password
+                        )
 
-                #if SOCIAL_LOGIN_ENABLED
-                Text("OR")
-                    .font(.system(size: 12))
-                    .foregroundColor(.black)
+                        // 2) 바로 로그인해서 accessToken 받기
+                        let session = try await AuthAPI.login(email: email, password: password)
 
+                        // 3) 토큰 저장 후 다음 화면 이동
+                        SessionStore.save(
+                            accessToken: session.accessToken,
+                            refreshToken: session.refreshToken
+                        )
+                        goPerm = true
+                    } catch {
+                        show("회원가입 실패: \(error.localizedDescription)")
+                    }
+                    isLoading = false
+                }
+            } label: {
+                Text(isLoading ? "가입 중..." : "가입하기")
+                    .authPrimaryButton()
+            }
+            .disabled(isLoading)
+            .alert("회원가입", isPresented: $showAlert) {
+                Button("확인", role: .cancel) {}
+            } message: { Text(alertMessage) }
+            .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
+
+            #if SOCIAL_LOGIN_ENABLED
+            Text("또는")
+                .font(.system(size: 13))
+                .foregroundColor(Color.brandTextMain)
+
+            VStack(spacing: 12) {
                 // Apple
                 SocialLoginButton(provider: "Apple", logo: Image(systemName: "applelogo")) {
                     Task {
@@ -180,16 +198,13 @@ struct Register2View: View {
                         }
                     }
                 }
-                #endif
-
-                Spacer(minLength: 24)
             }
-            .padding(.vertical, 16)
+            #endif
+
+            AuthSwitchPrompt(question: "이미 계정이 있으신가요?", actionTitle: "로그인") {
+                Register3View(appState: appState)
+            }
         }
-        .background(Color.white.ignoresSafeArea())
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .scrollDismissesKeyboard(.interactively)
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func show(_ msg: String) {

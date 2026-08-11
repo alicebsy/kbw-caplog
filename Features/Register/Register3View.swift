@@ -18,66 +18,73 @@ struct Register3View: View {
     private var canLogin: Bool { !email.isEmpty && !password.isEmpty && !isLoading }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer(minLength: 12)
+        // 랜딩과 같은 배경·로고·버튼을 써서 화면이 바뀐 느낌이 나지 않게 합니다.
+        // 내용이 짧으면 세로 가운데, 길어지면(키보드·소셜 버튼) 원래대로 스크롤됩니다.
+        GeometryReader { proxy in
+            ScrollView {
+                formContent
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 32)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: .center)
+            }
+            .background(AuthBackground())
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .scrollDismissesKeyboard(.interactively)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
 
-                Text("로그인")
-                    .font(.system(size: 22, weight: .bold))
+    private var formContent: some View {
+        VStack(spacing: 28) {
+            AuthHeader(title: "로그인", subtitle: "저장해둔 카드를 이어서 볼 수 있어요.")
 
-                // 입력 필드
-                VStack(spacing: 20) {
-                    UnderlineTextField(placeholder: "Email Address", text: $email)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.emailAddress)
-                        .textContentType(.username)
+            AuthFieldGroup {
+                UnderlineTextField(placeholder: "이메일", text: $email)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.username)
 
-                    UnderlineTextField(placeholder: "Password", text: $password, isSecure: true)
-                        .textContentType(.password)
-                        .privacySensitive(true)
+                UnderlineTextField(placeholder: "비밀번호", text: $password, isSecure: true)
+                    .textContentType(.password)
+                    .privacySensitive(true)
+            }
+
+            // 로그인 버튼
+            Button {
+                guard !email.isEmpty && !password.isEmpty else {
+                    return show("이메일과 비밀번호를 입력해주세요.")
                 }
-                .padding(.horizontal, 40)
-
-                // 로그인 버튼
-                Button {
-                    guard !email.isEmpty && !password.isEmpty else {
-                        return show("이메일과 비밀번호를 입력해주세요.")
+                isLoading = true
+                Task {
+                    do {
+                        let session = try await AuthAPI.login(email: email, password: password)
+                        SessionStore.save(
+                            accessToken: session.accessToken,
+                            refreshToken: session.refreshToken
+                        )
+                        goPerm = true
+                    } catch {
+                        show("로그인 실패: \(error.localizedDescription)")
                     }
-                    isLoading = true
-                    Task {
-                        do {
-                            let session = try await AuthAPI.login(email: email, password: password)
-                            SessionStore.save(
-                                accessToken: session.accessToken,
-                                refreshToken: session.refreshToken
-                            )
-                            goPerm = true
-                        } catch {
-                            show("로그인 실패: \(error.localizedDescription)")
-                        }
-                        isLoading = false
-                    }
-                } label: {
-                    Text(isLoading ? "Logging in..." : "Login")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 311, height: 45)
-                        .background(Color.homeGreenDark) // 통일
-                        .cornerRadius(32)
-                        .opacity(canLogin ? 1.0 : 0.6)
+                    isLoading = false
                 }
-                .disabled(!canLogin)
-                .alert("로그인", isPresented: $showAlert) {
-                    Button("확인", role: .cancel) {}
-                } message: { Text(alertMessage) }
-                .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
+            } label: {
+                Text(isLoading ? "로그인 중..." : "로그인")
+                    .authPrimaryButton()
+            }
+            .disabled(isLoading)
+            .alert("로그인", isPresented: $showAlert) {
+                Button("확인", role: .cancel) {}
+            } message: { Text(alertMessage) }
+            .navigationDestination(isPresented: $goPerm) { Register4_1View(appState: appState) }
 
-                #if SOCIAL_LOGIN_ENABLED
-                Text("OR")
-                    .font(.system(size: 12))
-                    .foregroundColor(.black)
+            #if SOCIAL_LOGIN_ENABLED
+            Text("또는")
+                .font(.system(size: 13))
+                .foregroundColor(Color.brandTextMain)
 
+            VStack(spacing: 12) {
                 // Apple
                 SocialLoginButton(provider: "Apple", logo: Image(systemName: "applelogo")) {
                     Task {
@@ -135,21 +142,16 @@ struct Register3View: View {
                         }
                     }
                 }
-                #endif
-
-                Text("Forgot Password?")
-                    .font(.system(size: 14, weight: .semibold))
-                    .underline()
-                    .foregroundColor(.gray)
-
-                Spacer(minLength: 24)
             }
-            .padding(.vertical, 16)
+            #endif
+
+            // 아래가 텅 비어 있던 자리에 실제로 쓸모 있는 다음 행동을 둡니다.
+            // ("Forgot Password?"는 밑줄까지 그어 눌리는 것처럼 보였지만
+            //  아무 동작도 없는 Text였습니다. 재설정 기능이 생기면 여기에 넣어주세요.)
+            AuthSwitchPrompt(question: "아직 계정이 없으신가요?", actionTitle: "회원가입") {
+                Register2View(appState: appState)
+            }
         }
-        .background(Color.white.ignoresSafeArea())
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .scrollDismissesKeyboard(.interactively)
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func show(_ msg: String) {

@@ -20,7 +20,11 @@ struct UnderlineTextField: View {
                     .foregroundColor(.primary)
                     .autocorrectionDisabled()
             }
-            Divider().background(Color.divider)
+            // Divider()에 .background를 붙여도 색이 바뀌지 않습니다(자체 헤어라인을 그림).
+            // 실제 화면에서 #ABACB0(2.17:1)로 찍혀서 명시적인 1pt 선으로 바꿉니다.
+            Rectangle()
+                .fill(Color.divider)
+                .frame(height: 1)
         }
     }
 }

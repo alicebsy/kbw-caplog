@@ -31,34 +31,33 @@ struct Register1View: View {
                 }
                 
                 // Join / Log in
-                VStack(spacing: 16) {
+                // 주 동작(회원가입)은 채움, 보조 동작(로그인)은 테두리형으로 위계를 둡니다.
+                // 예전에는 주 동작이 가장 연한 색(#AABBBE)이라 위계가 뒤집혀 있었습니다.
+                VStack(spacing: 12) {
                     NavigationLink(destination: Register2View(appState: appState)) {
-                        Text("Join")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 343, height: 49)
-                            .background(Color.joinButton)
-                            .cornerRadius(16)
+                        Text("회원가입").authPrimaryButton()
                     }
                     NavigationLink(destination: Register3View(appState: appState)) {
-                        Text("Log in")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 343, height: 49)
-                            .background(Color.loginButton)
-                            .cornerRadius(16)
+                        Text("로그인").authSecondaryButton()
                     }
                 }
-                
+                .padding(.horizontal, 24)
+
                 // 약관 안내
-                Text("By joining Caplog, you agreed to\nour Terms of service and Privacy policy.")
+                // 실제 동의는 가입 폼(Register2)의 필수 체크박스에서 받습니다.
+                // "가입 시 동의하게 됩니다"라고 쓰면 그 체크박스와 말이 어긋납니다.
+                // 색은 brandTextSub(#6B6B6B)이면 그라데이션 위쪽에서 2.13:1까지
+                // 떨어지므로, 어디에 놓여도 견디는 본문색(최소 6.05:1)을 씁니다.
+                Text("가입 단계에서 이용약관과 개인정보처리방침 동의가 필요합니다.")
                     .font(.system(size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.brandTextMain)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
                 #if DEBUG
                 // ✅ 디버그 버튼 (개발 모드에서만 표시)
+                // 주 동작보다 눈에 덜 띄도록 테두리형으로 두고, 개발용임을 색으로 구분합니다.
+                // #B35A00은 그라데이션 위에서 1.92:1까지 떨어져서 더 진한 갈주황을 씁니다.
                 Button {
                     showDebugView = true
                 } label: {
@@ -66,26 +65,24 @@ struct Register1View: View {
                         Image(systemName: "ladybug.fill")
                         Text("OCR/Vision/GPT-4 결과 확인")
                     }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 343, height: 49)
-                    .background(Color.orange.opacity(0.8))
-                    .cornerRadius(16)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color(hex: "#7A3D00"))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color(hex: "#7A3D00").opacity(0.5), lineWidth: 1)
+                    )
                 }
-                .padding(.top, 20)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
                 #endif
                 
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [.brandGradientTop, .brandGradientBottom]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            )
+            // 원래의 틸→크림 그라데이션을 유지합니다.
+            .background(AuthBackground())
             .toolbar(.hidden, for: .navigationBar)
             
             // ✅ OCRResultView로 이동
