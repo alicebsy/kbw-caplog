@@ -156,6 +156,29 @@ public class ChatService {
         chatRoomRepository.save(room);
     }
 
+    /**
+     * 회원 탈퇴용. 이 사용자를 모든 방에서 빼고 그가 보낸 메시지를 지웁니다.
+     *
+     * <p>혼자 남은 방은 방과 메시지를 통째로 지우고, 다른 사람이 남아 있는 방은
+     * 방을 유지합니다. 다만 탈퇴한 사람이 보낸 메시지는 그의 개인정보이므로
+     * 남은 사람 화면에서도 사라집니다.
+     */
+    @Transactional
+    public void purgeUser(Long userNo) {
+        for (ChatRoom room : chatRoomRepository.findRoomsByParticipantUserNo(userNo)) {
+            room.getParticipants().removeIf(participant -> participant.getUserNo().equals(userNo));
+
+            if (room.getParticipants().isEmpty()) {
+                messageRepository.deleteByChatRoomId(room.getId());
+                chatRoomRepository.delete(room);
+                continue;
+            }
+
+            messageRepository.deleteByChatRoomIdAndSenderUserNo(room.getId(), userNo);
+            chatRoomRepository.save(room);
+        }
+    }
+
     private String buildRoomTitle(ChatRoom room, Long currentUserNo) {
         List<String> names = room.getParticipants().stream()
                 .filter(p -> !p.getUserNo().equals(currentUserNo))

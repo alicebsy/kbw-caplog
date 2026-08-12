@@ -15,6 +15,7 @@ import java.util.List;
  * 사용자 프로필 및 친구 API (JWT Bearer 필요)
  * - GET /api/users/me: 내 프로필 조회
  * - PUT /api/users/me: 프로필 수정
+ * - DELETE /api/users/me: 회원 탈퇴 (계정과 연관 데이터 삭제)
  * - GET /api/users/friends: 친구 목록
  * - POST /api/users/friends: 친구 추가 (body: { "userId": "친구userId" })
  * - DELETE /api/users/friends/{userId}: 친구 삭제
@@ -26,6 +27,7 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final FriendService friendService;
+    private final AccountDeletionService accountDeletionService;
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileDto> getMe(Authentication auth) {
@@ -58,6 +60,18 @@ public class UserController {
                 .map(UserProfileDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(Authentication auth) {
+        Long userNo = resolveUserNo(auth);
+        if (userNo == null) return ResponseEntity.status(401).build();
+        try {
+            accountDeletionService.deleteAccount(userNo);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/friends")

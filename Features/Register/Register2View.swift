@@ -19,6 +19,20 @@ struct Register2View: View {
     @State private var alertMessage = ""
     @State private var goPerm = false
     @State private var isLoading = false
+    /// 동의 문구에서 열어보는 문서. nil이면 시트를 닫습니다.
+    @State private var legalDocumentToShow: LegalDocumentKind?
+
+    private enum LegalDocumentKind: String, Identifiable {
+        case privacy, terms
+        var id: String { rawValue }
+
+        var document: LegalDocument {
+            switch self {
+            case .privacy: return LegalDocuments.privacyPolicy
+            case .terms:   return LegalDocuments.termsOfService
+            }
+        }
+    }
 
     private var canSubmit: Bool {
         !name.isEmpty &&
@@ -48,6 +62,9 @@ struct Register2View: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $legalDocumentToShow) { kind in
+                LegalDocumentSheet(document: kind.document)
+            }
         }
     }
 
@@ -90,7 +107,12 @@ struct Register2View: View {
                 }
 
                 // 약관 체크
-                CheckBoxView(isChecked: $agreeToTerms)
+                CheckBoxView(isChecked: $agreeToTerms) { link in
+                    switch link {
+                    case .terms:   legalDocumentToShow = .terms
+                    case .privacy: legalDocumentToShow = .privacy
+                    }
+                }
             }
 
             // 가입 버튼

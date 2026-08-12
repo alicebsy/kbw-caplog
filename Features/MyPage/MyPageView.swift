@@ -11,6 +11,22 @@ struct MyPageView: View {
     @State private var showResetConfirm = false
     @State private var isImportingScreenshots = false
     @State private var showLogoutConfirm = false
+    @State private var showAccountDeletion = false
+    /// 띄울 법적 문서. nil이면 시트를 닫습니다.
+    @State private var legalDocumentToShow: LegalDocumentKind?
+
+    /// 시트 바인딩에 쓸 수 있도록 문서 종류를 Identifiable로 감쌉니다.
+    private enum LegalDocumentKind: String, Identifiable {
+        case privacy, terms
+        var id: String { rawValue }
+
+        var document: LegalDocument {
+            switch self {
+            case .privacy: return LegalDocuments.privacyPolicy
+            case .terms:   return LegalDocuments.termsOfService
+            }
+        }
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) { content }
@@ -46,6 +62,12 @@ struct MyPageView: View {
                 }
             }
             .sheet(isPresented: $showPasswordSheet) { MyPagePasswordChangeView() }
+            .sheet(isPresented: $showAccountDeletion) {
+                MyPageAccountDeletionView(vm: vm)
+            }
+            .sheet(item: $legalDocumentToShow) { kind in
+                LegalDocumentSheet(document: kind.document)
+            }
     }
 
     private var content: some View {
@@ -140,6 +162,12 @@ struct MyPageView: View {
                 allowNotification: $vm.allowNotification,
                 onLocationToggle: vm.toggleLocationPermission,
                 onNotificationToggle: vm.toggleNotificationPermission
+            )
+
+            MyPageLegalSection(
+                onOpenPrivacyPolicy: { legalDocumentToShow = .privacy },
+                onOpenTerms: { legalDocumentToShow = .terms },
+                onDeleteAccount: { showAccountDeletion = true }
             )
 
             // 로그아웃 버튼 (맨 아래)

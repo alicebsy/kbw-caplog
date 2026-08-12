@@ -15,6 +15,9 @@ public interface ScreenshotRepository extends JpaRepository<Screenshot, Long> {
 
     Optional<Screenshot> findByIdAndUserNo(Long id, Long userNo);
 
+    /** 회원 탈퇴용. 해당 계정의 카드를 모두 지웁니다. */
+    void deleteByUserNo(Long userNo);
+
     @Query(value = """
     SELECT
       s.screenshot_id    AS id,

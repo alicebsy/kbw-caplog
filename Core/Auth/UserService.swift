@@ -147,4 +147,18 @@ struct UserService {
         let body = Payload(currentPassword: current, newPassword: new)
         try await client.requestVoid("PUT", path: Endpoints.changePassword, body: body, authorized: true)
     }
+
+    /// 회원 탈퇴 (JWT Bearer 필요)
+    /// - DELETE /api/users/me
+    ///
+    /// 계정과 카드·친구 관계·채팅 메시지를 서버에서 지웁니다. 되돌릴 수 없습니다.
+    func deleteAccount() async throws {
+        if useMockData {
+            print("🔧 Mock: deleteAccount() - 탈퇴 성공")
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 딜레이
+            return
+        }
+
+        try await client.requestVoid("DELETE", path: Endpoints.deleteMe, authorized: true)
+    }
 }

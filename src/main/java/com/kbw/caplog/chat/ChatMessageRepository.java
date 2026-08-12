@@ -21,4 +21,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     );
 
     void deleteByChatRoomId(Long chatRoomId);
+
+    /** 회원 탈퇴용. 방은 남기고 탈퇴한 사람이 보낸 메시지만 지웁니다. */
+    void deleteByChatRoomIdAndSenderUserNo(Long chatRoomId, Long senderUserNo);
 }

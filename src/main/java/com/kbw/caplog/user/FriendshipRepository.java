@@ -17,4 +17,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
     void deleteByOwnerUserNoAndFriendUserNo(Long ownerUserNo, Long friendUserNo);
 
     boolean existsByOwnerUserNoAndFriendUserNo(Long ownerUserNo, Long friendUserNo);
+
+    /** 회원 탈퇴용. 내가 가진 관계와 남이 나를 가진 관계를 한 번에 지웁니다. */
+    void deleteByOwnerUserNoOrFriendUserNo(Long ownerUserNo, Long friendUserNo);
 }

@@ -183,6 +183,34 @@ final class MyPageViewModel: ObservableObject {
         NotificationCenter.default.post(name: .logoutCompleted, object: nil)
     }
 
+    /// 회원 탈퇴: 서버에서 계정을 지운 뒤 이 기기의 흔적도 정리합니다.
+    ///
+    /// 서버 삭제가 실패하면 로컬을 건드리지 않습니다. 로컬만 지워지면 사용자는 탈퇴한
+    /// 줄 알지만 서버에는 계정이 남아 있는 상태가 되기 때문입니다.
+    ///
+    /// - Returns: 성공하면 nil, 실패하면 사용자에게 보여줄 문구.
+    ///   `errorMessage`를 쓰지 않는 이유는 그 값이 `MyPageModifier`의 알림을 띄우는데,
+    ///   탈퇴 시트가 열린 상태에서 알림이 겹쳐 뜨면 시트 안 문구와 중복되기 때문입니다.
+    func deleteAccount() async -> String? {
+        guard !isLoading else { return nil }
+        isLoading = true
+        do {
+            try await userService.deleteAccount()
+        } catch {
+            print("❌ 회원 탈퇴 실패: \(error)")
+            isLoading = false
+            return "탈퇴에 실패했습니다. 네트워크 연결을 확인하고 다시 시도해 주세요."
+        }
+
+        // 기기에만 있는 카드·썸네일·스크린샷 처리 기록까지 지웁니다.
+        CardManager.shared.clearLocalCardsAndResetScreenshotState()
+        Self.clearProfileCache()
+        SessionStore.clear()
+        isLoading = false
+        NotificationCenter.default.post(name: .logoutCompleted, object: nil)
+        return nil
+    }
+
     /// UserDefaults에 저장된 프로필 캐시 삭제 (로그아웃 시 호출)
     static func clearProfileCache() {
         let keys = [
