@@ -13,24 +13,51 @@ struct ShareFriendSelectionView: View {
 
     var body: some View {
         NavigationStack {
-            List(vm.friends) { friend in
-                // 선택 가능한 행
-                SelectableFriendRow(
-                    friend: friend,
-                    isSelected: selectedFriendIDs.contains(friend.id)
-                )
-                .onTapGesture {
-                    // 탭할 때마다 Set에 추가/제거
-                    if selectedFriendIDs.contains(friend.id) {
-                        selectedFriendIDs.remove(friend.id)
+            Group {
+                // 예전엔 List 하나뿐이라, 친구가 없거나 목록을 못 불러오면
+                // 완전히 빈 흰 화면에 "취소 / 만들기"만 남았습니다.
+                if vm.friends.isEmpty {
+                    if let error = vm.friendErrorMessage {
+                        ContentUnavailableView {
+                            Label("친구 목록을 불러오지 못했어요", systemImage: "wifi.exclamationmark")
+                        } description: {
+                            Text(error)
+                        } actions: {
+                            Button("다시 시도") { Task { await vm.reloadFriends() } }
+                                .foregroundStyle(Color.pointBlue)
+                        }
                     } else {
-                        selectedFriendIDs.insert(friend.id)
+                        ContentUnavailableView {
+                            Label("아직 친구가 없어요", systemImage: "person.2")
+                        } description: {
+                            Text("친구 탭에서 친구를 먼저 추가해 주세요.")
+                        }
                     }
+                } else {
+                    List(vm.friends) { friend in
+                        // 선택 가능한 행
+                        SelectableFriendRow(
+                            friend: friend,
+                            isSelected: selectedFriendIDs.contains(friend.id)
+                        )
+                        .onTapGesture {
+                            // 탭할 때마다 Set에 추가/제거
+                            if selectedFriendIDs.contains(friend.id) {
+                                selectedFriendIDs.remove(friend.id)
+                            } else {
+                                selectedFriendIDs.insert(friend.id)
+                            }
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                    }
+                    .listStyle(.plain)
+                    .refreshable { await vm.reloadFriends() }
                 }
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
             }
-            .listStyle(.plain)
+            // 목록 로드가 실패한 상태로 이 시트를 열면 계속 비어 보였습니다.
+            // 열릴 때 한 번 다시 불러옵니다.
+            .task { await vm.reloadFriends() }
             .navigationTitle("대화 상대 선택")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

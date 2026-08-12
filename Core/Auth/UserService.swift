@@ -42,8 +42,13 @@ struct UserService {
                 avatarURL: nil
             )
         }
-        
-        return try await client.request("GET", path: Endpoints.me)
+
+        let profile: UserProfile = try await client.request("GET", path: Endpoints.me)
+        // userId를 여기서 캐시합니다. 예전에는 마이페이지 화면만 이 값을 저장해서,
+        // 로그인 후 마이페이지를 안 들르고 채팅방에 들어가면 내 아이디를 몰라
+        // 내가 보낸 메시지까지 상대방 것으로 그려졌습니다.
+        UserDefaults.standard.set(profile.userId, forKey: "userProfile_userId")
+        return profile
     }
 
     /// 프로필 수정 (JWT Bearer 필요)

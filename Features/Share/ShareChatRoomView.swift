@@ -6,18 +6,23 @@ struct ChatRoomView: View {
     
     @State private var inputText = ""
     @Environment(\.dismiss) var dismiss
-    // 현재 로그인한 유저의 userId (UserDefaults에 저장된 값 사용)
-    private let meId: String = {
-        UserDefaults.standard.string(forKey: "userProfile_userId") ?? ""
-    }()
-    
+    /// 현재 로그인한 유저의 userId.
+    /// 예전에는 뷰가 만들어지는 순간 UserDefaults에서 한 번 읽어 저장해뒀는데,
+    /// 프로필이 나중에 도착하면 계속 빈 값이라 내 메시지도 남의 것으로 보였습니다.
+    private var meId: String { vm.currentUserId }
+
     @State private var showCardSelection = false
     @State private var showLeaveConfirm = false
     @State private var isInitialLoading = true
     @State private var isSendingMessage = false
     @State private var isSendingCards = false
     @State private var isLeavingChat = false
+    /// 메시지 보내기·나가기처럼 사용자가 방금 누른 동작의 실패 (alert로 알림)
     @State private var operationError: String?
+    /// 메시지 목록을 불러오지 못한 상태 (화면 안에 남겨두고 다시 시도를 받음).
+    /// 예전엔 둘을 한 변수로 썼는데, alert가 뜨면서 "다시 시도" 버튼을 덮고
+    /// alert를 닫으면 값이 지워져 버튼까지 같이 사라졌습니다.
+    @State private var loadError: String?
     
     // 최초 진입 후 스크롤 한번만 강제 이동
     @State private var hasInitialScrolled = false
@@ -31,18 +36,26 @@ struct ChatRoomView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.top, 80)
                     } else if groupedMessages.isEmpty {
-                        ContentUnavailableView {
-                            Label("아직 메시지가 없어요", systemImage: "bubble.left.and.bubble.right")
-                        } description: {
-                            Text(operationError ?? "첫 메시지를 보내 대화를 시작해 보세요.")
-                        } actions: {
-                            if operationError != nil {
+                        // 못 불러온 것과 아직 아무도 말을 안 한 것은 다릅니다.
+                        if let loadError {
+                            ContentUnavailableView {
+                                Label("메시지를 불러오지 못했어요", systemImage: "wifi.exclamationmark")
+                            } description: {
+                                Text(loadError)
+                            } actions: {
                                 Button("다시 시도") {
                                     Task { await reloadMessages() }
                                 }
                             }
+                            .padding(.top, 48)
+                        } else {
+                            ContentUnavailableView {
+                                Label("아직 메시지가 없어요", systemImage: "bubble.left.and.bubble.right")
+                            } description: {
+                                Text("첫 메시지를 보내 대화를 시작해 보세요.")
+                            }
+                            .padding(.top, 48)
                         }
-                        .padding(.top, 48)
                     } else {
                         LazyVStack(spacing: 0) {
                             ForEach(groupedMessages) { group in
@@ -99,7 +112,7 @@ struct ChatRoomView: View {
                 .task(id: thread.id) {
                     let loaded = await vm.openThread(thread.id)
                     isInitialLoading = false
-                    operationError = loaded ? nil : vm.errorMessage
+                    loadError = loaded ? nil : vm.errorMessage
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         if let lastId = vm.messagesByThread[thread.id]?.last?.id {
@@ -270,7 +283,7 @@ struct ChatRoomView: View {
         isInitialLoading = true
         let loaded = await vm.openThread(thread.id)
         isInitialLoading = false
-        operationError = loaded ? nil : vm.errorMessage
+        loadError = loaded ? nil : vm.errorMessage
     }
     
     // MARK: - 보낸 사람 정보
@@ -317,23 +330,30 @@ struct ChatRoomView: View {
     }
     
     // MARK: - 날짜 관련
-    private func formatDate(_ date: Date) -> String {
+    // DateFormatter를 만드는 건 꽤 비쌉니다. 예전엔 아래 세 함수가 호출될 때마다
+    // 새로 만들었는데, groupedMessages가 메시지 하나당 한 번씩 부르는 데다
+    // inputText가 이 화면의 @State라 글자를 칠 때마다 전부 다시 돌았습니다.
+    private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy년 M월 d일 EEEE"
-        return f.string(from: date)
-    }
-    private func parseDate(_ dateString: String) -> Date {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "yyyy년 M월 d일 EEEE"
-        return f.date(from: dateString) ?? Date()
-    }
-    private func formatTime(_ date: Date) -> String {
+        return f
+    }()
+    private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "a h:mm"
-        return f.string(from: date)
+        return f
+    }()
+
+    private func formatDate(_ date: Date) -> String {
+        Self.dayFormatter.string(from: date)
+    }
+    private func parseDate(_ dateString: String) -> Date {
+        Self.dayFormatter.date(from: dateString) ?? Date()
+    }
+    private func formatTime(_ date: Date) -> String {
+        Self.timeFormatter.string(from: date)
     }
 }
 
@@ -392,9 +412,10 @@ struct MessageRow: View {
             VStack(alignment: isMine ? .trailing : .leading, spacing: 4) {
                 
                 if !isMine {
+                    // .secondary는 흰 면에서 3.26:1이라 12pt 글자로는 AA 미달입니다.
                     Text(senderInfo.name)
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                         .padding(.horizontal, 4)
                 }
                 
@@ -404,7 +425,7 @@ struct MessageRow: View {
                         if isMine {
                             Text(timeText)
                                 .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                                 .padding(.bottom, 2)
                         }
                         
@@ -413,7 +434,7 @@ struct MessageRow: View {
                         if !isMine {
                             Text(timeText)
                                 .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                                 .padding(.bottom, 2)
                         }
                     }
@@ -422,7 +443,7 @@ struct MessageRow: View {
                         if isMine {
                             Text(timeText)
                                 .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                                 .padding(.bottom, 2)
                         }
                         
@@ -442,7 +463,7 @@ struct MessageRow: View {
                         if !isMine {
                             Text(timeText)
                                 .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                                 .padding(.bottom, 2)
                         }
                     }

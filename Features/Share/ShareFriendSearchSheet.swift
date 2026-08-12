@@ -9,6 +9,11 @@ struct ShareFriendSearchSheet: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    /// 아이디를 아직 안 적었거나 요청을 보내는 중이면 버튼을 잠급니다.
+    private var isDisabled: Bool {
+        keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
@@ -16,7 +21,8 @@ struct ShareFriendSearchSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("추가할 친구의 ID를 입력하세요")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        // .secondary는 흰 면에서 3.26:1이라 본문 기준 AA에 못 미칩니다.
+                        .foregroundColor(Color.brandTextSub)
                     
                     TextField("예: friend_id", text: $keyword)
                         .textFieldStyle(.roundedBorder)
@@ -27,35 +33,39 @@ struct ShareFriendSearchSheet: View {
                 .padding(.top, 16)
                 
                 // 안내 문구
-                Text("정확한 친구 ID를 입력하면 서버에 친구 추가 요청을 보낼게요.")
+                Text("정확한 친구 ID를 입력하면 서버에 친구 추가 요청을 보낼게요.\n내 ID는 마이페이지에서 확인할 수 있어요.")
                     .font(.footnote)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.brandTextSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                
+
                 Spacer()
-                
+
                 // 추가 버튼
                 Button {
                     Task { await addFriend() }
                 } label: {
                     Text(isLoading ? "추가 중..." : "친구 추가")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(isDisabled ? Color.brandTextSub : .white)
+                        // 예전엔 비활성일 때도 흰 글씨에 옅은 회색 배경이라
+                        // 버튼 이름이 거의 읽히지 않았습니다.
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
-                        .background(keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading
-                                    ? Color.gray.opacity(0.5)
+                        .background(isDisabled
+                                    ? Color(uiColor: .tertiarySystemGroupedBackground)
                                     : Color.myPageSectionGreen)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
-                .disabled(keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                .disabled(isDisabled)
             }
             .navigationTitle("친구 추가")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                // 닫기는 취소 계열입니다. 예전엔 확인 위치(.confirmationAction)에 있어서
+                // 보이스오버가 결정 버튼처럼 읽었습니다.
+                ToolbarItem(placement: .cancellationAction) {
                     Button("닫기") { dismiss() }
                 }
             }
