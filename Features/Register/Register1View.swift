@@ -13,9 +13,6 @@ struct Register1View: View {
     @State private var gptResult: String?
     @State private var showPhotoPicker = false
     @State private var navigateToResult = false
-    
-    // ✅ 디버그 뷰 상태
-    @State private var showDebugView = false
 
     var body: some View {
         NavigationStack {
@@ -54,30 +51,6 @@ struct Register1View: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                #if DEBUG
-                // ✅ 디버그 버튼 (개발 모드에서만 표시)
-                // 주 동작보다 눈에 덜 띄도록 테두리형으로 두고, 개발용임을 색으로 구분합니다.
-                // #B35A00은 그라데이션 위에서 1.92:1까지 떨어져서 더 진한 갈주황을 씁니다.
-                Button {
-                    showDebugView = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "ladybug.fill")
-                        Text("OCR/Vision/GPT-4 결과 확인")
-                    }
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color(hex: "#7A3D00"))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(Color(hex: "#7A3D00").opacity(0.5), lineWidth: 1)
-                    )
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                #endif
-                
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -106,11 +79,6 @@ struct Register1View: View {
                 gptResult: $gptResult,
                 navigateToResult: $navigateToResult
             )
-        }
-        
-        // ✅ 디버그 뷰 시트
-        .sheet(isPresented: $showDebugView) {
-            ScreenshotDebugView()
         }
     }
 }

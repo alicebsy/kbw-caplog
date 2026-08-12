@@ -1,6 +1,7 @@
 package com.kbw.caplog.auth.security;
 
 import org.springframework.http.HttpMethod;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -50,6 +51,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll() // 로그인/회원가입/refresh/logout은 인증 없이 허용
 
                         .anyRequest().authenticated()   // 그 외는 인증 필요
+                )
+
+                // 인증이 없거나 만료된 요청은 401로 답합니다.
+                // 기본값은 403인데, iOS 클라이언트는 401에서만 토큰을 갱신하고 재시도합니다.
+                // 그래서 액세스 토큰이 만료되면 앱이 로그인 상태인 채로 모든 요청이 막혀
+                // "최신 카드를 불러오지 못했다"는 화면에서 회복하지 못했습니다.
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, deniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
                 )
 
                 // 필터 체인에 JWT 필터 삽입
