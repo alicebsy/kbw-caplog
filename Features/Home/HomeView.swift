@@ -264,11 +264,7 @@ struct HomeView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            // 하단 탭바(커스텀) 높이만큼 여백을 줘서 콘텐츠가 가리지 않도록
-            Color.clear
-                .frame(height: 76)
-        }
+        .caplogTabBarInset()
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.inline)

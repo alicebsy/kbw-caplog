@@ -135,6 +135,7 @@ struct SearchView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color(uiColor: .systemGroupedBackground))
         }
+        .caplogTabBarInset()
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)

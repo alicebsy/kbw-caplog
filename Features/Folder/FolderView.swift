@@ -26,11 +26,7 @@ struct FolderView: View {
                     }
                 }
         }
-        // 하단 커스텀 탭바 높이만큼 여백을 둬서 폴더 콘텐츠가 가려지지 않도록 처리
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear
-                .frame(height: 76)
-        }
+        .caplogTabBarInset()
         .onAppear {
             Task {
                 await manager.loadAllCards()

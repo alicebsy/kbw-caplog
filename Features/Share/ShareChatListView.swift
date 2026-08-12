@@ -117,7 +117,8 @@ struct ShareChatListView: View {
         } message: {
             Text(chatCreationError ?? "")
         }
-        // 하단 탭바와 겹치지 않도록 safeAreaInset + 탭바 높이만큼 여백
+        // 탭바 위쪽 여백은 AppNavigation이 이미 확보해뒀으므로,
+        // 이 버튼은 그 위에 바로 얹기만 하면 됩니다.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()
@@ -137,7 +138,7 @@ struct ShareChatListView: View {
                 .padding(.trailing, 20)
             }
             .padding(.top, 8)
-            .padding(.bottom, 72) // 탭바(64) + 여유
+            .padding(.bottom, CaplogTabBarMetrics.contentInset)
         }
     }
     
