@@ -41,6 +41,65 @@ struct UnifiedCardView: View {
             return tag
         }
     }
+
+    // MARK: - 공통 요소
+
+    /// 카테고리 알약의 배경(카드 면 위에 카테고리 색을 11% 얹은 실제 색).
+    private var categoryPillSurface: Color {
+        Color(uiColor: .secondarySystemGroupedBackground)
+            .composited(with: card.category.color, fraction: 0.11)
+    }
+
+    /// 알약 글자색. 예전에는 배경이 카테고리 색인데 글자만 초록(homeGreenTint) 고정이라
+    /// 정보(파랑)·콘텐츠(앰버) 카드에서 색이 서로 따로 놀았습니다.
+    private var categoryPillText: Color {
+        card.category.color.contrasting(on: categoryPillSurface)
+    }
+
+    /// 카테고리 · 하위분류 알약
+    private func categoryPill(fontSize: CGFloat) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: card.subcategorySymbolName)
+                .font(.system(size: fontSize - 2, weight: .semibold))
+                .accessibilityHidden(true)
+            Text(card.category.displayName + " · " + card.subcategory)
+                .lineLimit(1)
+        }
+        .font(.system(size: fontSize, weight: .semibold))
+        .foregroundStyle(categoryPillText)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(card.category.color.opacity(0.11))
+        .clipShape(Capsule())
+    }
+
+    /// 위치/만료일 줄에 쓰는 아이콘. 알약과 같은 심볼을 또 쓰면 한 카드에 같은 그림이 두 번 나옵니다.
+    private var contextualSymbolName: String {
+        switch card.subcategory {
+        case "쿠폰", "공고", "취업": return "clock"
+        default: return "mappin.and.ellipse"
+        }
+    }
+
+    private var contextualInfo: String {
+        card.contextualInfoText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 아이콘 + 위치/만료일 한 줄. 내용이 없으면 아무것도 그리지 않습니다.
+    @ViewBuilder
+    private func contextualInfoLine(fontSize: CGFloat) -> some View {
+        if !contextualInfo.isEmpty {
+            HStack(spacing: 4) {
+                Image(systemName: contextualSymbolName)
+                    .font(.system(size: fontSize - 1, weight: .medium))
+                    .accessibilityHidden(true)
+                Text(contextualInfo)
+                    .lineLimit(1)
+            }
+            .font(.system(size: fontSize))
+            .foregroundStyle(Color.brandTextSub)
+        }
+    }
     
     var body: some View {
         Group {
@@ -107,54 +166,46 @@ struct UnifiedCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 
                 VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 5) {
-                        Image(systemName: card.subcategorySymbolName)
-                            .font(.system(size: 10, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text(card.category.displayName + " · " + card.subcategory)
-                            .lineLimit(1)
-                    }
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.homeGreenTint)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(card.category.color.opacity(0.11))
-                    .clipShape(Capsule())
+                    categoryPill(fontSize: 12)
 
                     Text(card.title)
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(Color.brandTextMain)
                         .lineLimit(1)
                 }
-                
+
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 14))
                         .foregroundStyle(Color.homeGraySub)
                         .lineLimit(2)
                 }
-                
-                HStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                            .overlay(
-                                Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                            )
-                        
-                        Image(systemName: card.subcategorySymbolName)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(card.category.color)
-                            .accessibilityHidden(true)
+
+                // 예전엔 위치가 비어 있어도 28pt 원형 아이콘만 덩그러니 남아서
+                // 홈 화면에 정체 모를 동그라미가 떠 있었습니다.
+                if !contextualInfo.isEmpty {
+                    HStack(spacing: 8) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .overlay(
+                                    Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                )
+
+                            Image(systemName: contextualSymbolName)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(card.category.color)
+                                .accessibilityHidden(true)
+                        }
+                        .frame(width: 28, height: 28)
+
+                        Text(contextualInfo)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.homeGraySub)
+                            .lineLimit(1)
                     }
-                    .frame(width: 28, height: 28)
-                    
-                    Text(card.contextualInfoText)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.homeGraySub)
-                        .lineLimit(1)
                 }
-                
+
                 keywordChips(maxVisible: 2)
             }
             .contentShape(Rectangle()) // 탭 영역 명확하게 지정
@@ -167,8 +218,7 @@ struct UnifiedCardView: View {
             
             // RIGHT: 이미지 + 버튼
             VStack(spacing: 0) {
-                CardThumbnailView(thumbnailId: card.thumbnailName)
-                    .scaledToFill()
+                CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
                     .frame(width: 80, height: 90)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -240,8 +290,7 @@ struct UnifiedCardView: View {
     // MARK: - Horizontal Style
     private var horizontalStyle: some View {
         VStack(alignment: .leading, spacing: 6) {
-            CardThumbnailView(thumbnailId: card.thumbnailName)
-                .scaledToFill()
+            CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
                 .frame(height: 160)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -277,41 +326,30 @@ struct UnifiedCardView: View {
     // MARK: - Compact Style
     private var compactStyle: some View {
         HStack(alignment: .top, spacing: 12) {
-            
+
+            // 예전엔 카테고리·요약·위치·날짜 4줄이 전부 .secondary(흰 면에서 3.26:1)라
+            // 어디가 중요한지 구분이 안 됐습니다. 알약 하나 + 본문 대비 통과 색으로 위계를 줍니다.
             VStack(alignment: .leading, spacing: 8) {
-                Text(card.category.displayName + " · " + card.subcategory)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                
+                categoryPill(fontSize: 12)
+
                 Text(card.title)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.primary)
-                
+                    .foregroundStyle(Color.brandTextMain)
+                    .lineLimit(2)
+
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                         .lineLimit(2)
                 }
-                
-                if !card.location.isEmpty {
-                    Text(card.location)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if !card.dateString.isEmpty {
-                    Text(card.dateString)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
+
+                contextualInfoLine(fontSize: 13)
             }
-            
+
             Spacer(minLength: 10)
-            
-            CardThumbnailView(thumbnailId: card.thumbnailName)
-                .scaledToFill()
+
+            CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
                 .frame(width: isNotificationCard ? 80 : 64, height: isNotificationCard ? 80 : 64)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -324,59 +362,56 @@ struct UnifiedCardView: View {
         )
         .onTapGesture { onTap() }
     }
-    
-    
+
+
     // MARK: - Chat Style
+    /// 채팅 말풍선 안의 카드.
+    /// 예전에는 폭 200pt 안에서 썸네일 60pt를 뺀 ~110pt에 5줄을 욱여넣어 거의 읽히지 않았습니다.
+    /// 메신저 링크 미리보기처럼 이미지를 위에 깔고 글은 말풍선 폭을 다 쓰게 바꿨습니다.
     private var chatStyle: some View {
-        HStack(alignment: .top, spacing: 10) {
-            
+        VStack(alignment: .leading, spacing: 0) {
+            CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
+                .frame(height: 118)
+                .frame(maxWidth: .infinity)
+                .clipped()
+
             VStack(alignment: .leading, spacing: 6) {
-                Text(card.category.displayName + " · " + card.subcategory)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                
+                categoryPill(fontSize: 11)
+
                 Text(card.title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.brandTextMain)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 if !card.summary.isEmpty {
                     Text(card.summary)
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                
-                if !card.location.isEmpty {
-                    Text(card.location)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if !card.dateString.isEmpty {
-                    Text(card.dateString)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
+
+                // 카드 생성일(dateString)은 뺐습니다. 말풍선 옆에 이미 메시지 시각이 있어서
+                // 날짜가 두 개 붙어 나오는 게 어색했습니다.
+                contextualInfoLine(fontSize: 12)
             }
-            
-            Spacer(minLength: 8)
-            
-            CardThumbnailView(thumbnailId: card.thumbnailName)
-                .scaledToFill()
-                .frame(width: 60, height: 60)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
-        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
         .onTapGesture { onTap() }
-        .frame(maxWidth: 200)
+        .frame(maxWidth: 250)
     }
     /// 스크린샷/에셋 평균색을 쿠폰 액센트로 사용 (너무 밝·어두우면 브랜드 색 폴백)
     private static func couponAccentColor(thumbnailId: String, fallback: Color) -> Color {
@@ -403,7 +438,8 @@ struct UnifiedCardView: View {
     private var couponStyle: some View {
         let imageName = isHomeScreen ? card.homeThumbnailName : card.thumbnailName
         let brandName = card.fields["brand"] ?? card.fields["브랜드"] ?? ""
-        let expiryText = card.fields["만료일"] ?? card.fields["valid_until"] ?? card.fields["deadline"] ?? card.contextualInfoText
+        // 만료일 키 목록은 Card.expiryText 한 곳에서만 관리합니다.
+        let expiryText = card.expiryText.isEmpty ? card.contextualInfoText : card.expiryText
         let benefitText = card.fields["benefit"] ?? card.fields["혜택 요약"] ?? card.title
         let extraLine = card.fields["conditions"] ?? card.fields["조건/제한"] ?? card.fields["상품"] ?? card.summary
         let fallbackBrand = Color.expiringCardBrandColor(brandName: brandName.isEmpty ? nil : brandName)
@@ -462,8 +498,7 @@ struct UnifiedCardView: View {
                         ZStack {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(Color(uiColor: .tertiarySystemGroupedBackground))
-                            CardThumbnailView(thumbnailId: imageName)
-                                .scaledToFill()
+                            CardThumbnailView(thumbnailId: imageName, card: card)
                                 .frame(width: 92, height: 112)
                                 .clipped()
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -561,8 +596,7 @@ struct UnifiedCardView: View {
             } else {
                 // 홈이 아닐 때: 기존 쿠폰 이미지 카드 (카드 탭 시 상세)
                 ZStack(alignment: .bottomTrailing) {
-                    CardThumbnailView(thumbnailId: imageName)
-                        .scaledToFit()
+                    CardThumbnailView(thumbnailId: imageName, card: card, contentMode: .fit)
                         .frame(height: 120)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)

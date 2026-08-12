@@ -173,8 +173,11 @@ struct Card: Identifiable, Hashable, Codable {
     }
     
     /// 서버와 OCR 결과에서 사용하는 만료일 필드 중 비어 있지 않은 첫 값을 반환합니다.
+    /// AI 파이프라인은 valid_until/deadline을 "만료일"로 통일하지만(ScreenshotProcessingService),
+    /// 직접 입력하거나 다른 경로로 들어온 카드는 "유효기간"·"사용기한"으로 남아
+    /// 값이 있는데도 화면에 안 나오던 문제가 있었습니다.
     var expiryText: String {
-        for key in ["만료일", "valid_until", "deadline"] {
+        for key in ["만료일", "유효기간", "사용기한", "valid_until", "deadline"] {
             let value = fields[key]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if !value.isEmpty {
                 return value

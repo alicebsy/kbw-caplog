@@ -65,7 +65,7 @@ final class CardManager: ObservableObject {
         let persisted = loadPersistedLocalCards()
         let mergedLocal = (currentLocal + persisted).uniqued(by: { $0.id })
         do {
-            let serverCards = try await service.fetchAllCards()
+            let serverCards = try await service.fetchAllCards().map(Self.rehydratingLocalImage)
             let serverIds = Set(serverCards.map(\.id))
             // 서버에 이미 있는 건 제외, 로컬에서만 만든 카드만 유지 (한번 만든 카드는 그대로)
             var localCardsToKeep = mergedLocal.filter { !serverIds.contains($0.id) }
@@ -298,6 +298,24 @@ final class CardManager: ObservableObject {
             print("   ❌ 찾지 못함!")
         }
         return found
+    }
+
+    // MARK: - 서버 카드에 로컬 이미지 다시 붙이기
+
+    /// 서버는 기기 전용 이미지 경로를 저장하지 않아서(CardService.applyRequest 주석 참고)
+    /// `GET /api/cards` 응답의 thumbnailURL은 항상 nil입니다.
+    /// 그런데 createCard는 이미지 파일을 **서버가 준 카드 id** 이름으로 옮겨 두므로
+    /// (createCard의 CardImageStore.move 참고), 같은 기기라면 그 파일이 그대로 남아 있습니다.
+    /// 이걸 다시 이어 붙이지 않으면 새로고침할 때마다 썸네일이 빈 칸이 됐습니다.
+    private static func rehydratingLocalImage(_ card: Card) -> Card {
+        guard card.thumbnailURL == nil, card.screenshotURLs.isEmpty else { return card }
+        let imageId = card.id.uuidString
+        guard CardImageStore.fileURL(for: imageId) != nil else { return card }
+
+        var restored = card
+        restored.thumbnailURL = imageId
+        restored.screenshotURLs = [imageId]
+        return restored
     }
 
     // MARK: - 로컬 카드 저장/복원 (한번 만든 카드는 재시작 후에도 유지)

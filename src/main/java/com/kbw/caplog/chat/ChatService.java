@@ -82,6 +82,10 @@ public class ChatService {
         return result;
     }
 
+    // findById는 참여자 목록을 LAZY로 두고, open-in-view도 꺼져 있어서
+    // 트랜잭션 없이 getParticipants()를 만지면 LazyInitializationException으로 500이 났습니다.
+    // (listRooms는 @EntityGraph로 미리 가져와서 멀쩡했습니다.)
+    @Transactional(readOnly = true)
     public List<ChatMessageDto> getMessages(Long roomId, Long currentUserNo) {
         ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
         boolean isParticipant = room.getParticipants().stream().anyMatch(p -> p.getUserNo().equals(currentUserNo));
