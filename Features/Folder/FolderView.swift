@@ -3,30 +3,23 @@ import SwiftUI
 // MARK: - Entry (탭에서 이걸 불러오면 됨)
 struct FolderView: View {
     @StateObject private var manager = CardManager.shared
-    
-    @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             FolderCategoryListView()
                 .environmentObject(manager)
+                // NavigationStack은 바깥에서 준 safeAreaInset을 자기 콘텐츠까지
+                // 전달하지 않습니다. 그래서 여백은 반드시 스택 안쪽에서 잡습니다.
+                .caplogTabBarInset()
                 .navigationTitle("폴더")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)
+                // 탭 루트라 돌아갈 화면이 없습니다. 예전엔 dismiss()를 부르는
+                // chevron.left가 얹혀 있었는데, 눌러도 아무 일도 일어나지 않았습니다.
                 .navigationBarBackButtonHidden(true)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.primary)
-                        }
-                    }
-                }
         }
-        .caplogTabBarInset()
         .onAppear {
             Task {
                 await manager.loadAllCards()
@@ -46,10 +39,9 @@ struct FolderCategoryListView: View {
     @State private var selectedCategory: FolderCategory = .info
     /// 갤러리에 있는 스크린샷 전체 개수 (폴더 보일 때마다 갱신)
     @State private var galleryScreenshotCount: Int?
-
-    private var screenshotRecognizedCount: Int {
-        ScreenshotIndexer.shared.processedScreenshotCount
-    }
+    /// 카드로 만든 스크린샷 개수. ScreenshotIndexer는 ObservableObject가 아니라서
+    /// 계산 프로퍼티로 두면 값이 바뀌어도 화면이 다시 그려지지 않습니다.
+    @State private var screenshotRecognizedCount: Int = 0
 
     private var groupedSubcategories: [String: [FolderSubcategory]] {
         Dictionary(grouping: selectedCategory.subcategories, by: { $0.displayGroup })
@@ -121,11 +113,11 @@ struct FolderCategoryListView: View {
                         if let total = galleryScreenshotCount {
                             Text("갤러리 \(total)장 · 인식 \(screenshotRecognizedCount)장")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         } else {
                             Text("인식 완료 \(screenshotRecognizedCount)장")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         }
                         NavigationLink {
                             FolderRecentCardsView()
@@ -146,9 +138,12 @@ struct FolderCategoryListView: View {
                 }
                 .padding(.top, 16)
             }
-            .frame(width: UIScreen.main.bounds.width / 2)
+            // 화면 절반. UIScreen.main.bounds는 iOS 16부터 권장되지 않고,
+            // 회전이나 분할 화면에서 실제 컨테이너 폭과 어긋납니다.
+            .containerRelativeFrame(.horizontal) { width, _ in width * 0.5 }
             .background(Color(uiColor: .secondarySystemGroupedBackground))
             .onAppear {
+                screenshotRecognizedCount = ScreenshotIndexer.shared.processedScreenshotCount
                 Task { galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
             }
 
@@ -159,7 +154,7 @@ struct FolderCategoryListView: View {
                         if !key.isEmpty {
                             Text(key)
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.gray)
+                                .foregroundStyle(Color.brandTextSub)
                                 .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
                         }
                         ForEach(groupedSubcategories[key] ?? []) { sub in
@@ -241,18 +236,11 @@ struct FolderItemListView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Color(uiColor: .systemGroupedBackground))
+        // 밀어서 들어온 화면도 탭바가 그대로 떠 있으므로 여백이 필요합니다.
+        .caplogTabBarInset()
         .navigationTitle(subcategory)
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 0) {
-                Divider()
-                    .background(Color.black.opacity(0.12))
-                Rectangle()
-                    .fill(Color(.systemBackground))
-                    .frame(height: 12)
-            }
-        }
-        
+
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) {
                 // 카드 저장 후 폴더 뷰 갱신
@@ -360,17 +348,10 @@ struct FolderRecentCardsView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Color(uiColor: .systemGroupedBackground))
+        // 밀어서 들어온 화면도 탭바가 그대로 떠 있으므로 여백이 필요합니다.
+        .caplogTabBarInset()
         .navigationTitle("최근 인식 카드")
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 0) {
-                Divider()
-                    .background(Color.black.opacity(0.12))
-                Rectangle()
-                    .fill(Color(.systemBackground))
-                    .frame(height: 12)
-            }
-        }
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) {
                 Task { await manager.loadAllCards() }

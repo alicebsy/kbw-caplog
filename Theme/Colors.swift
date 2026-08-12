@@ -36,7 +36,10 @@ extension Color {
     static let registerGoogleBlue    = Color(hex: "#4285F4")
     static let registerKakaoYellow   = Color(hex: "#FBBC05")
     static let registerRed           = Color(hex: "#EA4335")
-    static let unreadBadgeRed        = Color(hex: "#F4525F")
+    /// 안 읽음 배지. 흰 숫자를 얹는 자리라 배경색 자체가 대비를 결정합니다.
+    /// 예전 #F4525F는 흰 글씨 기준 3.38:1이라 12pt 숫자가 AA(4.5:1)에 못 미쳤습니다.
+    /// #D32F2F는 4.98:1로 통과하면서 알림 빨강의 인상은 유지합니다.
+    static let unreadBadgeRed        = Color(hex: "#D32F2F")
     static let registerGray          = Color(hex: "#AABABE")
     static let registerGrayLight     = Color(hex: "#F1F1F1")
     static let registerGrayMid       = Color(hex: "#BEC1C2")

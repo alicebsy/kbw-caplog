@@ -13,16 +13,24 @@ struct ShareChatListView: View {
             if vm.isLoading && vm.threads.isEmpty {
                 ProgressView("채팅 목록을 불러오는 중...")
             } else if vm.threads.isEmpty {
-                ContentUnavailableView {
-                    Label("아직 채팅이 없어요", systemImage: "bubble.left.and.bubble.right")
-                } description: {
-                    Text(vm.errorMessage ?? "아래 버튼을 눌러 친구와 대화를 시작해 보세요.")
-                } actions: {
-                    if vm.errorMessage != nil {
+                // 불러오기 실패와 채팅이 없는 것은 다릅니다. 예전에는 실패해도
+                // 제목이 "아직 채팅이 없어요"로 떠서, 설명과 서로 어긋났습니다.
+                if let error = vm.errorMessage {
+                    ContentUnavailableView {
+                        Label("채팅 목록을 불러오지 못했어요", systemImage: "wifi.exclamationmark")
+                    } description: {
+                        Text(error)
+                    } actions: {
                         Button("다시 시도") {
                             Task { await vm.refreshThreads() }
                         }
                         .foregroundStyle(Color.pointBlue)
+                    }
+                } else {
+                    ContentUnavailableView {
+                        Label("아직 채팅이 없어요", systemImage: "bubble.left.and.bubble.right")
+                    } description: {
+                        Text("아래 버튼을 눌러 친구와 대화를 시작해 보세요.")
                     }
                 }
             } else {
@@ -44,24 +52,25 @@ struct ShareChatListView: View {
                                     Spacer()
                                     Text(vm.timeString(for: t.lastMessageAt))
                                         .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                        // .secondary는 흰 면에서 3.26:1이라 AA(4.5:1)에 못 미칩니다.
+                                        .foregroundStyle(Color.brandTextSub)
                                 }
-                                
+
                                 // 둘째 줄: 메시지 + 안읽음표시
                                 HStack(spacing: 0) {
                                     if let cardTitle = t.lastMessageCardTitle {
                                         Image(systemName: "doc.text.fill")
                                             .font(.subheadline)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.brandTextSub)
                                             .padding(.trailing, 4)
                                         Text(cardTitle)
                                             .font(.subheadline)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.brandTextSub)
                                             .lineLimit(1)
                                     } else {
                                         Text(t.lastMessageText ?? "메시지가 없습니다")
                                             .font(.subheadline)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(Color.brandTextSub)
                                             .lineLimit(1)
                                     }
                                     
@@ -117,8 +126,8 @@ struct ShareChatListView: View {
         } message: {
             Text(chatCreationError ?? "")
         }
-        // 탭바 위쪽 여백은 AppNavigation이 이미 확보해뒀으므로,
-        // 이 버튼은 그 위에 바로 얹기만 하면 됩니다.
+        // NavigationStack은 바깥 safeAreaInset을 자기 콘텐츠까지 전달하지 않습니다.
+        // 그래서 이 버튼은 탭바 높이만큼 직접 띄워야 가려지지 않습니다.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()
@@ -150,9 +159,10 @@ struct ShareChatListView: View {
         let title: String
         if friends.count == 1 {
             title = friends[0].name
+            // 방 제목으로 기존 방을 찾으면, 친구 이름으로 지어둔 단체방이
+            // 1:1 대화 대신 열릴 수 있습니다. 참가자로만 판단합니다.
             if let existing = vm.threads.first(where: {
-                ($0.participantIds.count == 2 && $0.participantIds.contains(friends[0].id))
-                    || ($0.participantIds.isEmpty && $0.title == title)
+                $0.participantIds.count == 2 && $0.participantIds.contains(friends[0].id)
             }) {
                 selectedThread = existing
                 return

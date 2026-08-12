@@ -5,7 +5,6 @@ struct SearchView: View {
     @FocusState private var isFocused: Bool
     @StateObject private var vm = SearchViewModel()
     
-    @Environment(\.dismiss) private var dismiss
 
     // 상세/편집/이미지 팝업 상태
     @State private var selectedCard: Card? = nil
@@ -141,17 +140,10 @@ struct SearchView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
+        // 탭 루트라 돌아갈 화면이 없습니다. dismiss()를 부르는 chevron.left가
+        // 얹혀 있었는데 눌러도 아무 일도 일어나지 않았습니다.
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        
+
         // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
             CardEditSheet(card: card) {

@@ -530,7 +530,9 @@ final class ShareViewModel: ObservableObject {
             print("✅ ShareViewModel: \(fs.count)명 친구 로드 완료")
         }
         catch {
-            self.friendErrorMessage = "친구 목록을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."
+            // 화면 제목이 이미 "불러오지 못했어요"라서, 여기서는 다음에 뭘 하면
+            // 되는지만 알려줍니다. 예전엔 제목과 같은 말이 두 번 나왔습니다.
+            self.friendErrorMessage = "네트워크 연결을 확인하고 다시 시도해 주세요."
         }
     }
 
@@ -609,7 +611,7 @@ final class ShareViewModel: ObservableObject {
         }
         catch {
             guard !Task.isCancelled else { return }
-            self.errorMessage = "채팅 목록을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."
+            self.errorMessage = "네트워크 연결을 확인하고 다시 시도해 주세요."
         }
     }
 

@@ -6,7 +6,6 @@ private enum NotificationDestination: Hashable { case open }
 struct HomeView: View {
     var onSelectTab: ((CaplogTab) -> Void)? = nil
 
-    @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = HomeViewModel()
     @StateObject private var appNotificationCenter = AppNotificationCenter.shared
     @ObservedObject private var pipelineStatus = ScreenshotPipelineStatus.shared
@@ -268,16 +267,9 @@ struct HomeView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.inline)
+        // 탭 루트라 돌아갈 화면이 없습니다. dismiss()를 부르는 chevron.left가
+        // 얹혀 있었는데 눌러도 아무 일도 일어나지 않았습니다.
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
 
         // ✅ 편집 시트
         .sheet(item: $editingCard) { card in
