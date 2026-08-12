@@ -22,7 +22,8 @@ struct PermissionRow: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(Color.homeGreenDark)
+                // 인증 화면 그라데이션 위 전경이라 authOnGradient를 씁니다.
+                .foregroundColor(Color.authOnGradient)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -44,10 +45,10 @@ struct PermissionRow: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         // 흰 면을 깔면 그라데이션 위에 판때기가 얹힌 것처럼 보여서 테두리만 둡니다.
-        // 0.6보다 연하게 하면 그라데이션 위쪽에서 3:1 밑으로 떨어집니다.
+        // 0.75를 곱한 값이 그라데이션 위쪽에서 3.02:1입니다. 더 연하게 하면 3:1 밑으로 떨어집니다.
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.homeGreenDark.opacity(0.6), lineWidth: 1)
+                .strokeBorder(Color.authOnGradient.opacity(0.75), lineWidth: 1)
         )
     }
 
@@ -61,7 +62,7 @@ struct PermissionRow: View {
                 Text("허용됨")
             }
             .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(Color.homeGreenDark)
+            .foregroundColor(Color.authOnGradient)
 
         case .notDetermined:
             Button(action: action) {
@@ -80,10 +81,10 @@ struct PermissionRow: View {
             Button(action: action) {
                 Text("설정 열기")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(Color.homeGreenDark)
+                    .foregroundColor(Color.authOnGradient)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .overlay(Capsule().strokeBorder(Color.homeGreenDark, lineWidth: 1.5))
+                    .overlay(Capsule().strokeBorder(Color.authOnGradient, lineWidth: 1.5))
             }
             .buttonStyle(.plain)
         }

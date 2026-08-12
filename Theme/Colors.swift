@@ -59,9 +59,21 @@ extension Color {
     // - 전경(Tint): 표면 위 아이콘·글자·테두리로 쓰이므로 다크모드에서 밝아져야 합니다.
     // 하나의 색으로 두 역할을 동시에 만족시키는 건 불가능합니다
     // (흰 글자용 상한 휘도 < 다크 표면용 하한 휘도).
-    static let homeGreenDark       = Color(hex: "#144749")
-    /// 표면 위 전경용 딥틸. 다크모드에서 밝은 틸로 전환됩니다.
-    static let homeGreenTint       = Color.adaptive(light: "#144749", dark: "#52B5B2")
+    //
+    // 예전 값 #144749는 흰 글자 대비 10.3:1로 기준(4.5:1)을 두 배 넘게 넘겼는데,
+    // 그만큼 어둡고 채도가 낮아서(청록-회색) 앱 전체가 가라앉아 보였습니다.
+    // 남는 대비 여유를 채도와 밝기로 돌려 브랜드의 밝은 딥그린을 되찾습니다.
+    // #0E7A50은 흰 글자 5.36:1, 흰 배경 위 전경으로도 5.36:1로 AA를 통과합니다.
+    static let homeGreenDark       = Color(hex: "#0E7A50")
+    /// 표면 위 전경용 딥그린. 다크모드에서 밝은 그린으로 전환됩니다.
+    static let homeGreenTint       = Color.adaptive(light: "#0E7A50", dark: "#4FD3A2")
+    /// 인증 화면 그라데이션(#87ABA4~#FFFCF1) **위에 얹는 글자·테두리** 전용 딥그린.
+    ///
+    /// 밝아진 homeGreenDark(#0E7A50)는 흰 면에서는 5.36:1이지만 그라데이션 위쪽에서는
+    /// 2.14:1까지 떨어져서, 로그인 버튼 글자와 화면 전환 링크에 쓸 수 없습니다.
+    /// 이 값은 그라데이션 어디에 놓여도 최소 4.80:1을 확보합니다.
+    /// 채우기(흰 글자를 올리는 버튼)에는 homeGreenDark를 그대로 씁니다.
+    static let authOnGradient      = Color(hex: "#073F26")
     static let homeGreen           = Color(hex: "#A4CFCA")
     static let homeGreenLight      = Color(hex: "#C1E4E0")
     static let homeGrayDeep        = Color(hex: "#2B2B2B")
@@ -79,35 +91,41 @@ extension Color {
     static let checkMint   = Color(hex: "#8FD694")
     // 입력 필드의 밑줄은 필드 경계를 알려주는 유일한 표시라 3:1이 필요합니다.
     // 인증 화면 그라데이션 위에서는 회색 계열이 1.5~2.2:1까지 떨어져서
-    // 브랜드 딥그린을 씁니다(그라데이션 어디에 놓여도 최소 4.14:1).
-    static let divider     = Color.adaptive(light: "#144749", dark: "#7FB7B4")
+    // 딥그린을 씁니다(authOnGradient와 같은 값, 그라데이션 위 최소 4.80:1).
+    static let divider     = Color.adaptive(light: "#073F26", dark: "#6FC4A3")
     // 입력 오류 안내. registerRed(#EA4335)는 흰 면에서도 3.92:1로 AA 미달이고,
     // 인증 화면 그라데이션 위에서는 더 떨어집니다.
     static let errorRed    = Color.adaptive(light: "#8C1D18", dark: "#FF8A80")
     static let placeholder = Color(.placeholderText)
 
     // === MyPage 전용 토큰 ===
-    static let myPageActionBlue   = Color(hex: "#4F6F8F")
-    static let myPageActionBlueBg = Color(hex: "#4F6F8F").opacity(0.12)
+    static let myPageActionBlue   = Color(hex: "#2A6BA0")
+    static let myPageActionBlueBg = Color(hex: "#2A6BA0").opacity(0.12)
     static let myPageSectionGreen = Color.accentGreen
     /// 표면 위 전경용 브랜드 그린. 다크모드에서 밝은 그린으로 전환됩니다.
     /// `myPageSectionGreen`은 흰 글자를 올리는 버튼 채우기 전용으로 남겨둡니다.
-    static let accentGreenTint    = Color.adaptive(light: "#0F5C00", dark: "#57B843")
+    static let accentGreenTint    = Color.adaptive(light: "#0E7A50", dark: "#4FD3A2")
 
-    // === 차분한 포인트 팔레트 ===
-    // 딥그린을 주색으로 유지하면서 정보 구조를 구분할 때만 제한적으로 사용합니다.
-    static let pointBlue   = Color(hex: "#4F6F8F")
-    static let pointAmber  = Color(hex: "#A8783F")
-    static let pointCoral  = Color(hex: "#AD6B66")
-    static let pointTeal   = Color(hex: "#4D7C76")
-    static let pointViolet = Color(hex: "#74658A")
-    static let pointSlate  = Color(hex: "#68727E")
+    // === 포인트 팔레트 ===
+    // 카드 대분류를 구분하는 색입니다. 예전 값은 회색을 많이 섞어 톤을 낮춘 탓에
+    // 카드가 늘어선 화면 전체가 흐릿하고 처져 보였습니다(회색끼).
+    // 색조는 그대로 두고 채도만 올렸고, 모든 값이 흰 면에서 5:1 이상을 유지합니다.
+    static let pointBlue   = Color(hex: "#2A6BA0")  // 5.66:1
+    static let pointAmber  = Color(hex: "#A05A00")  // 5.31:1
+    static let pointCoral  = Color(hex: "#B03A30")  // 6.01:1
+    static let pointTeal   = Color(hex: "#0F7A73")  // 5.19:1
+    static let pointViolet = Color(hex: "#6A3FA0")  // 7.41:1
+    static let pointSlate  = Color(hex: "#4A5A6E")  // 7.06:1 (기타: 유일하게 중립 유지)
+
 
     // === 마감 임박 카드: 브랜드별 색상 (원래 톤) ===
-    /// 브랜드 배경색의 hex. 글자색을 휘도에서 계산하기 위해 hex를 단일 출처로 둡니다.
-    private static func expiringCardBrandHex(brandName: String?) -> String {
+    /// 아는 브랜드일 때만 hex를 돌려줍니다(모르면 nil).
+    ///
+    /// 대체 썸네일은 "아는 브랜드인지"를 구분해야 합니다. 모르는 이름까지 기본 민트로
+    /// 칠하면 맛집·여행 카드가 전부 같은 초록 타일이 되어 카테고리 색 구분이 사라집니다.
+    private static func expiringCardBrandHexIfKnown(brandName: String?) -> String? {
         guard let name = brandName?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
-            return "#46A68E" // 기본 민트그린
+            return nil
         }
         if name.contains("스타벅스") || name.contains("starbucks") { return "#46A68E" }      // 기존 초록을 조금 밝게
         if name.contains("이마트") || name.contains("emart")       { return "#F7BF5B" }      // 부드러운 머스터드
@@ -121,7 +139,17 @@ extension Color {
         if name.contains("할리스") || name.contains("hollys")      { return "#7A567F" }      // 톤 다운 퍼플
         if name.contains("던킨") || name.contains("dunkin")        { return "#F48A7D" }      // 코랄 계열
         if name.contains("배스킨") || name.contains("baskin")      { return "#E97CA3" }      // 부드러운 핑크
-        return "#46A68E"
+        return nil
+    }
+
+    /// 브랜드 배경색의 hex. 글자색을 휘도에서 계산하기 위해 hex를 단일 출처로 둡니다.
+    private static func expiringCardBrandHex(brandName: String?) -> String {
+        expiringCardBrandHexIfKnown(brandName: brandName) ?? "#46A68E" // 기본 민트그린
+    }
+
+    /// 아는 브랜드의 색(모르면 nil). 대체 썸네일이 카테고리 색으로 넘어갈지 판단할 때 씁니다.
+    static func knownBrandColor(brandName: String?) -> Color? {
+        expiringCardBrandHexIfKnown(brandName: brandName).map { Color(hex: $0) }
     }
 
     static func expiringCardBrandColor(brandName: String?) -> Color {

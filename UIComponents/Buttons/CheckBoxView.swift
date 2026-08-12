@@ -22,11 +22,12 @@ struct CheckBoxView: View {
                     ZStack {
                         // 회색 테두리는 인증 화면 그라데이션 위쪽에서 2.13:1까지 떨어집니다.
                         // 체크박스 테두리는 컨트롤 경계라 3:1이 필요합니다.
-                        RoundedRectangle(cornerRadius: 6).stroke(Color.homeGreenDark, lineWidth: 2)
+                        // 밝은 homeGreenDark도 그라데이션 위에서는 2.14:1이라 못 씁니다.
+                        RoundedRectangle(cornerRadius: 6).stroke(Color.authOnGradient, lineWidth: 2)
                         if isChecked {
                             // checkMint(#8FD694)는 흰 체크 표시 대비가 1.72:1이라
-                            // 체크 여부가 거의 보이지 않았습니다. 앱 주 색상으로 통일합니다.
-                            RoundedRectangle(cornerRadius: 6).fill(Color.homeGreenDark)
+                            // 체크 여부가 거의 보이지 않았습니다. 테두리와 같은 색으로 채웁니다.
+                            RoundedRectangle(cornerRadius: 6).fill(Color.authOnGradient)
                             Image(systemName: "checkmark").foregroundColor(.white).font(.system(size: 12, weight: .bold))
                         }
                     }
@@ -58,7 +59,7 @@ struct CheckBoxView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(Color.homeGreenDark)
+                .foregroundColor(Color.authOnGradient)
                 .underline()
         }
         .buttonStyle(.plain)

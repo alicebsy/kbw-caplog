@@ -185,20 +185,26 @@ struct HomeView: View {
                     } else {
                         TabView {
                             ForEach(vm.coupons) { card in
-                                UnifiedCardView(
-                                    card: card,
-                                    style: .coupon,
-                                    onTap: { selectedCard = card },
-                                    onMore: { editingCard = card },
-                                    onTapImage: {
-                                        if let url = card.thumbnailURL ?? card.screenshotURLs.first {
-                                            fullscreenImage = url
-                                        }
-                                        CardManager.shared.markCardAsViewed(card)
-                                    },
-                                    isHomeScreen: true
-                                )
-                                .frame(height: couponH)
+                                // 카드에 직접 .frame(height:)를 주면 카드 배경만 180pt로 늘어나고
+                                // 글은 그 안에서 위아래 가운데로 밀려서, 글자와 카드 경계 사이에
+                                // 20pt 넘는 빈 띠가 생겼습니다. 카드는 내용 크기대로 두고
+                                // 남는 높이는 카드 밖(아래)으로 흘립니다.
+                                VStack(spacing: 0) {
+                                    UnifiedCardView(
+                                        card: card,
+                                        style: .coupon,
+                                        onTap: { selectedCard = card },
+                                        onMore: { editingCard = card },
+                                        onTapImage: {
+                                            if let url = card.thumbnailURL ?? card.screenshotURLs.first {
+                                                fullscreenImage = url
+                                            }
+                                            CardManager.shared.markCardAsViewed(card)
+                                        },
+                                        isHomeScreen: true
+                                    )
+                                    Spacer(minLength: 0)
+                                }
                                 .padding(.horizontal, 16)
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
@@ -217,15 +223,19 @@ struct HomeView: View {
                     ) {
                         TabView {
                             ForEach(vm.recommended.prefix(3)) { card in
-                                UnifiedCardView(
-                                    card: card, style: .row,
-                                    onTap: { selectedCard = card },
-                                    onMore: { editingCard = card },
-                                    onTapImage: {
-                                        fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
-                                        CardManager.shared.markCardAsViewed(card)
-                                    }
-                                )
+                                // 쿠폰 캐러셀과 같은 이유로 카드를 늘리지 않고 감쌉니다.
+                                VStack(spacing: 0) {
+                                    UnifiedCardView(
+                                        card: card, style: .row,
+                                        onTap: { selectedCard = card },
+                                        onMore: { editingCard = card },
+                                        onTapImage: {
+                                            fullscreenImage = card.screenshotURLs.first ?? card.thumbnailName
+                                            CardManager.shared.markCardAsViewed(card)
+                                        }
+                                    )
+                                    Spacer(minLength: 0)
+                                }
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                                 .padding(.horizontal, 4)
                             }
@@ -253,7 +263,6 @@ struct HomeView: View {
                                         CardManager.shared.markCardAsViewed(card)
                                     }
                                 )
-                                .frame(minHeight: rowH)
                                 .id("\(card.id)-\(card.updatedAt.timeIntervalSince1970)")
                             }
                         }

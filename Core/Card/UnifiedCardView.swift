@@ -203,12 +203,15 @@ struct UnifiedCardView: View {
     
     // MARK: - Row Style (Recommended / Recently)
     private var rowStyle: some View {
+        // 카드 높이는 오른쪽 열(썸네일 + 버튼)이 정합니다. 예전엔 90pt 썸네일 +
+        // 12pt 간격 + 버튼이라 오른쪽만 121pt였고, 글이 짧은 카드는 왼쪽 글자 밑에
+        // 그만큼 빈 공간이 남았습니다. 오른쪽 열을 97pt로 줄여 그 틈을 없앱니다.
         HStack(alignment: .top, spacing: 10) {
-            
+
             // LEFT: 텍스트 (카드 상세 보기)
-            VStack(alignment: .leading, spacing: 8) {
-                
-                VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 6) {
+
+                VStack(alignment: .leading, spacing: 4) {
                     categoryPill(fontSize: 12)
 
                     Text(card.title)
@@ -262,7 +265,7 @@ struct UnifiedCardView: View {
             // RIGHT: 이미지 + 버튼
             VStack(spacing: 0) {
                 CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
-                    .frame(width: 80, height: 90)
+                    .frame(width: 76, height: 72)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .contentShape(Rectangle())
@@ -271,7 +274,7 @@ struct UnifiedCardView: View {
                         onTapImage()
                     }
                 
-                Spacer().frame(height: 12)
+                Spacer().frame(height: 6)
                 
                 HStack(spacing: 14) {
                     Button(action: {
@@ -291,11 +294,11 @@ struct UnifiedCardView: View {
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color.brandTextSub)
-                .frame(width: 80)
+                .frame(width: 76)
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -374,7 +377,7 @@ struct UnifiedCardView: View {
 
             // 예전엔 카테고리·요약·위치·날짜 4줄이 전부 .secondary(흰 면에서 3.26:1)라
             // 어디가 중요한지 구분이 안 됐습니다. 알약 하나 + 본문 대비 통과 색으로 위계를 줍니다.
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 categoryPill(fontSize: 12)
 
                 Text(card.title)
@@ -395,11 +398,12 @@ struct UnifiedCardView: View {
             Spacer(minLength: 10)
 
             CardThumbnailView(thumbnailId: card.thumbnailName, card: card)
-                .frame(width: isNotificationCard ? 80 : 64, height: isNotificationCard ? 80 : 64)
+                .frame(width: isNotificationCard ? 76 : 64, height: isNotificationCard ? 76 : 64)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .padding(isNotificationCard ? 14 : 16)
+        // 16pt 사방 여백은 글 4줄짜리 카드에서 글자와 카드 경계 사이가 너무 벌어져 보였습니다.
+        .padding(isNotificationCard ? 12 : 13)
         .frame(maxWidth: isNotificationCard ? .infinity : nil)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)

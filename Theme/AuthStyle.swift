@@ -82,16 +82,18 @@ extension View {
     /// 보조 동작 버튼 (테두리형)
     ///
     /// 흰 면을 깔면 그라데이션 위에 판때기가 얹힌 것처럼 보여서 면은 비우고
-    /// 테두리와 글자만 브랜드 딥그린으로 둡니다(그라데이션 위 최소 4.14:1).
+    /// 테두리와 글자만 브랜드 딥그린으로 둡니다.
+    /// 채움 버튼(위)과 달리 색이 **글자로** 쓰이므로, 그라데이션 위에서도 4.80:1을
+    /// 유지하는 authOnGradient를 씁니다. homeGreenDark는 밝아서 여기선 2.14:1입니다.
     func authSecondaryButton() -> some View {
         self
             .font(.system(size: 16, weight: .bold))
-            .foregroundColor(Color.homeGreenDark)
+            .foregroundColor(Color.authOnGradient)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.homeGreenDark, lineWidth: 1.5)
+                    .strokeBorder(Color.authOnGradient, lineWidth: 1.5)
             )
     }
 }
@@ -112,7 +114,8 @@ struct AuthSwitchPrompt<Destination: View>: View {
                 Text(actionTitle)
                     .font(.system(size: 14, weight: .bold))
                     .underline()
-                    .foregroundColor(Color.homeGreenDark)
+                    // 그라데이션 위 글자라서 authOnGradient(4.80:1)를 씁니다.
+                    .foregroundColor(Color.authOnGradient)
             }
         }
     }

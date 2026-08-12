@@ -45,15 +45,50 @@ struct CardThumbnailView: View {
 
 /// 이미지가 없는 카드용 대체 썸네일.
 /// 어떤 크기로 잘려도 자연스럽도록 심볼 크기를 컨테이너에 비례시킵니다.
+///
+/// 브랜드/장소 이름을 아는 카드(쿠폰·기프티콘·맛집 등)는 심볼 대신 **머리글자 타일**을
+/// 그립니다. 티켓 심볼만 있는 자리는 "사진이 빠졌다"로 읽히는데, 브랜드 색 위에 머리글자를
+/// 얹으면 사진이 없어도 의도된 모양이 됩니다. 실제 브랜드 로고는 상표라 쓰지 않습니다.
 struct CardThumbnailFallback: View {
     var card: Card?
 
+    /// 머리글자에 쓸 이름. 쿠폰은 브랜드, 그 외는 장소명을 봅니다.
+    /// couponStyle이 "쿠폰" 알약 옆에 쓰는 키와 같은 순서입니다.
+    private var brandName: String? {
+        guard let fields = card?.fields else { return nil }
+        let candidates = ["brand", "브랜드", "장소명", "place", "매장", "가맹점"]
+        for key in candidates {
+            if let value = fields[key]?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty {
+                return value
+            }
+        }
+        return nil
+    }
+
+    /// 한글은 한 글자로 충분히 읽히고, 라틴 문자는 두 글자를 씁니다.
+    private var monogram: String? {
+        guard let name = brandName, let first = name.first else { return nil }
+        let isHangulSyllable = first.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) }
+        return isHangulSyllable ? String(first) : String(name.prefix(2)).uppercased()
+    }
+
     private var tint: Color {
-        card?.category.color ?? Color.brandTextSub
+        // 아는 브랜드면 브랜드 색(쿠폰 카드가 쓰는 것과 같은 색), 모르면 카테고리 색입니다.
+        // 모르는 이름까지 브랜드 기본색으로 칠하면 맛집·여행 카드가 전부 같은 초록이 됩니다.
+        if let brandColor = Color.knownBrandColor(brandName: brandName) {
+            return brandColor
+        }
+        return card?.category.color ?? Color.brandTextSub
     }
 
     private var symbolName: String {
         card?.subcategorySymbolName ?? "photo"
+    }
+
+    /// 틴트를 얹은 실제 면. 글자·심볼 색을 여기 기준으로 보정합니다.
+    private var surface: Color {
+        Color(uiColor: .secondarySystemGroupedBackground)
+            .composited(with: tint, fraction: 0.20)
     }
 
     var body: some View {
@@ -65,16 +100,31 @@ struct CardThumbnailFallback: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                Image(systemName: symbolName)
-                    .font(.system(size: max(14, side * 0.34), weight: .semibold))
-                    // 옅은 틴트 면 위에서 3:1을 넘기도록 밝기만 보정합니다.
-                    .foregroundStyle(
-                        tint.contrasting(
-                            on: Color(uiColor: .secondarySystemGroupedBackground)
-                                .composited(with: tint, fraction: 0.20),
-                            minimumRatio: 3
-                        )
-                    )
+
+                if let monogram {
+                    VStack(spacing: 3) {
+                        Text(monogram)
+                            .font(.system(size: max(18, side * 0.42), weight: .bold, design: .rounded))
+                            .foregroundStyle(tint.contrasting(on: surface))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+
+                        // 타일이 좁으면 이름까지 넣으면 둘 다 안 읽힙니다.
+                        if side >= 80, let brandName {
+                            Text(brandName)
+                                .font(.system(size: max(9, side * 0.10), weight: .semibold))
+                                .foregroundStyle(tint.contrasting(on: surface))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .padding(.horizontal, 6)
+                        }
+                    }
+                } else {
+                    Image(systemName: symbolName)
+                        .font(.system(size: max(14, side * 0.34), weight: .semibold))
+                        // 옅은 틴트 면 위에서 3:1을 넘기도록 밝기만 보정합니다.
+                        .foregroundStyle(tint.contrasting(on: surface, minimumRatio: 3))
+                }
             }
         }
         .accessibilityHidden(true)
