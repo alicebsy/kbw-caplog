@@ -44,15 +44,15 @@ struct MyPageCardCleanupSection: View {
                     if let dup = duplicateByScreenshot, dup > 0 {
                         Text("스크린샷보다 카드가 많아 중복일 수 있는 건 약 \(dup)건이에요.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                     } else if duplicateCount > 0 {
                         Text("같은 출처로 보이는 카드 \(duplicateCount)건을 정리할 수 있어요.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                     } else if screenshotCount != nil {
                         Text("중복 없음 · 스크린샷당 1개로 유지 중")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                     }
                 }
                 .padding(.vertical, 4)
@@ -94,10 +94,10 @@ struct MyPageCardCleanupSection: View {
                         HStack(spacing: 12) {
                             Image(systemName: "arrow.counterclockwise")
                                 .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                             Text("로컬 카드 초기화 후 다시 가져오기")
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.brandTextSub)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13, weight: .semibold))

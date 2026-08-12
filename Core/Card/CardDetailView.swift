@@ -145,6 +145,7 @@ struct FullScreenImageView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
+                            .accessibilityLabel("뒤로")
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
                             .padding(12)
@@ -204,10 +205,10 @@ struct CardDetailView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                     Text("카드를 찾을 수 없습니다")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                     Button("돌아가기") {
                         dismiss()
                     }
@@ -258,12 +259,12 @@ struct CardDetailView: View {
                                 .accessibilityHidden(true)
                             Text(card.category.displayName)
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                             Text("•")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                             Text(card.subcategory)
                                 .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         }
 
                         // 제목
@@ -274,7 +275,7 @@ struct CardDetailView: View {
                         if !card.summary.isEmpty {
                             Text(card.summary)
                                 .font(.system(size: 15))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         }
 
                         Divider()
@@ -285,7 +286,7 @@ struct CardDetailView: View {
                                 HStack {
                                     Text("상세 정보")
                                         .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.brandTextSub)
                                     Spacer()
                                 }
 
@@ -294,7 +295,7 @@ struct CardDetailView: View {
                                         HStack(alignment: .top, spacing: 8) {
                                             Text(key)
                                                 .font(.system(size: 13, weight: .medium))
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(Color.brandTextSub)
                                                 .frame(width: 80, alignment: .leading)
                                             Text(value)
                                                 .font(.system(size: 14))
@@ -311,7 +312,7 @@ struct CardDetailView: View {
                             HStack {
                                 Text("핵심 키워드")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.brandTextSub)
                                 Spacer()
                             }
 
@@ -347,6 +348,7 @@ struct CardDetailView: View {
                                                 showDeleteConfirm = true
                                             } label: {
                                                 Image(systemName: "xmark.circle.fill")
+                                                    .accessibilityLabel("태그 삭제")
                                                     .font(.system(size: 16))
                                                     .foregroundStyle(Color.homeGreenTint.opacity(0.55))
                                             }
@@ -362,6 +364,7 @@ struct CardDetailView: View {
                                         showAddTagSheet = true
                                     } label: {
                                         Image(systemName: "plus.circle.fill")
+                                            .accessibilityLabel("태그 추가")
                                             .font(.system(size: 20))
                                             .foregroundStyle(Color.homeGreenTint)
                                     }

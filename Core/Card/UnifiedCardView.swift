@@ -13,6 +13,8 @@ struct UnifiedCardView: View {
     var isHomeScreen: Bool = false // ✅ 홈 화면 여부
     
     @State private var isShareSheetPresented = false
+    /// 카드 보내기 결과 안내. nil이면 알림을 띄우지 않습니다.
+    @State private var shareResultMessage: String?
     @Environment(\.notificationCardWidth) private var isNotificationCard
     @Environment(\.colorScheme) private var colorScheme
     
@@ -120,40 +122,81 @@ struct UnifiedCardView: View {
             ShareSheetView(
                 target: card
             ) { friendIDs, threadIDs, msg in
-                
+
                 let vm = ShareViewModel.shared
                 let cardToSend = self.card
-                
+
                 Task {
-                    for threadId in threadIDs {
-                        await vm.sendCard(to: threadId, card: cardToSend)
-                        if !msg.isEmpty { await vm.send(to: threadId, text: msg) }
+                    // 공유 시트는 친구 탭과 채팅 탭의 선택을 따로 들고 있습니다.
+                    // 예전에는 두 목록을 각각 순회해서, 같은 사람을 양쪽에서 고르면
+                    // 그 사람에게 카드가 두 번 갔습니다. 보낼 방을 먼저 하나로 모읍니다.
+                    var targetThreadIds: [String] = []
+                    func addTarget(_ id: String) {
+                        guard !targetThreadIds.contains(id) else { return }
+                        targetThreadIds.append(id)
                     }
-                    
+
+                    var failures: [String] = []
+
+                    threadIDs.forEach(addTarget)
+
                     for friendId in friendIDs {
                         guard let friend = vm.friends.first(where: { $0.id == friendId }) else { continue }
-                        
-                        var targetThreadId: String
+
                         if let existingThread = vm.threads.first(where: {
                             $0.participantIds.count == 2 && $0.participantIds.contains(friend.id)
                         }) {
-                            targetThreadId = existingThread.id
+                            addTarget(existingThread.id)
+                        } else if let newThread = await vm.createAndEnterChat(
+                            participantUserIds: [friend.id],
+                            title: friend.name
+                        ) {
+                            addTarget(newThread.id)
                         } else {
-                            guard let newThread = await vm.createAndEnterChat(
-                                participantUserIds: [friend.id],
-                                title: friend.name
-                            ) else {
-                                continue
-                            }
-                            targetThreadId = newThread.id
+                            // 방을 못 만들면 보낼 곳이 없습니다. 조용히 넘기지 않고 알립니다.
+                            failures.append(friend.name)
                         }
-                        
-                        await vm.sendCard(to: targetThreadId, card: cardToSend)
-                        if !msg.isEmpty { await vm.send(to: targetThreadId, text: msg) }
                     }
+
+                    var sentCount = 0
+                    for threadId in targetThreadIds {
+                        // sendCard는 성공 여부를 Bool로 돌려주는데 예전에는 그걸 버려서
+                        // 전송이 실패해도 사용자에게 아무 표시가 없었습니다.
+                        guard await vm.sendCard(to: threadId, card: cardToSend) else {
+                            failures.append(vm.threads.first(where: { $0.id == threadId })?.title ?? "대화")
+                            continue
+                        }
+                        sentCount += 1
+                        if !msg.isEmpty { await vm.send(to: threadId, text: msg) }
+                    }
+
+                    shareResultMessage = Self.shareResultText(sentCount: sentCount, failures: failures)
                 }
             }
             .presentationDetents([.height(420)])
+        }
+        .alert("카드 보내기", isPresented: Binding(
+            get: { shareResultMessage != nil },
+            set: { if !$0 { shareResultMessage = nil } }
+        )) {
+            Button("확인") { shareResultMessage = nil }
+        } message: {
+            Text(shareResultMessage ?? "")
+        }
+    }
+
+    /// 공유 결과 안내 문구.
+    private static func shareResultText(sentCount: Int, failures: [String]) -> String {
+        let failed = failures.joined(separator: ", ")
+        switch (sentCount, failures.isEmpty) {
+        case (0, false):
+            return "\(failed)에게 카드를 보내지 못했어요."
+        case (_, false):
+            return "\(sentCount)곳에 보냈어요. \(failed)에게는 보내지 못했어요."
+        case (0, true):
+            return "보낼 상대를 찾지 못했어요."
+        default:
+            return "카드를 \(sentCount)곳에 보냈어요."
         }
     }
     
@@ -236,12 +279,14 @@ struct UnifiedCardView: View {
                         isShareSheetPresented = true
                     }) {
                         Image(systemName: "square.and.arrow.up")
+                            .accessibilityLabel("카드 공유")
                     }
                     Button(action: {
                         print("🔴 UnifiedCardView rowStyle: ... 버튼 탭 -> onMore() 호출 (수정 시트)")
                         onMore()
                     }) {
                         Image(systemName: "ellipsis")
+                            .accessibilityLabel("카드 더 보기")
                     }
                 }
                 .font(.system(size: 16, weight: .semibold))
@@ -523,7 +568,7 @@ struct UnifiedCardView: View {
                                 if !brandName.isEmpty {
                                     Text(brandName)
                                         .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.brandTextSub)
                                         .lineLimit(1)
                                 }
                             }
@@ -566,18 +611,21 @@ struct UnifiedCardView: View {
                                 HStack(spacing: 4) {
                                     Button(action: { isShareSheetPresented = true }) {
                                         Image(systemName: "square.and.arrow.up")
+                                            .accessibilityLabel("카드 공유")
                                             .font(.system(size: 15, weight: .medium))
-                                            .foregroundStyle(Color.secondary)
+                                            .foregroundStyle(Color.brandTextSub)
                                     }
                                     .buttonStyle(.plain)
                                     Button(action: { onMore() }) {
                                         Image(systemName: "ellipsis")
+                                            .accessibilityLabel("카드 더 보기")
                                             .font(.system(size: 15, weight: .medium))
-                                            .foregroundStyle(Color.secondary)
+                                            .foregroundStyle(Color.brandTextSub)
                                     }
                                     .buttonStyle(.plain)
                                     Button(action: { onTap() }) {
                                         Image(systemName: "chevron.right.circle.fill")
+                                            .accessibilityLabel("카드 자세히 보기")
                                             .font(.system(size: 26))
                                             .symbolRenderingMode(.palette)
                                             .foregroundStyle(accentGraphic, Color(uiColor: .secondarySystemGroupedBackground))
@@ -603,6 +651,7 @@ struct UnifiedCardView: View {
                     HStack(spacing: 12) {
                         Button(action: { isShareSheetPresented = true }) {
                             Image(systemName: "square.and.arrow.up")
+                                .accessibilityLabel("카드 공유")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 36, height: 36)
@@ -612,6 +661,7 @@ struct UnifiedCardView: View {
                         .buttonStyle(.plain)
                         Button(action: { onMore() }) {
                             Image(systemName: "ellipsis")
+                                .accessibilityLabel("카드 더 보기")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 36, height: 36)

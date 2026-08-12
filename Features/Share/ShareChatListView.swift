@@ -135,6 +135,7 @@ struct ShareChatListView: View {
                     showFriendSelection = true
                 } label: {
                     Image(systemName: "plus.bubble.fill")
+                        .accessibilityLabel("새 대화 시작")
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: 60, height: 60)

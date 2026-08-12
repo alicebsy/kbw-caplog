@@ -108,10 +108,10 @@ struct ShareCardSelectionSheet: View {
                         Spacer()
                         Image(systemName: "tray")
                             .font(.system(size: 30, weight: .regular))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         Text(searchQuery.isEmpty ? "필터에 맞는 카드가 없습니다." : "검색 결과가 없습니다.")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

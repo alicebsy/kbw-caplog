@@ -66,7 +66,7 @@ struct AddTagSheet: View {
                 // 안내 문구
                 Text("중복된 태그는 추가할 수 없습니다.")
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.brandTextSub)
                 
                 Spacer()
             }

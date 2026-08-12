@@ -41,7 +41,7 @@ struct CardEditSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("제목")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         
                         TextField("카드 제목", text: $title)
                             .font(.system(size: 16))
@@ -56,7 +56,7 @@ struct CardEditSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("요약")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         
                         TextField("간단한 설명 (선택사항)", text: $summary)
                             .font(.system(size: 16))
@@ -71,7 +71,7 @@ struct CardEditSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("카테고리")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         
                         HStack(spacing: 12) {
                             // 대분류
@@ -103,7 +103,7 @@ struct CardEditSheet: View {
                                     Spacer()
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.brandTextSub)
                                 }
                                 .foregroundStyle(.primary)
                                 .padding(.horizontal, 16)
@@ -133,7 +133,7 @@ struct CardEditSheet: View {
                                     Spacer()
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.brandTextSub)
                                 }
                                 .foregroundStyle(.primary)
                                 .padding(.horizontal, 16)
@@ -150,13 +150,13 @@ struct CardEditSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("상세 정보")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                             
                             ForEach(Array(customFields.keys.sorted()), id: \.self) { key in
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(key)
                                         .font(.system(size: 13))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color.brandTextSub)
                                     
                                     TextField(key, text: Binding(
                                         get: { customFields[key] ?? "" },

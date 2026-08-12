@@ -25,7 +25,7 @@ struct MyPageAccountSection: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.primary)
                         .frame(width: 72, alignment: .leading)
-                    TextField("", text: $name, prompt: Text("이름 입력").foregroundColor(.secondary))
+                    TextField("", text: $name, prompt: Text("이름 입력").foregroundColor(Color.brandTextSub))
                         .font(.system(size: 15))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

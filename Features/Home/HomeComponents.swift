@@ -82,12 +82,13 @@ struct HomeHeader: View {
                     .foregroundColor(Color.homeGreenTint)
                 Text("캡처한 로그를 한눈에 정리해요")
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.brandTextSub)
             }
             Spacer()
             Button(action: onTapNotification) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
+                        .accessibilityLabel("알림")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(Color.homeGreenTint)
                         .frame(width: 32, height: 32)

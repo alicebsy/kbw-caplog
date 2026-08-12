@@ -71,7 +71,7 @@ struct ScreenshotDebugView: View {
                                 .font(.headline)
                             Text("기기 내 OCR·이미지 분석 → GPT 분류")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.brandTextSub)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
@@ -85,7 +85,7 @@ struct ScreenshotDebugView: View {
                                 .foregroundColor(.red)
                             Text(error)
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.brandTextSub)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -136,7 +136,7 @@ struct ResultSections: View {
                         HStack {
                             Text("태그:")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.brandTextSub)
                             Text(result.card.tags.map { "#\($0)" }.joined(separator: " "))
                                 .font(.caption)
                                 .foregroundColor(.blue)
@@ -154,14 +154,14 @@ struct ResultSections: View {
                 if result.ocrText.isEmpty {
                     Text("인식된 텍스트가 없습니다")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(Array(result.ocrText.enumerated()), id: \.offset) { index, line in
                             HStack(alignment: .top, spacing: 8) {
                                 Text("\(index + 1).")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(Color.brandTextSub)
                                     .frame(width: 30, alignment: .trailing)
                                 Text(line)
                                     .font(.body)
@@ -182,7 +182,7 @@ struct ResultSections: View {
                 if result.imageLabels.isEmpty {
                     Text("탐지된 레이블이 없습니다")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(result.imageLabels) { label in
@@ -192,7 +192,7 @@ struct ResultSections: View {
                                 Spacer()
                                 Text(label.confidencePercentage)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(Color.brandTextSub)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(Color(.systemGray5))
@@ -261,7 +261,7 @@ struct ResultRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.brandTextSub)
             Text(value)
                 .font(.body)
                 .textSelection(.enabled)

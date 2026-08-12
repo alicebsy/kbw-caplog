@@ -10,7 +10,7 @@ struct SearchEmptyStateView: View {
                 .foregroundStyle(Color.pointBlue.opacity(0.75))
             Text("검색 결과가 없습니다.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.brandTextSub)
         }
         .padding(.vertical, 40)
         .frame(maxWidth: .infinity)
@@ -23,7 +23,7 @@ struct SearchLoadingView: View {
             ProgressView()
             Text("검색 중입니다...")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.brandTextSub)
         }
         .padding(.vertical, 40)
         .frame(maxWidth: .infinity)
@@ -41,7 +41,7 @@ struct SearchErrorView: View {
                 .font(.system(size: 28))
             Text(message)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.brandTextSub)
             if let retry {
                 Button("다시 시도") { retry() }
                     .buttonStyle(.borderedProminent)

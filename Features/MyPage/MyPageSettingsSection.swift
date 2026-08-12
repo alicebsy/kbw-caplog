@@ -57,7 +57,7 @@ private struct SettingsToggleRow: View {
                 if let subtitle = subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 }
             }
             Spacer(minLength: 12)

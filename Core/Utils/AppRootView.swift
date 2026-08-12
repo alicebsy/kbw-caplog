@@ -21,6 +21,7 @@ private struct CustomBackButton: View {
     var body: some View {
         Button { dismiss() } label: {
             Image(systemName: "chevron.left")
+                .accessibilityLabel("뒤로")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.black)
         }

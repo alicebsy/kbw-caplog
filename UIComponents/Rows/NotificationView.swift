@@ -390,7 +390,7 @@ struct NotificationView: View {
                 if let locationMessage = notificationCenter.locationMessage {
                     Label(locationMessage, systemImage: "location.circle")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 4)
                 }
@@ -466,7 +466,7 @@ private struct NotificationRow: View {
                             }
                         }
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                     }
 
                     Spacer(minLength: 4)
@@ -491,7 +491,7 @@ private struct NotificationRow: View {
                 Button(action: onDelete) {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                         .frame(width: 30, height: 30)
                         .background(Color(uiColor: .systemGray5))
                         .clipShape(Circle())

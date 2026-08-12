@@ -35,7 +35,7 @@ struct HomeView: View {
                         ProgressView()
                         Text("카드를 불러오고 있어요.")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 42)
@@ -52,7 +52,7 @@ struct HomeView: View {
                             .foregroundColor(.primary)
                         Text(loadError)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                             .multilineTextAlignment(.center)
                         Button {
                             Task { await vm.retry() }
@@ -94,7 +94,7 @@ struct HomeView: View {
                             .foregroundColor(.primary)
                         Text("스크린샷을 가져오면 중요한 내용을 카드로 정리해드려요.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                             .multilineTextAlignment(.center)
                         Button {
                             Task { await vm.importScreenshotsFromGallery() }
@@ -120,7 +120,7 @@ struct HomeView: View {
                             Text(pipelineStatus.lastMessage)
                                 .font(.system(size: 12))
                                 .foregroundStyle(
-                                    pipelineStatus.phase == .failure ? Color.red : Color.secondary
+                                    pipelineStatus.phase == .failure ? Color.red : Color.brandTextSub
                                 )
                                 .multilineTextAlignment(.center)
                         }
@@ -178,7 +178,7 @@ struct HomeView: View {
                     if vm.coupons.isEmpty {
                         Text("마감일이 가까운 카드가 없어요.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                             .frame(maxWidth: .infinity)
                             .frame(height: couponH)
                             .padding(.horizontal, 20)

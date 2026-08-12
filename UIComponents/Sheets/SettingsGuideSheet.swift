@@ -17,10 +17,10 @@ struct SettingsGuideSheet: View {
             Text(title).font(.system(size: 22, weight: .bold))
             Text(message)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.brandTextSub)
 
             VStack(spacing: 6) {
-                Text("이동 경로").font(.footnote).foregroundStyle(.secondary)
+                Text("이동 경로").font(.footnote).foregroundStyle(Color.brandTextSub)
                 Text(pathHint).font(.footnote)
             }
             .padding(.top, 4)

@@ -32,8 +32,9 @@ struct ShareSheetView<T: Identifiable>: View {
                 Spacer()
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
+                        .accessibilityLabel("닫기")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.brandTextSub)
                 }
             }
             .padding(.horizontal, 16)
@@ -44,14 +45,14 @@ struct ShareSheetView<T: Identifiable>: View {
                 Button { innerTab = .friends } label: {
                     Label("친구", systemImage: "person.2.fill")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(innerTab == .friends ? .primary : .secondary)
+                        .foregroundStyle(innerTab == .friends ? Color.brandTextMain : Color.brandTextSub)
                         .padding(.vertical, 8).padding(.horizontal, 10)
                         .background(Capsule().fill(innerTab == .friends ? Color.secondary.opacity(0.15) : .clear))
                 }
                 Button { innerTab = .chats } label: {
                     Label("채팅", systemImage: "bubble.left.and.bubble.right.fill")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(innerTab == .chats ? .primary : .secondary)
+                        .foregroundStyle(innerTab == .chats ? Color.brandTextMain : Color.brandTextSub)
                         .padding(.vertical, 8).padding(.horizontal, 10)
                         .background(Capsule().fill(innerTab == .chats ? Color.secondary.opacity(0.15) : .clear))
                 }
@@ -123,6 +124,7 @@ struct ShareSheetView<T: Identifiable>: View {
                     dismiss()
                 } label: {
                     Image(systemName: "paperplane.fill")
+                        .accessibilityLabel("보내기")
                         .foregroundStyle(.white)
                         .frame(width: 56, height: 48)
                         .background(Color.brandAccent)

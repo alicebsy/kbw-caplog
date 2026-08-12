@@ -44,7 +44,7 @@ struct OCRResultView: View {
                     if recognizedText.isEmpty {
                         Text("인식된 텍스트가 없습니다.")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                             .modifier(DetailItemStyle())
                     } else {
                         let merged = mergeNumberedLines(from: recognizedText)
@@ -69,7 +69,7 @@ struct OCRResultView: View {
                                     Spacer()
                                     Text(label.confidencePercentage)
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(Color.brandTextSub)
                                 }
                             }
                         }
@@ -84,7 +84,7 @@ struct OCRResultView: View {
                         
                         Text("탐지된 객체/개념이 없습니다.")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.brandTextSub)
                             .modifier(DetailItemStyle())
                     }
                     .frame(maxWidth: .infinity)

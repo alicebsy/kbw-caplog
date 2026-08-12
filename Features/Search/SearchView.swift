@@ -38,8 +38,9 @@ struct SearchView: View {
                     if !vm.query.isEmpty {
                         Button { vm.query = "" } label: {
                             Image(systemName: "xmark.circle.fill")
+                                .accessibilityLabel("검색어 지우기")
                                 .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         }
                     }
                 }
@@ -182,7 +183,7 @@ private struct RecentSearchList: View {
             if !items.isEmpty {
                 Text("최근 검색")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.brandTextSub)
                     .padding(.leading, 6)
             }
 
@@ -194,15 +195,16 @@ private struct RecentSearchList: View {
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color.pointSlate)
                             Text(term)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.brandTextSub)
                         }
                     }
                     .buttonStyle(.plain)
                     Spacer()
                     Button(action: { remove(term) }) {
                         Image(systemName: "xmark")
+                            .accessibilityLabel("최근 검색어에서 삭제")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                     }
                     .buttonStyle(.plain)
                 }

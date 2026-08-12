@@ -69,14 +69,14 @@ struct ChatThreadRow: View {
                     if let cardTitle = thread.lastMessageCardTitle {
                         Image(systemName: "doc.text.fill")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                         Text(cardTitle)
                     } else {
                         Text(thread.lastMessageText ?? "...")
                     }
                 }
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.brandTextSub)
                 .lineLimit(1)
             }
             

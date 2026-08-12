@@ -84,7 +84,7 @@ struct MyPagePasswordChangeView: View {
                 // 안내 문구
                 Text("영문/숫자/특수문자 조합 8자 이상을 권장합니다.")
                     .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.brandTextSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
                 

@@ -137,7 +137,7 @@ struct ScreenshotUploadView: View {
                     
                     Text(card.summary)
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                     
                     HStack {
                         Image(systemName: card.category.symbolName)

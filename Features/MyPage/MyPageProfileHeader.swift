@@ -34,6 +34,7 @@ struct MyPageProfileHeader: View {
                     else { showImagePicker = true }
                 } label: {
                     Image(systemName: "camera.circle.fill")
+                        .accessibilityLabel("프로필 사진 변경")
                         .font(.system(size: 26))
                         .foregroundStyle(.white)
                         .background(Circle().fill(Color.myPageSectionGreen))

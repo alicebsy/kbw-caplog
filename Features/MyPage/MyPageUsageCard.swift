@@ -18,7 +18,7 @@ struct MyPageUsageCard: View {
                         .foregroundColor(.primary)
                     Text("건 저장")
                         .font(.system(size: 15))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 }
                 .frame(maxWidth: .infinity)
                 Rectangle()
@@ -33,7 +33,7 @@ struct MyPageUsageCard: View {
                         .foregroundColor(.primary)
                     Text("건 추천")
                         .font(.system(size: 15))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 }
                 .frame(maxWidth: .infinity)
             }

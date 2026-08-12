@@ -138,6 +138,7 @@ struct ChatRoomView: View {
                     showCardSelection = true
                 } label: {
                     Image(systemName: "plus")
+                        .accessibilityLabel("카드 첨부")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(width: 32, height: 32)
                         .background(Color.homeGreenLight.opacity(0.5))
@@ -193,7 +194,7 @@ struct ChatRoomView: View {
                     if thread.participantIds.count > 2 {
                         Text("\(thread.participantIds.count)")
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                     }
                 }
             }

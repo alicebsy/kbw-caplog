@@ -39,6 +39,7 @@ struct MyPageView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
+                            .accessibilityLabel("뒤로")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
                     }

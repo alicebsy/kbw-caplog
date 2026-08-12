@@ -14,6 +14,7 @@ struct FolderAddSheet: View {
                 Spacer()
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
+                        .accessibilityLabel("닫기")
                 }
             }
             .padding(.horizontal)

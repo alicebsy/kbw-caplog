@@ -273,7 +273,7 @@ struct FolderItemListView: View {
                 .foregroundColor(.primary)
             Text("스크린샷을 저장하면 여기에 쌓여요")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.brandTextSub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
@@ -310,7 +310,7 @@ struct FolderRecentCardsView: View {
                         .foregroundColor(.primary)
                     Text("마이페이지에서 스크린샷을 가져와 보세요")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.brandTextSub)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 48)

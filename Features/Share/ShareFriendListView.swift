@@ -67,6 +67,7 @@ struct ShareFriendListView: View {
                                     }
                                 } label: {
                                     Image(systemName: "bubble.left.and.bubble.right")
+                                        .accessibilityLabel("대화 시작")
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(Color.pointBlue)
                                         .frame(minWidth: 44, minHeight: 44)
@@ -159,6 +160,7 @@ struct ShareFriendListView: View {
                     showAdd = true
                 } label: {
                     Image(systemName: "person.badge.plus")
+                        .accessibilityLabel("친구 추가")
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: 60, height: 60)

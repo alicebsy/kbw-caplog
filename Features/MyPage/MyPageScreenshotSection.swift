@@ -90,7 +90,7 @@ struct MyPageScreenshotSection: View {
                        pipelineStatus.phase != .running {
                         Text(error)
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.brandTextSub)
                             .lineLimit(2)
                     }
                 }
@@ -102,7 +102,7 @@ struct MyPageScreenshotSection: View {
                     .tint(Color.accentGreenTint)
                 Text("\(pipelineStatus.currentCount)/\(pipelineStatus.totalCount) 처리 중")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.brandTextSub)
             }
 
             if pipelineStatus.phase == .warning || pipelineStatus.phase == .failure {
