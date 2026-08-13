@@ -28,23 +28,37 @@ struct CaplogApp: App {
 
     var body: some Scene {
         WindowGroup {
-            StartView(appState: appState)
-                .environmentObject(appState)
-                .onOpenURL { url in
-                    #if SOCIAL_LOGIN_ENABLED
-                    if AuthApi.isKakaoTalkLoginUrl(url) {
-                        _ = AuthController.handleOpenUrl(url: url)
-                    } else {
-                        _ = GIDSignIn.sharedInstance.handle(url)
-                    }
-                    #else
-                    _ = url
-                    #endif
-                }
-                .onChange(of: appState.isLoggedIn) { _, isLoggedIn in
-                    updateScreenshotMonitoring(isLoggedIn: isLoggedIn)
-                }
+            #if DEBUG
+            // 서버가 내려가 로그인이 막혔을 때 화면만 확인하는 통로 (실행 인자로만 켜짐)
+            if ProcessInfo.processInfo.arguments.contains("-CaplogFolderPreview") {
+                FolderPreviewHost()
+            } else {
+                mainScene
+            }
+            #else
+            mainScene
+            #endif
         }
+    }
+
+    @ViewBuilder
+    private var mainScene: some View {
+        StartView(appState: appState)
+            .environmentObject(appState)
+            .onOpenURL { url in
+                #if SOCIAL_LOGIN_ENABLED
+                if AuthApi.isKakaoTalkLoginUrl(url) {
+                    _ = AuthController.handleOpenUrl(url: url)
+                } else {
+                    _ = GIDSignIn.sharedInstance.handle(url)
+                }
+                #else
+                _ = url
+                #endif
+            }
+            .onChange(of: appState.isLoggedIn) { _, isLoggedIn in
+                updateScreenshotMonitoring(isLoggedIn: isLoggedIn)
+            }
     }
     
     /// 로그인한 동안에만 새 스크린샷 자동 분류를 감시합니다.

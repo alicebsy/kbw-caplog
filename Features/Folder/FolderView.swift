@@ -11,11 +11,6 @@ struct FolderView: View {
                 // NavigationStack은 바깥에서 준 safeAreaInset을 자기 콘텐츠까지
                 // 전달하지 않습니다. 그래서 여백은 반드시 스택 안쪽에서 잡습니다.
                 .caplogTabBarInset()
-                .navigationTitle("폴더")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarBackground(Color(uiColor: .systemGroupedBackground), for: .navigationBar)
-                .toolbarColorScheme(.light, for: .navigationBar)
                 // 탭 루트라 돌아갈 화면이 없습니다. 예전엔 dismiss()를 부르는
                 // chevron.left가 얹혀 있었는데, 눌러도 아무 일도 일어나지 않았습니다.
                 .navigationBarBackButtonHidden(true)
@@ -33,20 +28,31 @@ struct FolderView: View {
     }
 }
 
-// MARK: - 1) 대분류 + 소분류 리스트 (피그마 디자인 최종본)
+// MARK: - 1) 대분류 칩 + 소분류 그룹 리스트
+/// 예전 구현은 화면을 좌우로 반 갈라 왼쪽에 대분류, 오른쪽에 소분류를 담았습니다.
+/// 390pt 화면에서는 양쪽 다 160pt밖에 안 돼서 이름이 잘리고, 어느 대분류에 무엇이
+/// 들어 있는지는 눌러 보기 전까지 알 수 없었습니다(좌우 분할은 아이패드 문법입니다).
+/// 대분류는 칩으로 항상 띄우고, 소분류는 전체 폭을 쓰는 그룹 리스트로 내리고
+/// 개수를 오른쪽에 붙였습니다. 목록을 훑는 것만으로 카테고리가 읽힙니다.
 struct FolderCategoryListView: View {
     @EnvironmentObject private var manager: CardManager
+    /// 로그인·서버 없이 화면만 확인할 때 쓰는 카드 목록. nil이면 실제 카드를 씁니다.
+    var previewCards: [Card]? = nil
+
     @State private var selectedCategory: FolderCategory = .info
     /// 갤러리에 있는 스크린샷 전체 개수 (폴더 보일 때마다 갱신)
     @State private var galleryScreenshotCount: Int?
     /// 카드로 만든 스크린샷 개수. ScreenshotIndexer는 ObservableObject가 아니라서
     /// 계산 프로퍼티로 두면 값이 바뀌어도 화면이 다시 그려지지 않습니다.
     @State private var screenshotRecognizedCount: Int = 0
+    @State private var isImporting = false
+
+    private var cards: [Card] { previewCards ?? manager.allCards }
 
     private var groupedSubcategories: [String: [FolderSubcategory]] {
         Dictionary(grouping: selectedCategory.subcategories, by: { $0.displayGroup })
     }
-    
+
     private var orderedGroupKeys: [String] {
         var keys: [String] = []
         for subcategory in selectedCategory.subcategories {
@@ -57,135 +63,151 @@ struct FolderCategoryListView: View {
         return keys
     }
 
+    /// 선택한 대분류의 소분류별 카드 개수. 한 번만 훑고 사전으로 들고 있습니다.
+    private var countsBySubcategory: [String: Int] {
+        var counts: [String: Int] = [:]
+        for card in cards where card.category == selectedCategory {
+            counts[card.subcategory, default: 0] += 1
+        }
+        return counts
+    }
+
     var body: some View {
-        HStack(spacing: 0) {
-            // --- 왼쪽: 대분류 리스트 + 하단 갤러리/최근 인식 ---
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(FolderCategory.allCases) { category in
-                        Button(action: {
-                            withAnimation(.easeOut(duration: 0.18)) {
-                                selectedCategory = category
-                            }
-                        }) {
-                            HStack(spacing: 10) {
-                                Image(systemName: category.symbolName)
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(category.color)
-                                    .symbolRenderingMode(.monochrome)
-                                    .frame(width: 32, height: 32)
-                                    .accessibilityHidden(true)
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                categoryChips
 
-                                Text(category.displayName)
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(
-                                        selectedCategory == category
-                                        ? category.color
-                                        : .primary
-                                    )
-                                    .lineLimit(1)
+                ForEach(orderedGroupKeys, id: \.self) { key in
+                    if !key.isEmpty {
+                        CapSectionHeader(key)
+                    } else {
+                        Spacer().frame(height: 8)
+                    }
+                    subcategoryGroup(for: key)
+                }
 
-                                Spacer()
-                            }
-                            .padding(.vertical, 7)
-                            .padding(.horizontal, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(
-                                        selectedCategory == category
-                                        ? category.color.opacity(0.1)
-                                        : Color.clear
-                                    )
-                            )
+                galleryNote
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle("폴더")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    FolderRecentCardsView()
+                        .environmentObject(manager)
+                } label: {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 17))
+                        .foregroundStyle(Color.homeGreenTint)
+                }
+                .accessibilityLabel("최근 인식 카드")
+
+                if isImporting {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button {
+                        importScreenshots()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.homeGreenTint)
+                    }
+                    .accessibilityLabel("스크린샷에서 카드 가져오기")
+                }
+            }
+        }
+        .onAppear {
+            screenshotRecognizedCount = ScreenshotIndexer.shared.processedScreenshotCount
+            Task { galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
+        }
+    }
+
+    // MARK: 대분류 칩
+    private var categoryChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(FolderCategory.allCases) { category in
+                    Button {
+                        withAnimation(.easeOut(duration: 0.18)) {
+                            selectedCategory = category
                         }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 10)
-                        .accessibilityLabel(category.displayName)
-                        .accessibilityAddTraits(
-                            selectedCategory == category ? .isSelected : []
+                    } label: {
+                        CapChip(
+                            title: category.displayName,
+                            isSelected: selectedCategory == category
                         )
                     }
-
-                    // 갤러리·인식 정보 + 최근 인식 카드 (왼쪽 맨 아래)
-                    VStack(alignment: .leading, spacing: 10) {
-                        Divider()
-                            .padding(.vertical, 8)
-                        if let total = galleryScreenshotCount {
-                            Text("갤러리 \(total)장 · 인식 \(screenshotRecognizedCount)장")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Color.brandTextSub)
-                        } else {
-                            Text("인식 완료 \(screenshotRecognizedCount)장")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Color.brandTextSub)
-                        }
-                        NavigationLink {
-                            FolderRecentCardsView()
-                                .environmentObject(manager)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "photo.on.rectangle.angled")
-                                    .font(.system(size: 12))
-                                Text("최근 인식 카드")
-                                    .font(.system(size: 13, weight: .medium))
-                            }
-                            .foregroundStyle(Color.accentGreenTint)
-                        }
-                    }
-                    .padding(.leading, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
-                }
-                .padding(.top, 16)
-            }
-            // 화면 절반. UIScreen.main.bounds는 iOS 16부터 권장되지 않고,
-            // 회전이나 분할 화면에서 실제 컨테이너 폭과 어긋납니다.
-            .containerRelativeFrame(.horizontal) { width, _ in width * 0.5 }
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .onAppear {
-                screenshotRecognizedCount = ScreenshotIndexer.shared.processedScreenshotCount
-                Task { galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount() }
-            }
-
-            // --- 오른쪽: 소분류 리스트 ---
-            List {
-                ForEach(orderedGroupKeys, id: \.self) { key in
-                    Section {
-                        if !key.isEmpty {
-                            Text(key)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.brandTextSub)
-                                .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
-                        }
-                        ForEach(groupedSubcategories[key] ?? []) { sub in
-                            NavigationLink {
-                                FolderItemListView(category: selectedCategory, subcategory: sub.name)
-                                    .environmentObject(manager)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: Card.symbolName(forSubcategory: sub.name))
-                                        .font(.system(size: 17, weight: .semibold))
-                                        .foregroundStyle(selectedCategory.color)
-                                        .symbolRenderingMode(.monochrome)
-                                        .frame(width: 30, height: 30)
-                                        .accessibilityHidden(true)
-
-                                    Text(sub.name)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundStyle(Color.primary)
-                                }
-                            }
-                            .accessibilityLabel("\(sub.name) 폴더")
-                            .listRowInsets(EdgeInsets(top: 9, leading: 20, bottom: 9, trailing: 20))
-                        }
-                    }
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(category.displayName)
+                    .accessibilityAddTraits(selectedCategory == category ? .isSelected : [])
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color(uiColor: .systemGroupedBackground))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 2)
+        }
+        .padding(.bottom, 8)
+    }
+
+    // MARK: 소분류 그룹
+    private func subcategoryGroup(for key: String) -> some View {
+        let subcategories = groupedSubcategories[key] ?? []
+        let counts = countsBySubcategory
+
+        return CapGroup {
+            ForEach(Array(subcategories.enumerated()), id: \.element.id) { index, sub in
+                let count = counts[sub.name] ?? 0
+
+                NavigationLink {
+                    FolderItemListView(category: selectedCategory, subcategory: sub.name)
+                        .environmentObject(manager)
+                } label: {
+                    CapRow(
+                        title: sub.name,
+                        value: "\(count)",
+                        showsChevron: false,
+                        isDimmed: count == 0
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(sub.name) 폴더, \(count)개")
+
+                if index < subcategories.count - 1 {
+                    CapSeparator()
+                }
+            }
+        }
+    }
+
+    // MARK: 갤러리·인식 각주
+    private var galleryNote: some View {
+        Group {
+            if let total = galleryScreenshotCount {
+                Text("갤러리 \(total)장 · 인식 \(screenshotRecognizedCount)장")
+            } else {
+                Text("인식 완료 \(screenshotRecognizedCount)장")
+            }
+        }
+        .font(.system(size: 13))
+        .foregroundStyle(Color.brandTextSub)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 32)
+        .padding(.top, 12)
+    }
+
+    private func importScreenshots() {
+        guard !isImporting else { return }
+        isImporting = true
+        Task {
+            await ScreenshotIndexer.shared.forceImportRecentScreenshots(limit: 20)
+            await manager.loadAllCards()
+            screenshotRecognizedCount = ScreenshotIndexer.shared.processedScreenshotCount
+            galleryScreenshotCount = await ScreenshotIndexer.fetchGalleryScreenshotCount()
+            isImporting = false
         }
     }
 }
@@ -370,3 +392,22 @@ struct FolderRecentCardsView: View {
         }
     }
 }
+
+#if DEBUG
+// MARK: - 로그인·서버 없이 폴더 화면만 확인하는 통로
+/// 백엔드가 내려가 있으면 로그인 화면을 지나갈 수 없어서 폴더를 볼 방법이 없습니다.
+/// Xcode 캔버스(아래 #Preview)로 보거나, 실행 인자에 `-CaplogFolderPreview`를 넣고
+/// 앱을 켜면 이 화면으로 바로 들어갑니다. DEBUG 빌드에만 들어갑니다.
+struct FolderPreviewHost: View {
+    var body: some View {
+        NavigationStack {
+            FolderCategoryListView(previewCards: Card.sampleCards)
+                .environmentObject(CardManager.shared)
+        }
+    }
+}
+
+#Preview("폴더 · 칩 + 소분류") {
+    FolderPreviewHost()
+}
+#endif
